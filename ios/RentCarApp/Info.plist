@@ -26,7 +26,6 @@
 	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-	  <!-- Do not change NSAllowsArbitraryLoads to true, or you will risk app rejection! -->
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 		<key>NSAllowsLocalNetworking</key>
@@ -35,7 +34,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
+	<string>BootSplash</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
@@ -48,5 +47,80 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>GT-Walsheim-Black-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Black-Trial.otf</string>
+		<string>GT-Walsheim-Bold-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Bold-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Black-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Black-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Bold-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Bold-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Light-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Light-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Medium-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Medium-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Regular-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Regular-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Thin-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Thin-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Ultra-Bold-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Ultra-Bold-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Ultra-Light-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Condensed-Ultra-Light-Trial.otf</string>
+		<string>GT-Walsheim-Light-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Light-Trial.otf</string>
+		<string>GT-Walsheim-Medium-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Medium-Trial.otf</string>
+		<string>GT-Walsheim-Regular-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Regular-Trial.otf</string>
+		<string>GT-Walsheim-Thin-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Thin-Trial.otf</string>
+		<string>GT-Walsheim-Ultra-Bold-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Ultra-Bold-Trial.otf</string>
+		<string>GT-Walsheim-Ultra-Light-Oblique-Trial.otf</string>
+		<string>GT-Walsheim-Ultra-Light-Trial.otf</string>
+		<string>SF-Pro-Text-Bold.ttf</string>
+		<string>SF-Pro-Text-Light.ttf</string>
+		<string>SF-Pro-Text-Medium.ttf</string>
+		<string>SF-Pro-Text-Regular.ttf</string>
+		<string>Poppins-Black.ttf</string>
+		<string>Poppins-BlackItalic.ttf</string>
+		<string>Poppins-Bold.ttf</string>
+		<string>Poppins-BoldItalic.ttf</string>
+		<string>Poppins-ExtraBold.ttf</string>
+		<string>Poppins-ExtraBoldItalic.ttf</string>
+		<string>Poppins-ExtraLight.ttf</string>
+		<string>Poppins-ExtraLightItalic.ttf</string>
+		<string>Poppins-Italic.ttf</string>
+		<string>Poppins-Light.ttf</string>
+		<string>Poppins-LightItalic.ttf</string>
+		<string>Poppins-Medium.ttf</string>
+		<string>Poppins-MediumItalic.ttf</string>
+		<string>Poppins-Regular.ttf</string>
+		<string>Poppins-SemiBold.ttf</string>
+		<string>Poppins-SemiBoldItalic.ttf</string>
+		<string>Poppins-Thin.ttf</string>
+		<string>Poppins-ThinItalic.ttf</string>
+		<string>Raleway-Black.ttf</string>
+		<string>Raleway-BlackItalic.ttf</string>
+		<string>Raleway-Bold.ttf</string>
+		<string>Raleway-BoldItalic.ttf</string>
+		<string>Raleway-ExtraBold.ttf</string>
+		<string>Raleway-ExtraBoldItalic.ttf</string>
+		<string>Raleway-ExtraLight.ttf</string>
+		<string>Raleway-ExtraLightItalic.ttf</string>
+		<string>Raleway-Italic.ttf</string>
+		<string>Raleway-Light.ttf</string>
+		<string>Raleway-LightItalic.ttf</string>
+		<string>Raleway-Medium.ttf</string>
+		<string>Raleway-MediumItalic.ttf</string>
+		<string>Raleway-Regular.ttf</string>
+		<string>Raleway-SemiBold.ttf</string>
+		<string>Raleway-SemiBoldItalic.ttf</string>
+		<string>Raleway-Thin.ttf</string>
+		<string>Raleway-ThinItalic.ttf</string>
+	</array>
 </dict>
 </plist>

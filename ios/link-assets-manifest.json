@@ -1,0 +1,333 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/bg.png",
+      "sha1": "2e9292ae2dfe8c28e087d8e59e097e5c5fbd68be"
+    },
+    {
+      "path": "assets/bg2.png",
+      "sha1": "d31b772fba5ee4ed9692f2cb12485bcabf8017d6"
+    },
+    {
+      "path": "assets/car1.jpg",
+      "sha1": "565660326240677516132b070285b9d5b574fd99"
+    },
+    {
+      "path": "assets/car2.jpg",
+      "sha1": "34530893d3ce1ec18397cd42070b6a9730272699"
+    },
+    {
+      "path": "assets/caricon.png",
+      "sha1": "b6a5a9857f3bcc0ce5d7d9859e076c1f8d1931d9"
+    },
+    {
+      "path": "assets/caricon2.png",
+      "sha1": "c692a561c05ff2689ec9730749ae82e3bc0e3f4e"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Text/SF-Pro-Text-Bold.ttf",
+      "sha1": "09a7ce76077f8696943638f5cc99c112f8d716ae"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Text/SF-Pro-Text-Light.ttf",
+      "sha1": "2598837d0da90b71704242c5ca507bab3499708e"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Text/SF-Pro-Text-Medium.ttf",
+      "sha1": "8cb56a028cc7bf091e49830a8b19a7a0dd07b84e"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Text/SF-Pro-Text-Regular.ttf",
+      "sha1": "6f8b9d118e5e053ba77690922f793a5fa87667d2"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Text/background.jpg",
+      "sha1": "b10dd66fc7e312cf3daae478cc6afd3a638c4f1d"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Black-Oblique-Trial.otf",
+      "sha1": "13605cd42bfdba6cf75d7c3797d4401550039155"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Black-Trial.otf",
+      "sha1": "95e21a87055f2efe243cf7e4500969abb5c364a8"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Bold-Oblique-Trial.otf",
+      "sha1": "510947d6c12130faa67737cb6631643a4722fdd9"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Bold-Trial.otf",
+      "sha1": "6ab6a1a744e9a2f85e2fc9be7fc40baf0d1431b6"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Black-Oblique-Trial.otf",
+      "sha1": "4a3172a1ee9468a3223ac5ff207eaedc024bfbd9"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Black-Trial.otf",
+      "sha1": "e70d13533b2bc41783dc8fdf56aeebfffd1f3756"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Bold-Oblique-Trial.otf",
+      "sha1": "7deec47ef1232847e291d28b6ed2ff86b208a128"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Bold-Trial.otf",
+      "sha1": "2a2ce7b458dffc05f94dfc86785859b06e1f705f"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Light-Oblique-Trial.otf",
+      "sha1": "2a74bb775e2b1a82a2859bed9c67a857b041d761"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Light-Trial.otf",
+      "sha1": "9729d1eb2be9aa2bc52be225dda4bd1f973dc24d"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Medium-Oblique-Trial.otf",
+      "sha1": "b6782dbcc75a036344dac87ccdca2c456b4c4712"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Medium-Trial.otf",
+      "sha1": "72fe5a032461520ed1aeaf3c4fd80b6169ba3cf9"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Regular-Oblique-Trial.otf",
+      "sha1": "8173ec69fca758b86521dc3323863d6c532885f3"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Regular-Trial.otf",
+      "sha1": "bd00b32d856ee3b4201fc8f9020ec3318a75126b"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Thin-Oblique-Trial.otf",
+      "sha1": "9a2ba679681a2f833e34e0f613eee9221638cf81"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Thin-Trial.otf",
+      "sha1": "3e704122d375890f00c1f620f7ba064c47ab4191"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Ultra-Bold-Oblique-Trial.otf",
+      "sha1": "8089e18a51aef0f745dc3d2b04888be6d370c163"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Ultra-Bold-Trial.otf",
+      "sha1": "fca86bb1103c5cb897f9fdb177f2e925f2a9c97a"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Ultra-Light-Oblique-Trial.otf",
+      "sha1": "6d8f3bbc61245e868e095161c85da22870e100c3"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Condensed-Ultra-Light-Trial.otf",
+      "sha1": "33c7ef27cdc2832a49543d440caf4ef10c2a75f2"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Light-Oblique-Trial.otf",
+      "sha1": "b7a14aa4dd90990d00f388d4051b3628914c1c49"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Light-Trial.otf",
+      "sha1": "072e6a954393626a2a862416ae41dcb0dcd1dc2f"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Medium-Oblique-Trial.otf",
+      "sha1": "e4f092f526afe0aa07c732556f93bec2db1ef0c4"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Medium-Trial.otf",
+      "sha1": "46ed4575b1c130c4da22c42cc3ae32bb650a2b71"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Regular-Oblique-Trial.otf",
+      "sha1": "c543a57f7b1b63fc837ddb1cc4c2bdb14f6e912e"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Regular-Trial.otf",
+      "sha1": "7bf7adec6811597af3e340a356521b84ae5e6649"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Thin-Oblique-Trial.otf",
+      "sha1": "c0d06190e30a0cd9effc14e5711ff51ce866530b"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Thin-Trial.otf",
+      "sha1": "3652e40ca84f982096f126e5972f3de22663e1d5"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Ultra-Bold-Oblique-Trial.otf",
+      "sha1": "45eaf9440cbe0946f61224a2bb48f5261a801359"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Ultra-Bold-Trial.otf",
+      "sha1": "baa3141c6700bef0160eb04d32c8389a1a011f28"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Ultra-Light-Oblique-Trial.otf",
+      "sha1": "fc69517d00420fa86dbc84cc70d2f1d6f5585c88"
+    },
+    {
+      "path": "assets/fonts/poppins/GT-Walsheim-Ultra-Light-Trial.otf",
+      "sha1": "b8454bf3754236f45da3241775535d320d95b58d"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-Black.ttf",
+      "sha1": "86a24baced6e165f2d64901ea61b8a6f0efba553"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-BlackItalic.ttf",
+      "sha1": "fc9a78f39a426c701511649f274066ca380427f6"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-Bold.ttf",
+      "sha1": "cbe48c785f1af6bcd7320609094055e299481da9"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-BoldItalic.ttf",
+      "sha1": "c4ae2c23829f83d18803663ceefe74cb47af6935"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-ExtraBold.ttf",
+      "sha1": "6ed04065d66cbabcb49cd02e342f6459d6b2580e"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-ExtraBoldItalic.ttf",
+      "sha1": "497ae77063d462e927e238844659b08feaf31ac3"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-ExtraLight.ttf",
+      "sha1": "20c587a55713abe55f036299b397470a7eaefbbf"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-ExtraLightItalic.ttf",
+      "sha1": "686efa1dbebefd55d0da0b7ca9eace186ea1a8bf"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-Italic.ttf",
+      "sha1": "785e2a61204720cfedf09b56891b295d576640b7"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-Light.ttf",
+      "sha1": "ecceeecdfea053e23ee31bf56806fc39f9d32e7d"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-LightItalic.ttf",
+      "sha1": "898a965bd3f73617e8964c40c707b0f2def96931"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-Medium.ttf",
+      "sha1": "5c96d1545a51c39e05ee0fcc0c3c9021f14d9c31"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-MediumItalic.ttf",
+      "sha1": "8ed5a8aba7a5a33dc9898992aecb424ca8abd6f0"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-Regular.ttf",
+      "sha1": "440dc8992517a306d66e55cb0afed0cfe9b971b5"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-SemiBold.ttf",
+      "sha1": "0dbbb6d5a8fa0f9ece415dda4a69c8aa6595fba5"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-SemiBoldItalic.ttf",
+      "sha1": "c9ff23ca310c140c175a46d516e6cc261d8b9751"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-Thin.ttf",
+      "sha1": "b55ce67e46964f1230492a16ef40a6186335658c"
+    },
+    {
+      "path": "assets/fonts/poppins/Poppins-ThinItalic.ttf",
+      "sha1": "6970a931d62a40d6d32a46abb91f754b8a24877c"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-Black.ttf",
+      "sha1": "6d79683d6f2ded5ff592cee98521010400a297e5"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-BlackItalic.ttf",
+      "sha1": "8a4382b40486ad4ec0510e80f47042d9dc604c3f"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-Bold.ttf",
+      "sha1": "4ab381ecd77519206ff3eaf8ad7653cb825b4496"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-BoldItalic.ttf",
+      "sha1": "602acd6953515e777347b60c4a68b7c11c7f2686"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-ExtraBold.ttf",
+      "sha1": "944ed35cb171cfb4da57c01e66f3ee91a0a5785d"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-ExtraBoldItalic.ttf",
+      "sha1": "a9335a10ad17c56c9979e2df5f60443215839230"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-ExtraLight.ttf",
+      "sha1": "17713540c130b7e1606ddfa009c5dcf61d35c33d"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-ExtraLightItalic.ttf",
+      "sha1": "2c7ff395e23e2e0b965f6752dae0f0a90c1be3d9"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-Italic.ttf",
+      "sha1": "019ec18d7b50085aada0ce5fc42b36f198e7dc9a"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-Light.ttf",
+      "sha1": "df6bea2956c0a2471aef790b6a5458f0822cd898"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-LightItalic.ttf",
+      "sha1": "f5cdd25ce8eae484cd31f05e9c7128bc9b7b6f44"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-Medium.ttf",
+      "sha1": "a3919800d5e4e950c84d162ce1b0abd8010f1650"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-MediumItalic.ttf",
+      "sha1": "469be00f077b085ed840aea237d6ee3c699e687e"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-Regular.ttf",
+      "sha1": "a31c64db393ad78109933b35c69e0d45ba3b61b6"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-SemiBold.ttf",
+      "sha1": "d214f42258b1651aaf74cdebc5795c677ba4b87d"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-SemiBoldItalic.ttf",
+      "sha1": "b4264d7d10ced06c8488cd5bacddd07ea19ad0ef"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-Thin.ttf",
+      "sha1": "8fcf432beca391369b26110e88c772c7ffa62894"
+    },
+    {
+      "path": "assets/fonts/poppins/Raleway-ThinItalic.ttf",
+      "sha1": "c78743a67531c95fc0ca9fb2c4c809055e3383b2"
+    },
+    {
+      "path": "assets/icons/apple.png",
+      "sha1": "76326b9082f4149b82909c174d5546109be2cbb4"
+    },
+    {
+      "path": "assets/icons/eye.png",
+      "sha1": "def007e9232c25ee1014e4068c3a8df7c3c11b23"
+    },
+    {
+      "path": "assets/icons/google.png",
+      "sha1": "940674802ed923a34a31385f818d4469f16d3c29"
+    }
+  ]
+}
