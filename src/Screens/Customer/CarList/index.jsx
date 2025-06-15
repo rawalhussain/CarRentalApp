@@ -21,7 +21,7 @@ const CarList = () => {
       id: 1,
       name: 'TopGun',
       model: 'Model S',
-      image: require('../../../assets/car1.jpg'), // ✅ Local image
+      image: require('../../../../assets/car1.jpg'), // ✅ Local image
       reviews: '5.0',
       trips: 14,
       location: where,
@@ -31,7 +31,7 @@ const CarList = () => {
       id: 2,
       name: 'Cultus',
       model: 'Model X',
-      image: require('../../../assets/car2.jpg'), // ✅ Local image
+      image: require('../../../../assets/car2.jpg'), // ✅ Local image
       reviews: '4.8',
       trips: 22,
       location: where,

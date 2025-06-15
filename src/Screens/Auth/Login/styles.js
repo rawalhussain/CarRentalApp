@@ -1,5 +1,7 @@
 import { StyleSheet } from 'react-native';
 import {Colors} from '../../../Themes/MyColors';
+import {typography} from '../../../Themes/Typography';
+import {colors} from '../../../Themes/Colors';
 
 const styles = StyleSheet.create({
   container: {
@@ -46,14 +48,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  forgotPassword: {
-  },
+  forgotPassword: {},
   forgotPasswordText: {
-    fontSize: 14,
     color: Colors.PRIMARY_GREY,
+    fontWeight: '600',
   },
   button: {
-    marginTop: 20,
+    marginTop: 24,
   },
   footer: {
     flexDirection: 'row',

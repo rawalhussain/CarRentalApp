@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && ($uid === auth.uid || !data.exists())",
+        ".validate": "newData.hasChildren(['fullName', 'email', 'phoneNumber', 'userType'])"
+      }
+    },
+    "cars": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'provider'"
+    },
+    "bookings": {
+      "$uid": {
+        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'provider')",
+        ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'provider')"
+      }
+    }
+  }
+} 

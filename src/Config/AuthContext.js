@@ -1,13 +1,14 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import auth from '@react-native-firebase/auth';
 import { getUserData } from './firebase';
+import useAuthStore from '../store/useAuthStore';
+import useUserStore from '../store/useUserStore';
 
 const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { setUser, setLoading, clearAuth } = useAuthStore();
+  const { setUserData, clearUserData } = useUserStore();
 
   useEffect(() => {
     // Subscribe to auth state changes
@@ -15,15 +16,16 @@ export const AuthProvider = ({ children }) => {
       setUser(user);
 
       if (user) {
-        // Get additional user data from database
         try {
+          // Get additional user data from database
           const data = await getUserData(user.uid);
           setUserData(data);
         } catch (error) {
           console.error('Error fetching user data:', error);
         }
       } else {
-        setUserData(null);
+        clearAuth();
+        clearUserData();
       }
 
       setLoading(false);
@@ -33,17 +35,9 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  const value = {
-    user,
-    userData,
-    loading,
-    isAuthenticated: !!user,
-    userType: userData?.userType || null,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{ useAuthStore, useUserStore }}>
+      {children}
     </AuthContext.Provider>
   );
 };

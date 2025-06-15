@@ -7,32 +7,73 @@ export const initializeFirebase = () => {
   // You can add any additional initialization logic here
 };
 
-// Authentication methods
-export const signUp = async (email, password, userData) => {
+// Phone Authentication methods
+export const sendOTP = async (phoneNumber) => {
   try {
-    const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-    const user = userCredential.user;
-
-    // Store additional user data in the database
-    await database().ref(`users/${user.uid}`).set({
-      ...userData,
-      email,
-      createdAt: database.ServerValue.TIMESTAMP,
-    });
-
-    return user;
+    const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
+    return confirmation;
   } catch (error) {
     throw error;
   }
 };
 
-export const signIn = async (email, password) => {
+export const verifyOTP = async (confirmation, otp) => {
   try {
-    const userCredential = await auth().signInWithEmailAndPassword(email, password);
-    return userCredential.user;
+    const result = await confirmation.confirm(otp);
+    return result.user;
   } catch (error) {
     throw error;
   }
+};
+
+// Authentication methods
+export const signUp = (email, password, userData) => {
+  return auth().createUserWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      // Send verification email
+      userCredential.user.sendEmailVerification();
+      
+      // Create user data object
+      const userProfile = {
+        ...userData,
+        emailVerified: false,
+        createdAt: database.ServerValue.TIMESTAMP,
+        updatedAt: database.ServerValue.TIMESTAMP
+      };
+
+      // Save user data to database
+      return database()
+        .ref(`users/${userCredential.user.uid}`)
+        .set(userProfile)
+        .then(() => {
+          // Return the user credential for further use
+          return {
+            user: userCredential.user,
+            profile: userProfile
+          };
+        });
+    });
+};
+
+export const signIn = (email, password) => {
+  return auth().signInWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      // Get user profile data
+      return database()
+        .ref(`users/${userCredential.user.uid}`)
+        .once('value')
+        .then((snapshot) => {
+          const userData = snapshot.val();
+          return {
+            user: userCredential.user,
+            profile: userData
+          };
+        });
+    });
+};
+
+export const sendPasswordResetEmail = (email) => {
+  return auth().sendPasswordResetEmail(email);
 };
 
 export const signOut = async () => {

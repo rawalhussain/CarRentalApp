@@ -5,10 +5,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.BACKGROUND_GREY,
-    paddingHorizontal: 20,
-  },
-  scrollContent: {
-    paddingVertical: 30,
   },
   headerContainer: {
     backgroundColor: Colors.BACKGROUND_GREY,
@@ -40,6 +36,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
   },
+  containerTop: {
+    marginTop: 30,
+  },
   header: {
     padding: 20,
     paddingTop: 40,
@@ -47,48 +46,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.BLACK,
+    color: '#000',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.PRIMARY_GREY,
+    color: '#666',
     marginBottom: 20,
   },
   form: {
-    padding: 20,
-  },
-  // User Type Selection Styles
-  userTypeContainer: {
-    marginBottom: 20,
-  },
-  userTypeLabel: {
-    fontSize: 16,
-    color: Colors.BLACK,
-    marginBottom: 10,
-  },
-  userTypeButtons: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  userTypeButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.LINE_GRAY,
-    alignItems: 'center',
-  },
-  userTypeButtonActive: {
-    backgroundColor: Colors.PRIMARY,
-    borderColor: Colors.PRIMARY,
-  },
-  userTypeButtonText: {
-    fontSize: 16,
-    color: Colors.BLACK,
-  },
-  userTypeButtonTextActive: {
-    color: Colors.WHITE,
+    paddingHorizontal: 20,
   },
   button: {
     marginTop: 20,
@@ -104,26 +71,8 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 16,
-    color: Colors.PRIMARY,
+    color: Colors.BLACK,
     fontWeight: '600',
-  },
-  orContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    marginBottom: 20,
-  },
-  line: {
-    flex: 1,
-    borderColor: Colors.LINE_GRAY,
-    borderTopWidth: 1,
-  },
-  orText: {
-    fontSize: 14,
-    color: Colors.PRIMARY_GREY,
-    paddingHorizontal: 20,
   },
 });
 

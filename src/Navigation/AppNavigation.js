@@ -1,25 +1,30 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React, {useEffect, useState} from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useAuth } from '../Config/AuthContext';
-import { storage } from '../../App';
+import {Colors} from '../Themes/MyColors';
+import useAuthStore from '../store/useAuthStore';
+import useUserStore from '../store/useUserStore';
+import {getUserData} from '../Config/firebase';
+import Loader from '../Components/Loader';
+
 // Auth Screens
-import Welcome from '../Screens/Welcome';
 import Login from '../Screens/Auth/Login';
 import SignUp from '../Screens/Auth/SignUp';
-import OtpVerification from '../Screens/Auth/OtpVerification';
+import ForgotPassword from '../Screens/Auth/ForgotPassword';
+
 // Customer Screens
-import Services from '../Screens/Services';
-import CarList from '../Screens/CarList';
-import CarDetails from '../Screens/CarDetails';
-// import BookingScreen from '../Screens/Booking';
-// Driver Screens
-import VendorDashboard from '../Screens/VendorDashboard';
-// Admin Screens
-import AdminDashboard from '../Screens/AdminDashboard';
-import BootSplash from 'react-native-bootsplash';
+import CustomerHome from '../Screens/Customer/Services';
+import CustomerBookings from '../Screens/Customer/Booking';
+import CustomerCarList from '../Screens/Customer/CarList';
+import CustomerCarDetails from '../Screens/Customer/CarDetails';
+
+// Provider Screens
+import ProviderHome from '../Screens/Provider/Home';
+import ProviderBookings from '../Screens/Provider/Bookings';
+import ProviderCars from '../Screens/Provider/Cars';
+import ProviderAddCar from '../Screens/Provider/AddCar';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -28,72 +33,132 @@ const Tab = createBottomTabNavigator();
 const CustomerTabs = () => {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+      screenOptions={({route}) => ({
+        tabBarIcon: ({focused, color, size}) => {
           let iconName;
 
-          if (route.name === 'Services') {
+          if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Cars') {
+            iconName = focused ? 'car' : 'car-outline';
           } else if (route.name === 'Bookings') {
             iconName = focused ? 'calendar' : 'calendar-outline';
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#E53935',
-        tabBarInactiveTintColor: 'gray',
-      })}
-    >
-      <Tab.Screen name="Services" component={Services} />
-      {/*<Tab.Screen name="Bookings" component={BookingScreen} />*/}
-      <Tab.Screen name="Profile" component={Services} />
+        tabBarActiveTintColor: Colors.PRIMARY,
+        tabBarInactiveTintColor: Colors.PRIMARY_GREY,
+        headerShown: false,
+      })}>
+      <Tab.Screen name="Home" component={CustomerHome} />
+      <Tab.Screen name="Cars" component={CustomerCarList} />
+      <Tab.Screen name="Bookings" component={CustomerBookings} />
     </Tab.Navigator>
   );
 };
 
-const AppNavigation = () => {
-  const { user, userType, loading } = useAuth();
-  const hasCompletedOnboarding = storage.getBoolean('hasCompletedOnboarding');
+// Provider Tab Navigator
+const ProviderTabs = () => {
+  return (
+    <Tab.Navigator
+      screenOptions={({route}) => ({
+        tabBarIcon: ({focused, color, size}) => {
+          let iconName;
+
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'MyCars') {
+            iconName = focused ? 'car' : 'car-outline';
+          } else if (route.name === 'Bookings') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: Colors.PRIMARY,
+        tabBarInactiveTintColor: Colors.PRIMARY_GREY,
+        headerShown: false,
+      })}>
+      <Tab.Screen name="Home" component={ProviderHome} />
+      <Tab.Screen name="MyCars" component={ProviderCars} />
+      <Tab.Screen name="Bookings" component={ProviderBookings} />
+    </Tab.Navigator>
+  );
+};
+
+const Navigation = () => {
+  const {user, setUser} = useAuthStore();
+  const {userData, setUserData} = useUserStore();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const initializeUser = async () => {
+      try {
+        if (user) {
+          // Fetch user data if we have a user but no userData
+          if (!userData) {
+            const data = await getUserData(user.uid);
+            setUserData(data);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeUser();
+  }, [user]);
 
   if (loading) {
-    return null; // Or a loading screen
+    return <Loader />;
   }
 
   return (
-    <NavigationContainer
-        onReady={async () => {
-            await BootSplash.hide({ fade: true });
-        }}>
-      <Stack.Navigator>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{headerShown: false}}>
         {!user ? (
           // Auth Stack
           <>
-            {!hasCompletedOnboarding && (
-              <Stack.Screen name="Welcome" component={Welcome} options={{headerShown: false}} />
-            )}
-            <Stack.Screen name="Login" component={Login} options={{headerShown: false}} />
+            <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="SignUp" component={SignUp} />
-            <Stack.Screen name="OtpVerification" component={OtpVerification} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+          </>
+        ) : userData?.userType === 'customer' ? (
+          // Customer Stack
+          <>
+            <Stack.Screen name="CustomerTabs" component={CustomerTabs} />
+            <Stack.Screen
+              name="CarDetails"
+              component={CustomerCarDetails}
+              options={{
+                headerShown: true,
+                title: 'Car Details',
+                headerStyle: {
+                  backgroundColor: Colors.PRIMARY,
+                },
+                headerTintColor: Colors.WHITE,
+              }}
+            />
           </>
         ) : (
-          // App Stack based on user type
+          // Provider Stack
           <>
-            {userType === 'customer' && (
-              <>
-                <Stack.Screen name="MainTabs" component={CustomerTabs} />
-                <Stack.Screen name="CarList" component={CarList} />
-                <Stack.Screen name="CarDetails" component={CarDetails} />
-                {/*<Stack.Screen name="Booking" component={BookingScreen} />*/}
-              </>
-            )}
-            {userType === 'vendor' && (
-              <Stack.Screen name="VendorDashboard" component={VendorDashboard} />
-            )}
-            {userType === 'admin' && (
-              <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
-            )}
+            <Stack.Screen name="ProviderTabs" component={ProviderTabs} />
+            <Stack.Screen
+              name="AddCar"
+              component={ProviderAddCar}
+              options={{
+                headerShown: true,
+                title: 'Add New Car',
+                headerStyle: {
+                  backgroundColor: Colors.PRIMARY,
+                },
+                headerTintColor: Colors.WHITE,
+              }}
+            />
           </>
         )}
       </Stack.Navigator>
@@ -101,4 +166,4 @@ const AppNavigation = () => {
   );
 };
 
-export default AppNavigation;
+export default Navigation;
