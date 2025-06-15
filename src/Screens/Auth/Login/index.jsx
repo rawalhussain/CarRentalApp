@@ -19,7 +19,9 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    console.log(formData);
     if (!formData.email || !formData.password) {
+      show
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -27,6 +29,7 @@ const Login = () => {
     try {
       setLoading(true);
       const userCredential = await signIn(formData.email, formData.password);
+      console.log(userCredential);
 
       // The navigation will be handled by the AuthContext based on user type
     } catch (error) {
@@ -65,7 +68,10 @@ const Login = () => {
         <InputField
           label="Password"
           value={formData.password}
-          onChangeText={(text) => setFormData({ ...formData, password: text })}
+          onChangeText={(text) => {
+            console.log(text);
+            setFormData({ ...formData, password: text });
+          }}
           placeholder="Enter your password"
           secureTextEntry={secure}
           onPressIcon={() => setSecure(!secure)}
@@ -107,13 +113,13 @@ const Login = () => {
         </View>
 
         {/* Social */}
+        {/*<Button*/}
+        {/*    title="Continue with Apple"*/}
+        {/*    type="social"*/}
+        {/*    icon={'apple'}*/}
+        {/*/>*/}
         <Button
-            title="Continue with Apple"
-            type="social"
-            icon={'apple'}
-        />
-        <Button
-            title="  Google"
+            title="oogle"
             type="social"
             icon={'google-plus'}
         />

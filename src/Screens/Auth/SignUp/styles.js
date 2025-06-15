@@ -12,7 +12,6 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     backgroundColor: Colors.BACKGROUND_GREY,
-    marginTop: 30,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -106,6 +105,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.PRIMARY,
     fontWeight: '600',
+  },
+  orContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+  },
+  line: {
+    flex: 1,
+    borderColor: Colors.LINE_GRAY,
+    borderTopWidth: 1,
+  },
+  orText: {
+    fontSize: 14,
+    color: Colors.PRIMARY_GREY,
+    paddingHorizontal: 20,
   },
 });
 

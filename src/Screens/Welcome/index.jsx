@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Swiper from 'react-native-swiper';
 import styles from './styles';
+import { storage } from '../../../App';
 
 const slides = [
   {
@@ -24,6 +25,16 @@ const slides = [
 ];
 
 const WelcomeScreen = ({ navigation }) => {
+  const handleGetStarted = () => {
+    // Save that user has completed onboarding
+    storage.set('hasCompletedOnboarding', true);
+    // Reset navigation stack to Login screen
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Login' }],
+    });
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -67,7 +78,7 @@ const WelcomeScreen = ({ navigation }) => {
         {/* Fixed Get Started Button */}
         <TouchableOpacity
           style={styles.getStartedButton}
-          onPress={() => navigation.navigate('Login')}
+          onPress={handleGetStarted}
         >
           <Text style={styles.getStartedText}>Get Started</Text>
         </TouchableOpacity>

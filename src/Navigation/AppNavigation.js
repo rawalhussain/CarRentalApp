@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuth } from '../Config/AuthContext';
+import { storage } from '../../App';
 // Auth Screens
 import Welcome from '../Screens/Welcome';
 import Login from '../Screens/Auth/Login';
@@ -54,6 +55,7 @@ const CustomerTabs = () => {
 
 const AppNavigation = () => {
   const { user, userType, loading } = useAuth();
+  const hasCompletedOnboarding = storage.getBoolean('hasCompletedOnboarding');
 
   if (loading) {
     return null; // Or a loading screen
@@ -68,7 +70,9 @@ const AppNavigation = () => {
         {!user ? (
           // Auth Stack
           <>
-            <Stack.Screen name="Welcome" component={Welcome} options={{headerShown: false}} />
+            {!hasCompletedOnboarding && (
+              <Stack.Screen name="Welcome" component={Welcome} options={{headerShown: false}} />
+            )}
             <Stack.Screen name="Login" component={Login} options={{headerShown: false}} />
             <Stack.Screen name="SignUp" component={SignUp} />
             <Stack.Screen name="OtpVerification" component={OtpVerification} />

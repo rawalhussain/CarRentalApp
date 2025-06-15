@@ -15,9 +15,8 @@ import { signUp } from '../../../Config/firebase';
 
 const SignUp = () => {
   const navigation = useNavigation();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [userType, setUserType] = useState('customer'); // 'customer', 'vendor', or 'admin'
+  const [showPassword, setShowPassword] = useState(true);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(true);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -127,7 +126,9 @@ const SignUp = () => {
           value={formData.password}
           onChangeText={(text) => handleInputChange('password', text)}
           placeholder="Enter your password"
-          secureTextEntry
+          secureTextEntry={showPassword}
+          onPressIcon={() => setShowPassword(!showPassword)}
+          icon={showPassword ? 'eye-off-outline' : 'eye-outline'}
         />
 
         <InputField
@@ -135,44 +136,35 @@ const SignUp = () => {
           value={formData.confirmPassword}
           onChangeText={(text) => handleInputChange('confirmPassword', text)}
           placeholder="Confirm your password"
-          secureTextEntry
+          secureTextEntry={showConfirmPassword}
+          onPressIcon={() => setShowConfirmPassword(!showConfirmPassword)}
+          icon={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
         />
-
-        <View style={styles.userTypeContainer}>
-          <Text style={styles.userTypeLabel}>I am a:</Text>
-          <View style={styles.userTypeButtons}>
-            <TouchableOpacity
-              style={[
-                styles.userTypeButton,
-                formData.userType === 'customer' && styles.userTypeButtonActive,
-              ]}
-              onPress={() => setUserType('customer')}
-            >
-              <Text style={[
-                styles.userTypeButtonText,
-                formData.userType === 'customer' && styles.userTypeButtonTextActive,
-              ]}>Customer</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.userTypeButton,
-                formData.userType === 'vendor' && styles.userTypeButtonActive,
-              ]}
-              onPress={() => setUserType('vendor')}
-            >
-              <Text style={[
-                styles.userTypeButtonText,
-                formData.userType === 'vendor' && styles.userTypeButtonTextActive,
-              ]}>Vendor</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
         <Button
           title="Sign Up"
           onPress={handleSignUp}
           loading={loading}
           style={styles.button}
+        />
+
+        {/* Divider */}
+        <View style={styles.orContainer}>
+          <View style={styles.line} />
+          <Text style={styles.orText}>Or</Text>
+          <View style={styles.line} />
+        </View>
+
+        {/* Social */}
+        {/*<Button*/}
+        {/*    title="Continue with Apple"*/}
+        {/*    type="social"*/}
+        {/*    icon={'apple'}*/}
+        {/*/>*/}
+        <Button
+            title="oogle"
+            type="social"
+            icon={'google-plus'}
         />
 
         {/* Footer */}

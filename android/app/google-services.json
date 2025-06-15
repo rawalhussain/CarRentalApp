@@ -13,7 +13,20 @@
           "package_name": "com.rentcarapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "159324908911-ei2t0unvhfplibtu9as8rbvfms0e3jhb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rentcarapp",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "159324908911-m17frq0lcjfuomll8kuif2b8mlh8dj5v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD_ur8_CYtjT5QueZ-L7X7jryiRWiWj0zQ"
@@ -21,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "159324908911-m17frq0lcjfuomll8kuif2b8mlh8dj5v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

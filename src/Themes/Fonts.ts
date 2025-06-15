@@ -1,4 +1,4 @@
-import { Platform } from 'react-native'
+import { Platform } from 'react-native';
 
 // https://fonts.google.com/specimen/Poppins
 const type = {
@@ -20,7 +20,7 @@ const type = {
   ralewayExtraBold: 'Raleway-ExtraBold',
   ralewayBlack: 'Raleway-Black',
   // TODO: Add GT-Walsheims fonts here
-}
+};
 
 const size = {
   h1: 24,
@@ -36,7 +36,7 @@ const size = {
   medium: 16,
   large: 18,
   xl: 20,
-}
+};
 
 const style = {
   default: {
@@ -103,10 +103,10 @@ const style = {
     fontFamily: type.black,
     fontSize: size.regular,
   },
-}
+};
 
 export default {
   type,
   size,
   style,
-}
+};

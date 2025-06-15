@@ -1,9 +1,10 @@
 import React from 'react';
-import {View, TextInput, Image, StyleSheet, TouchableOpacity} from 'react-native';
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import {Colors} from "../Themes/MyColors";
+import {View, TextInput, StyleSheet, TouchableOpacity} from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {Colors} from '../Themes/MyColors';
 
-const InputField = ({ placeholder, secureTextEntry, icon, iconColor, onPressIcon }) => {
+const InputField = (props) => {
+  const { placeholder, secureTextEntry, icon, iconColor, onPressIcon } = props;
   return (
     <View style={styles.inputWrapper}>
       <TextInput
@@ -11,6 +12,7 @@ const InputField = ({ placeholder, secureTextEntry, icon, iconColor, onPressIcon
         placeholder={placeholder}
         placeholderTextColor="#999"
         secureTextEntry={secureTextEntry}
+        {...props}
       />
       {icon && (
         <TouchableOpacity activeOpacity={0.99} onPress={onPressIcon} style={styles.iconWrapper}>
