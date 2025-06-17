@@ -1,8 +1,9 @@
 {
   "rules": {
     "users": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'",
       "$uid": {
-        ".read": "auth != null",
+        ".read": "auth != null && ($uid === auth.uid)",
         ".write": "auth != null && ($uid === auth.uid || !data.exists())",
         ".validate": "newData.hasChildren(['fullName', 'email', 'phoneNumber', 'userType'])"
       }

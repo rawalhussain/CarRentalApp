@@ -198,7 +198,7 @@ const SignUp = () => {
           errorMessage = error.message;
       }
 
-      showMessageAlert('Error', errorMessage, 'error');
+      showMessageAlert('Error', errorMessage, 'danger');
     } finally {
       setLoading(false);
     }

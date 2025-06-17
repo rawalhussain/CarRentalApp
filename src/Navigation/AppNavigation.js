@@ -6,8 +6,9 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../Themes/MyColors';
 import useAuthStore from '../store/useAuthStore';
 import useUserStore from '../store/useUserStore';
-import {getUserData} from '../Config/firebase';
-import Loader from '../Components/Loader';
+import {View, ActivityIndicator} from 'react-native';
+import {useMMKVBoolean} from 'react-native-mmkv';
+import {logEvent} from "../Config/firebase";
 
 // Auth Screens
 import Login from '../Screens/Auth/Login';
@@ -17,153 +18,229 @@ import ForgotPassword from '../Screens/Auth/ForgotPassword';
 // Customer Screens
 import CustomerHome from '../Screens/Customer/Services';
 import CustomerBookings from '../Screens/Customer/Booking';
-import CustomerCarList from '../Screens/Customer/CarList';
 import CustomerCarDetails from '../Screens/Customer/CarDetails';
 
 // Provider Screens
-import ProviderHome from '../Screens/Provider/Home';
-import ProviderBookings from '../Screens/Provider/Bookings';
-import ProviderCars from '../Screens/Provider/Cars';
-import ProviderAddCar from '../Screens/Provider/AddCar';
+import ProviderHome from '../Screens/Provider/Home/Home';
+import ProviderAddCar from '../Screens/Provider/Home/component/AddCar';
+import BootSplash from 'react-native-bootsplash';
+import ProviderBookings from '../Screens/Provider/Booking';
+import Cars from '../Screens/Provider/Home/component/Cars';
+import BankDetails from '../Screens/Provider/Home/component/BankDetails';
+import SubmissionSuccess from '../Screens/Provider/Home/component/SubmissionSuccess';
+import MyCars from '../Screens/Provider/MyCars';
+import VehicleManagement from '../Screens/AdminDashboard/component/MyCars';
+
+// Admin Screens
+import AdminDashboard from '../Screens/AdminDashboard';
+import AdminBookings from '../Screens/AdminDashboard/component/Booking';
+import Welcome from '../Screens/Welcome';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // Customer Tab Navigator
 const CustomerTabs = () => {
-  return (
-    <Tab.Navigator
-      screenOptions={({route}) => ({
-        tabBarIcon: ({focused, color, size}) => {
-          let iconName;
+    return (
+        <Tab.Navigator
+            screenOptions={({route}) => ({
+                tabBarIcon: ({focused, color, size}) => {
+                    let iconName;
 
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Cars') {
-            iconName = focused ? 'car' : 'car-outline';
-          } else if (route.name === 'Bookings') {
-            iconName = focused ? 'calendar' : 'calendar-outline';
-          }
+                    if (route.name === 'Home') {
+                        iconName = focused ? 'home' : 'home-outline';
+                    } else if (route.name === 'Cars') {
+                        iconName = focused ? 'car' : 'car-outline';
+                    } else if (route.name === 'Bookings') {
+                        iconName = focused ? 'calendar' : 'calendar-outline';
+                    }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: Colors.PRIMARY,
-        tabBarInactiveTintColor: Colors.PRIMARY_GREY,
-        headerShown: false,
-      })}>
-      <Tab.Screen name="Home" component={CustomerHome} />
-      <Tab.Screen name="Cars" component={CustomerCarList} />
-      <Tab.Screen name="Bookings" component={CustomerBookings} />
-    </Tab.Navigator>
-  );
+                    return <Ionicons name={iconName} size={size} color={color} />;
+                },
+                tabBarActiveTintColor: Colors.PRIMARY,
+                tabBarInactiveTintColor: Colors.PRIMARY_GREY,
+                headerShown: false,
+            })}>
+            <Tab.Screen name="Home" component={CustomerHome} />
+            <Tab.Screen name="Bookings" component={CustomerBookings} />
+        </Tab.Navigator>
+    );
 };
 
 // Provider Tab Navigator
 const ProviderTabs = () => {
-  return (
-    <Tab.Navigator
-      screenOptions={({route}) => ({
-        tabBarIcon: ({focused, color, size}) => {
-          let iconName;
+    return (
+        <Tab.Navigator
+            screenOptions={({route}) => ({
+                tabBarIcon: ({focused, color, size}) => {
+                    let iconName;
 
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'MyCars') {
-            iconName = focused ? 'car' : 'car-outline';
-          } else if (route.name === 'Bookings') {
-            iconName = focused ? 'calendar' : 'calendar-outline';
-          }
+                    if (route.name === 'Home') {
+                        iconName = focused ? 'home' : 'home-outline';
+                    } else if (route.name === 'MyCars') {
+                        iconName = focused ? 'car' : 'car-outline';
+                    } else if (route.name === 'Bookings') {
+                        iconName = focused ? 'calendar' : 'calendar-outline';
+                    }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: Colors.PRIMARY,
-        tabBarInactiveTintColor: Colors.PRIMARY_GREY,
-        headerShown: false,
-      })}>
-      <Tab.Screen name="Home" component={ProviderHome} />
-      <Tab.Screen name="MyCars" component={ProviderCars} />
-      <Tab.Screen name="Bookings" component={ProviderBookings} />
-    </Tab.Navigator>
-  );
+                    return <Ionicons name={iconName} size={size} color={color} />;
+                },
+                tabBarActiveTintColor: Colors.PRIMARY,
+                tabBarInactiveTintColor: Colors.PRIMARY_GREY,
+                headerShown: false,
+            })}>
+            <Tab.Screen name="Home" component={ProviderHome} />
+            <Tab.Screen name="MyCars" component={MyCars} />
+            <Tab.Screen name="Bookings" component={ProviderBookings} />
+        </Tab.Navigator>
+    );
+};
+
+
+// Admin  Tab Navigator
+const AdminTabs = () => {
+    return (
+        <Tab.Navigator
+            screenOptions={({route}) => ({
+                tabBarIcon: ({focused, color, size}) => {
+                    let iconName;
+                    if (route.name === 'Home') {
+                        iconName = focused ? 'home' : 'home-outline';
+                    } else if (route.name === 'Vehicle Management') {
+                        iconName = focused ? 'car' : 'car-outline';
+                    } else if (route.name === 'Bookings') {
+                        iconName = focused ? 'calendar' : 'calendar-outline';
+                    }
+
+                    return <Ionicons name={iconName} size={size} color={color} />;
+                },
+                tabBarActiveTintColor: Colors.PRIMARY,
+                tabBarInactiveTintColor: Colors.PRIMARY_GREY,
+                headerShown: false,
+            })}>
+            <Tab.Screen name="Home" component={AdminDashboard} />
+            <Tab.Screen name="Vehicle Management" component={VehicleManagement} />
+            <Tab.Screen name="Bookings" component={AdminBookings} />
+        </Tab.Navigator>
+    );
 };
 
 const Navigation = () => {
-  const {user, setUser} = useAuthStore();
-  const {userData, setUserData} = useUserStore();
-  const [loading, setLoading] = useState(true);
+    const {user} = useAuthStore();
+    const {userData} = useUserStore();
+    const [hasCompletedOnboarding] = useMMKVBoolean('hasCompletedOnboarding');
 
-  useEffect(() => {
-    const initializeUser = async () => {
-      try {
-        if (user) {
-          // Fetch user data if we have a user but no userData
-          if (!userData) {
-            const data = await getUserData(user.uid);
-            setUserData(data);
-          }
+    const handleNavigationStateChange = async (state) => {
+        try {
+            const currentRoute = state.routes[state.index];
+            await logEvent('screen_view', {
+                screen_name: currentRoute.name,
+                screen_class: currentRoute.name,
+            });
+        } catch (error) {
+            console.warn('Analytics error:', error);
+            // Continue with navigation even if analytics fails
         }
-      } catch (error) {
-        console.error('Error initializing user:', error);
-      } finally {
-        setLoading(false);
-      }
     };
 
-    initializeUser();
-  }, [user]);
+    // Determine which stack to show
+    const getInitialRoute = () => {
+        if (!user) {
+            return 'Login';
+        }
+        
+        if (!userData) {
+            return 'Login';
+        }
 
-  if (loading) {
-    return <Loader />;
-  }
+        switch (userData.userType) {
+            case 'customer':
+                return 'CustomerTabs';
+            case 'provider':
+                return 'ProviderTabs';
+            case 'admin':
+                return 'AdminTabs';
+            default:
+                return 'Login';
+        }
+    };
 
-  return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown: false}}>
-        {!user ? (
-          // Auth Stack
-          <>
-            <Stack.Screen name="Login" component={Login} />
-            <Stack.Screen name="SignUp" component={SignUp} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-          </>
-        ) : userData?.userType === 'customer' ? (
-          // Customer Stack
-          <>
-            <Stack.Screen name="CustomerTabs" component={CustomerTabs} />
-            <Stack.Screen
-              name="CarDetails"
-              component={CustomerCarDetails}
-              options={{
-                headerShown: true,
-                title: 'Car Details',
-                headerStyle: {
-                  backgroundColor: Colors.PRIMARY,
-                },
-                headerTintColor: Colors.WHITE,
-              }}
-            />
-          </>
-        ) : (
-          // Provider Stack
-          <>
-            <Stack.Screen name="ProviderTabs" component={ProviderTabs} />
-            <Stack.Screen
-              name="AddCar"
-              component={ProviderAddCar}
-              options={{
-                headerShown: true,
-                title: 'Add New Car',
-                headerStyle: {
-                  backgroundColor: Colors.PRIMARY,
-                },
-                headerTintColor: Colors.WHITE,
-              }}
-            />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+    return (
+        <NavigationContainer
+            onStateChange={handleNavigationStateChange}
+            onReady={async () => {
+                await BootSplash.hide({ fade: true });
+            }}>
+            <Stack.Navigator 
+                screenOptions={{headerShown: false}}
+                initialRouteName={getInitialRoute()}>
+                {!hasCompletedOnboarding && (
+                    <Stack.Screen name="WelcomeScreen" component={Welcome} />
+                )}
+                {!user || !userData ? (
+                    // Auth Stack
+                    <>
+                        <Stack.Screen name="Login" component={Login} />
+                        <Stack.Screen name="SignUp" component={SignUp}  options={{
+                            headerShown: true,
+                        }} />
+                        <Stack.Screen name="ForgotPassword" component={ForgotPassword}  options={{
+                            headerShown: true,
+                        }} />
+                    </>
+                ) : (
+                    // User type specific stacks
+                    <>
+                        {userData.userType === 'customer' && (
+                            <>
+                                <Stack.Screen name="CustomerTabs" component={CustomerTabs} />
+                                <Stack.Screen
+                                    name="CarDetails"
+                                    component={CustomerCarDetails}
+                                    options={{
+                                        headerShown: true,
+                                    }}
+                                />
+                            </>
+                        )}
+                        {userData.userType === 'provider' && (
+                            <>
+                                <Stack.Screen name="ProviderTabs" component={ProviderTabs} />
+                                <Stack.Screen
+                                    name="AddCar"
+                                    component={ProviderAddCar}
+                                    options={{
+                                        headerShown: true,
+                                    }}
+                                />
+                                <Stack.Screen
+                                    name="CarDetails"
+                                    component={Cars}
+                                    options={{
+                                        headerShown: true,
+                                    }}
+                                />
+                                <Stack.Screen
+                                    name="BankDetails"
+                                    component={BankDetails}
+                                    options={{
+                                        headerShown: true,
+                                    }}
+                                />
+                                <Stack.Screen
+                                    name="SubmissionSuccess"
+                                    component={SubmissionSuccess}
+                                />
+                            </>
+                        )}
+                        {userData.userType === 'admin' && (
+                            <Stack.Screen name="AdminTabs" component={AdminTabs} />
+                        )}
+                    </>
+                )}
+            </Stack.Navigator>
+        </NavigationContainer>
+    );
 };
 
 export default Navigation;

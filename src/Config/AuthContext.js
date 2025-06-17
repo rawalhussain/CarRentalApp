@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect } from 'react';
-import auth from '@react-native-firebase/auth';
-import { getUserData } from './firebase';
+import { getUserData, onAuthStateChanged } from './firebase';
 import useAuthStore from '../store/useAuthStore';
 import useUserStore from '../store/useUserStore';
 
@@ -12,7 +11,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Subscribe to auth state changes
-    const unsubscribe = auth().onAuthStateChanged(async (user) => {
+    const unsubscribe = onAuthStateChanged(async (user) => {
       setUser(user);
 
       if (user) {

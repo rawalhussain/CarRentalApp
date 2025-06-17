@@ -1,10 +1,11 @@
 import { StyleSheet } from 'react-native';
+import {Colors} from "../../../Themes/MyColors";
 
 export default StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 50,
+    paddingTop: 20,
     paddingHorizontal: 20,
   },
 
@@ -50,33 +51,31 @@ export default StyleSheet.create({
     color: '#000',
     marginBottom: 40,
   },
-
-  rentalButton: {
-    backgroundColor: '#2196F3',
-    paddingVertical: 15,
-    paddingHorizontal: 70,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-
-  rentalButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-
-  busButton: {
-    backgroundColor: '#E53935',
-    paddingVertical: 15,
+  rentalBtn: {
+    backgroundColor: Colors.PRIMARY, // blue
+    paddingVertical: 20,
     paddingHorizontal: 60,
-    borderRadius: 10,
+    borderRadius: 25,
+    marginBottom: 25,
+    width: 260,
+    alignItems: 'center',
   },
-
-  busButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  rentalBtnText: {
+    color: Colors.WHITE,
+    fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
+  },
+  busBtn: {
+    backgroundColor: Colors.SECONDARY,
+    paddingVertical: 20,
+    paddingHorizontal: 60,
+    borderRadius: 25,
+    width: 260,
+    alignItems: 'center',
+  },
+  busBtnText: {
+    color: Colors.WHITE,
+    fontSize: 24,
+    fontWeight: 'bold',
   },
 });

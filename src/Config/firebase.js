@@ -1,178 +1,428 @@
-import auth from '@react-native-firebase/auth';
-import database from '@react-native-firebase/database';
+import { initializeApp, getApp, getApps } from '@react-native-firebase/app';
+import { getAuth } from '@react-native-firebase/auth';
+import { getDatabase, serverTimestamp } from '@react-native-firebase/database';
+import { getStorage } from '@react-native-firebase/storage';
+import { getAnalytics } from '@react-native-firebase/analytics';
 
-// Initialize Firebase services
-export const initializeFirebase = () => {
-  // Firebase is automatically initialized when the app starts
-  // You can add any additional initialization logic here
-};
+// Initialize Firebase
+const app = getApps().length === 0 ? initializeApp() : getApp();
+const authRef = getAuth(app);
+const databaseRef = getDatabase(app);
+const storageRef = getStorage(app);
+const analyticsRef = getAnalytics(app);
 
-// Phone Authentication methods
-export const sendOTP = async (phoneNumber) => {
+// Sign up
+export const signUp = async (email, password, userData) => {
   try {
-    const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
-    return confirmation;
+    const userCredential = await authRef.createUserWithEmailAndPassword(email, password);
+    const userProfile = {
+      ...userData,
+      userType: userData.userType,
+      emailVerified: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    await databaseRef.ref(`users/${userCredential.user.uid}`).set(userProfile);
+
+    return {
+      user: userCredential.user,
+      userData: userProfile,
+    };
   } catch (error) {
+    console.error('Error in signUp:', error);
     throw error;
   }
 };
 
-export const verifyOTP = async (confirmation, otp) => {
+// Sign in
+export const signIn = async (email, password) => {
   try {
-    const result = await confirmation.confirm(otp);
-    return result.user;
+    const userCredential = await authRef.signInWithEmailAndPassword(email, password);
+    const snapshot = await databaseRef.ref(`users/${userCredential.user.uid}`).once('value');
+    return {
+      user: userCredential.user,
+      userData: snapshot.val(),
+    };
   } catch (error) {
+    console.error('Error in signIn:', error);
     throw error;
   }
 };
 
-// Authentication methods
-export const signUp = (email, password, userData) => {
-  return auth().createUserWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-      // Send verification email
-      userCredential.user.sendEmailVerification();
-      
-      // Create user data object
-      const userProfile = {
-        ...userData,
-        emailVerified: false,
-        createdAt: database.ServerValue.TIMESTAMP,
-        updatedAt: database.ServerValue.TIMESTAMP
-      };
-
-      // Save user data to database
-      return database()
-        .ref(`users/${userCredential.user.uid}`)
-        .set(userProfile)
-        .then(() => {
-          // Return the user credential for further use
-          return {
-            user: userCredential.user,
-            profile: userProfile
-          };
-        });
-    });
-};
-
-export const signIn = (email, password) => {
-  return auth().signInWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-      // Get user profile data
-      return database()
-        .ref(`users/${userCredential.user.uid}`)
-        .once('value')
-        .then((snapshot) => {
-          const userData = snapshot.val();
-          return {
-            user: userCredential.user,
-            profile: userData
-          };
-        });
-    });
-};
-
+// Reset password
 export const sendPasswordResetEmail = (email) => {
-  return auth().sendPasswordResetEmail(email);
+  return authRef.sendPasswordResetEmail(email);
 };
 
+// Sign out
 export const signOut = async () => {
   try {
-    await auth().signOut();
+    await authRef.signOut();
   } catch (error) {
+    console.error('Error in signOut:', error);
     throw error;
   }
 };
 
-// Database methods
+// Get user data
 export const getUserData = async (userId) => {
-  try {
-    const snapshot = await database().ref(`users/${userId}`).once('value');
-    return snapshot.val();
-  } catch (error) {
-    throw error;
-  }
+  const snapshot = await databaseRef.ref(`users/${userId}`).once('value');
+  return snapshot.val();
 };
 
+// Update user data
 export const updateUserData = async (userId, data) => {
-  try {
-    await database().ref(`users/${userId}`).update(data);
-  } catch (error) {
-    throw error;
-  }
+  await databaseRef.ref(`users/${userId}`).update(data);
 };
 
-// Car management methods
+// Add car
 export const addCar = async (vendorId, carData) => {
-  try {
-    const carRef = database().ref('cars').push();
-    await carRef.set({
-      ...carData,
-      vendorId,
-      createdAt: database.ServerValue.TIMESTAMP,
-    });
-    return carRef.key;
-  } catch (error) {
-    throw error;
-  }
+  const carRef = databaseRef.ref('cars').push();
+  await carRef.set({
+    ...carData,
+    vendorId,
+    createdAt: serverTimestamp(),
+  });
+  return carRef.key;
 };
 
+// Get cars
 export const getCars = async (filters = {}) => {
   try {
-    let carsRef = database().ref('cars');
+    const type = filters.type?.toLowerCase() || 'cars';
+    const tableName = type.endsWith('s') ? type : `${type}s`;
+    let query = databaseRef.ref(tableName);
 
-    // Apply filters if any
+    // Only filter by vendorId if it's explicitly provided
     if (filters.vendorId) {
-      carsRef = carsRef.orderByChild('vendorId').equalTo(filters.vendorId);
+      query = query.orderByChild('vendorId').equalTo(filters.vendorId);
     }
 
-    const snapshot = await carsRef.once('value');
-    return snapshot.val();
+    const snapshot = await query.once('value');
+    return snapshot.val() || {};
   } catch (error) {
+    console.error('Error fetching cars:', error);
     throw error;
   }
 };
 
-// Booking methods
+// Delete vehicle (car or bus)
+export const deleteVehicle = async (vehicleId, type = 'cars') => {
+  const tableName = type.endsWith('s') ? type : `${type}s`;
+  const vehicleSnap = await databaseRef.ref(tableName).child(vehicleId).once('value');
+  const vehicleData = vehicleSnap.val();
+
+  if (vehicleData?.photo) {
+    try {
+      const imageRef = storageRef.ref(vehicleData.photo);
+      await storageRef.ref(imageRef).delete();
+    } catch (error) {
+      console.warn('Image delete failed:', error);
+    }
+  }
+
+  await databaseRef.ref(tableName).child(vehicleId).remove();
+};
+
+// Create booking
 export const createBooking = async (bookingData) => {
+  const bookingRef = databaseRef.ref('bookings').push();
+  await bookingRef.set({
+    ...bookingData,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+  });
+  return bookingRef.key;
+};
+
+// Get bookings
+export const getBookings = async (userId, userType) => {
+  let bookingsRef = databaseRef.ref('bookings');
+
+  if (userType === 'customer') {
+    bookingsRef = databaseRef.ref('bookings').orderByChild('customerId').equalTo(userId);
+  } else if (userType === 'vendor') {
+    bookingsRef = databaseRef.ref('bookings').orderByChild('vendorId').equalTo(userId);
+  }
+
+  const snapshot = await databaseRef.ref(bookingsRef).once('value');
+  return snapshot.val();
+};
+
+// Update booking status
+export const updateBookingStatus = async (bookingId, status) => {
+  await databaseRef.ref(`bookings/${bookingId}/status`).set(status);
+  await databaseRef.ref(`bookings/${bookingId}/updatedAt`).set(serverTimestamp());
+};
+
+// Get admin dashboard stats
+export const getAdminStats = async () => {
   try {
-    const bookingRef = database().ref('bookings').push();
-    await bookingRef.set({
-      ...bookingData,
-      status: 'pending',
-      createdAt: database.ServerValue.TIMESTAMP,
-    });
-    return bookingRef.key;
+    const [usersSnapshot, bookingsSnapshot] = await Promise.all([
+      databaseRef.ref('users').once('value'),
+      databaseRef.ref('bookings').once('value'),
+    ]);
+
+    const users = usersSnapshot.val() || {};
+    const bookings = bookingsSnapshot.val() || {};
+
+    const stats = {
+      totalUsers: Object.keys(users).length,
+      activeVendors: Object.values(users).filter(user => user.userType === 'provider').length,
+      totalBookings: Object.keys(bookings).length,
+      revenue: Object.values(bookings).reduce((sum, booking) => sum + (booking.amount || 0), 0),
+    };
+
+    return stats;
   } catch (error) {
+    console.error('Error fetching admin stats:', error);
     throw error;
   }
 };
 
-export const getBookings = async (userId, userType) => {
-  try {
-    let bookingsRef = database().ref('bookings');
+// Verify car
+export const verifyCar = async (carId, type = 'car') => {
+  const table = type === 'car' ? 'cars' : 'buses';
+  await databaseRef.ref(`${table}/${carId}/verified`).set(true);
+  await databaseRef.ref(`${table}/${carId}/updatedAt`).set(serverTimestamp());
+};
 
-    // Filter bookings based on user type
-    if (userType === 'customer') {
-      bookingsRef = bookingsRef.orderByChild('customerId').equalTo(userId);
-    } else if (userType === 'vendor') {
-      bookingsRef = bookingsRef.orderByChild('vendorId').equalTo(userId);
+// Get current user
+export const getCurrentUser = () => {
+  return authRef.currentUser;
+};
+
+// On auth state changed
+export const onAuthStateChanged = (callback) => {
+  return authRef.onAuthStateChanged(callback);
+};
+
+// Analytics
+export const logEvent = async (eventName, params = {}) => {
+  try {
+    await analyticsRef.logEvent(eventName, params);
+  } catch (error) {
+    console.error('Error logging analytics event:', error);
+  }
+};
+
+// Get image reference from URL
+export const getImageRefFromURL = (imageUrl) => {
+  return storageRef.ref(imageUrl);
+};
+
+// Get image reference
+export const getImageRef = (path) => {
+  return storageRef.ref(path);
+};
+
+// Upload file to storage
+export const uploadFile = async (fileUri, path) => {
+  try {
+    const reference = storageRef.ref(path);
+    await reference.putFile(fileUri);
+    return await reference.getDownloadURL();
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    throw error;
+  }
+};
+
+// Delete file from storage
+export const deleteFile = async (path) => {
+  try {
+    const reference = storageRef.ref(path);
+    await reference.delete();
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    throw error;
+  }
+};
+
+// Get database reference
+export const getDatabaseRef = (path) => {
+  return databaseRef.ref(path);
+};
+
+// Get database value
+export const getDatabaseValue = async (path) => {
+  const snapshot = await databaseRef.ref(path).once('value');
+  return snapshot.val();
+};
+
+// Set database value
+export const setDatabaseValue = async (path, value) => {
+  await databaseRef.ref(path).set(value);
+};
+
+// Update database value
+export const updateDatabaseValue = async (path, value) => {
+  await databaseRef.ref(path).update(value);
+};
+
+// Remove database value
+export const removeDatabaseValue = async (path) => {
+  await databaseRef.ref(path).remove();
+};
+
+// Save bank details and car preferences
+export const saveBankDetailsAndPreferences = async (userId, data) => {
+  try {
+    if (!userId) {
+      throw new Error('User ID is required');
     }
 
-    const snapshot = await bookingsRef.once('value');
-    return snapshot.val();
+    const update = {
+      bankDetails: data.bankDetails,
+      carDeliveryPreference: data.canDeliver,
+      updatedAt: serverTimestamp(),
+    };
+
+    const userRef = databaseRef.ref(`users/${userId}`);
+    await userRef.update(update);
+    return update;
   } catch (error) {
+    console.error('Error saving bank details:', error);
     throw error;
   }
 };
 
-export const updateBookingStatus = async (bookingId, status) => {
+// Save cars with images
+export const saveCarsWithImages = async (vendorId, cars, type) => {
   try {
-    await database().ref(`bookings/${bookingId}`).update({
-      status,
-      updatedAt: database.ServerValue.TIMESTAMP,
-    });
+    if (!vendorId) {
+      throw new Error('Vendor ID is required');
+    }
+
+    // 1. Upload car images and prepare car data
+    const carsWithImages = await Promise.all(
+      cars.map(async car => {
+        // If there's no photo, just return the car data without uploading
+        if (!car.photo) {
+          return {
+            ...car,
+            vendorId,
+            createdAt: serverTimestamp(),
+            verified: false,
+          };
+        }
+
+        // Only attempt to upload if there's a photo
+        const imageUrl = await uploadFile(car.photo, `cars/${vendorId}/${Date.now()}`);
+        return {
+          ...car,
+          photo: imageUrl,
+          vendorId,
+          createdAt: serverTimestamp(),
+          verified: false,
+        };
+      }),
+    );
+
+    // 2. Save cars to appropriate table
+    const carTable = type === 'car' ? 'cars' : 'buses';
+    const carPromises = carsWithImages.map(car =>
+      databaseRef.ref(carTable).push().set(car)
+    );
+    await Promise.all(carPromises);
+
+    return carsWithImages;
   } catch (error) {
+    console.error('Error saving cars:', error);
+    throw error;
+  }
+};
+
+// Get server timestamp
+export const getServerTimestamp = () => {
+  return serverTimestamp();
+};
+
+// Update vehicle
+export const updateVehicle = async (vehicleId, updates, type = 'cars') => {
+  try {
+    if (!vehicleId) {
+      throw new Error('Vehicle ID is required');
+    }
+
+    const vehicleRef = databaseRef.ref(`${type}/${vehicleId}`);
+    const updateData = {
+      ...updates,
+      updatedAt: serverTimestamp()
+    };
+
+    await vehicleRef.update(updateData);
+    return true;
+  } catch (error) {
+    console.error('Error updating vehicle:', error);
+    throw error;
+  }
+};
+
+// Get vendor details
+export const getVendorDetails = async (vendorId) => {
+  try {
+    if (!vendorId) {
+      throw new Error('Vendor ID is required');
+    }
+
+    const vendorRef = databaseRef.ref(`users/${vendorId}`);
+    const snapshot = await vendorRef.once('value');
+    const vendorData = snapshot.val();
+
+    if (!vendorData) {
+      throw new Error('Vendor not found');
+    }
+
+    return vendorData;
+  } catch (error) {
+    console.error('Error fetching vendor details:', error);
+    throw error;
+  }
+};
+
+// Get vehicles with vendor details
+export const getVehiclesWithVendorDetails = async ({ type = 'cars' }) => {
+  try {
+    const data = await getCars({ type });
+    
+    if (!data) {
+      return [];
+    }
+
+    const vehiclesWithVendor = await Promise.all(
+      Object.entries(data).map(async ([id, vehicle]) => {
+        try {
+          // Skip vendor details fetch if vendorId is missing
+          if (!vehicle.vendorId) {
+            return {
+              id,
+              ...vehicle,
+              vendorName: 'Unknown Vendor'
+            };
+          }
+
+          const vendorData = await getVendorDetails(vehicle.vendorId);
+          return {
+            id,
+            ...vehicle,
+            vendorName: vendorData?.fullName || 'Unknown Vendor'
+          };
+        } catch (error) {
+          console.error('Error fetching vendor details:', error);
+          return {
+            id,
+            ...vehicle,
+            vendorName: 'Unknown Vendor'
+          };
+        }
+      })
+    );
+
+    return vehiclesWithVendor;
+  } catch (error) {
+    console.error('Error fetching vehicles with vendor details:', error);
     throw error;
   }
 };

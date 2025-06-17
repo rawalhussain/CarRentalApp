@@ -2,10 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '../../Themes/MyColors';
 
-const ProviderProfile = () => {
+const ProviderBookings = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Provider Profile Screen</Text>
+      <Text style={styles.text}>Provider Bookings Screen</Text>
     </View>
   );
 };
@@ -23,4 +23,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProviderProfile; 
+export default ProviderBookings;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {View, Text, TouchableOpacity, ScrollView, Alert, StatusBar, Image} from 'react-native';
+import {View, Text, TouchableOpacity, ScrollView, StatusBar, Image} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import InputField from '../../../Components/InputField';
 import Button from '../../../Components/Button';
@@ -14,7 +14,7 @@ import Loader from '../../../Components/Loader';
 
 const Login = () => {
   const navigation = useNavigation();
-  const { setUser, setCredentials, credentials } = useAuthStore();
+  const { credentials, setCredentials, setUser } = useAuthStore();
   const { setUserData } = useUserStore();
   const [secure, setSecure] = useState(true);
   const [checked, setChecked] = useState(false);
@@ -28,8 +28,8 @@ const Login = () => {
   useEffect(() => {
     if (credentials) {
       setFormData({
-        email: credentials.email,
-        password: credentials.password,
+        email: credentials.email || '',
+        password: credentials.password || '',
       });
       setChecked(true);
     }
@@ -60,48 +60,37 @@ const Login = () => {
         );
         return;
       }
+      if (userCredential.user.uid) {
+        // Get user data from database
+        const userData = await getUserData(userCredential.user.uid);
 
-      // Get user data from database
-      const userData = await getUserData(userCredential.user.uid);
+        // Update emailVerified status in database if it's not already true
+        if (userData && !userData.emailVerified) {
+          await updateUserData(userCredential.user.uid, {
+            emailVerified: true,
+          });
+          userData.emailVerified = true;
+        }
+        setUserData(userData);
+        // Set user data in stores
+        setUser(userCredential);
 
-      // Update emailVerified status in database if it's not already true
-      if (userData && !userData.emailVerified) {
-        await updateUserData(userCredential.user.uid, {
-          emailVerified: true,
-        });
-        userData.emailVerified = true;
-      }
-
-      // Set user data in stores
-      setUser(userCredential);
-      setUserData(userData);
-
-      // Save credentials if Remember Me is checked
-      if (checked) {
-        setCredentials({
-          email: formData.email,
-          password: formData.password,
-        });
-      } else {
-        setCredentials(null);
-      }
-
-      // Navigate based on user type
-      if (userData?.userType === 'customer') {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'CustomerTabs' }],
-        });
-      } else {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'ProviderTabs' }],
-        });
+        // Save credentials if Remember Me is checked
+        if (checked) {
+          setCredentials({
+            email: formData.email,
+            password: formData.password,
+          });
+        } else {
+          setCredentials(null);
+        }
       }
     } catch (error) {
       let errorMessage = 'An error occurred during login';
-
       switch (error.code) {
+        case 'auth/invalid-credential':
+          errorMessage = 'Invalid credentials. please try again.';
+          break;
         case 'auth/invalid-email':
           errorMessage = 'Invalid email address';
           break;
@@ -118,9 +107,11 @@ const Login = () => {
           errorMessage = error.message;
       }
 
-      showMessageAlert('Error', errorMessage, 'error');
+      showMessageAlert('Error', errorMessage, 'danger');
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 3000);
     }
   };
 

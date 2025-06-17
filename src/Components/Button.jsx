@@ -1,14 +1,15 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, Image } from 'react-native';
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import {Colors} from "../Themes/MyColors";
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {Colors} from '../Themes/MyColors';
 
-const Button = ({ title, onPress, type = 'primary', icon }) => {
+const Button = ({ title, onPress, type = 'primary', icon, buttonStyle }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
       style={[
         styles.button,
+          buttonStyle,
         type === 'outline' && styles.outlineButton,
         type === 'social' && styles.socialButton,
       ]}

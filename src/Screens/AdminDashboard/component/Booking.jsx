@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '../../Themes/MyColors';
+import { Colors } from '../../../Themes/MyColors';
 
 const ProviderBookings = () => {
   return (
@@ -23,4 +23,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProviderBookings; 
+export default ProviderBookings;

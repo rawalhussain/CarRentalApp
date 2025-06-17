@@ -61,10 +61,7 @@ const ForgotPassword = () => {
 
     try {
       setLoading(true);
-      console.log('Sending reset email to:', email);
-      const result = await sendPasswordResetEmail(email);
-      console.log('Reset email result:', result);
-
+      await sendPasswordResetEmail(email);
       showMessageAlert(
         'Reset Email Sent',
         'Please check your email for instructions to reset your password.',
@@ -88,7 +85,7 @@ const ForgotPassword = () => {
           errorMessage = error.message;
       }
 
-      showMessageAlert('Error', errorMessage, 'error');
+      showMessageAlert('Error', errorMessage, 'danger');
     } finally {
       setLoading(false);
     }

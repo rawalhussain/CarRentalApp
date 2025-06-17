@@ -4,13 +4,13 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import {Colors} from '../Themes/MyColors';
 
 const InputField = (props) => {
-  const { placeholder, secureTextEntry, icon, iconColor, onPressIcon } = props;
+  const { placeholder, secureTextEntry, icon, iconColor, onPressIcon, inputStyle } = props;
   return (
     <View style={styles.inputWrapper}>
       <TextInput
-        style={styles.input}
+        style={[styles.input, inputStyle]}
         placeholder={placeholder}
-        placeholderTextColor="#999"
+        placeholderTextColor={Colors.PRIMARY_GREY}
         secureTextEntry={secureTextEntry}
         {...props}
       />

@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
-const fs = require('fs')
-const os = require('os')
-const admin = require('firebase-admin')
-const moment = require('moment')
+const fs = require('fs');
+const os = require('os');
+const admin = require('firebase-admin');
+const moment = require('moment');
 
-const { keys } = require('lodash')
-const { default: axios } = require('axios')
-const { exit } = require('process')
+const { keys } = require('lodash');
+const { default: axios } = require('axios');
+const { exit } = require('process');
 
-require('firebase/auth')
-require('firebase/storage')
+require('firebase/auth');
+require('firebase/storage');
 
 const firebaseConfig = {
   bilditStaging: {
@@ -22,7 +22,7 @@ const firebaseConfig = {
     databaseURL: 'https://compilepoc-2d379.firebaseio.com',
     serviceAccountFile: './bildit-dev-key.json',
   },
-}
+};
 
 /**
  *
@@ -31,82 +31,66 @@ const firebaseConfig = {
  */
 async function transpile(baseUrl, filePath) {
   try {
-    console.log(`Transpile code: ${filePath}`)
-    const componentRawContent = fs.readFileSync(filePath).toString()
-    const codeType = filePath.split('.').pop()
+    const componentRawContent = fs.readFileSync(filePath).toString();
+    const codeType = filePath.split('.').pop();
     // call transpile api
-    console.log(`Calling transpile api for ${codeType} file`)
     const response = await axios.post(`${baseUrl}/utility-code_transpiler`, {
       code: componentRawContent,
       codeType,
-    })
+    });
 
     if (response.status === 200) {
-      console.log('Transpile success')
       return {
         raw: componentRawContent,
         compiled: response.data.data,
-      }
+      };
     } else {
-      console.log('Transpile error')
-      return {}
+      return {};
     }
   } catch (error) {
-    console.log('Something went wrong', error)
-    return {}
+    return {};
   }
 }
 
-;(async () => {
-  console.log('Firebase Component Deployment')
+(async () => {
   try {
     // Create tmp directory
     if (!fs.existsSync('tmp')) {
-      console.log('Creating tmp directory')
-      fs.mkdirSync('tmp')
+      fs.mkdirSync('tmp');
     }
 
     // Copy AppConfig.ts to AppConfig.js
-    console.log('Copy the the config file to tmp')
-    fs.copyFileSync('../App/Config/AppConfig.tsx', 'tmp/AppConfig.js')
+    fs.copyFileSync('../App/Config/AppConfig.tsx', 'tmp/AppConfig.js');
 
-    console.log('Reading config file')
-    const configText = fs.readFileSync('tmp/AppConfig.js', 'utf8')
+    const configText = fs.readFileSync('tmp/AppConfig.js', 'utf8');
 
-    console.log('Changing export default to module.exports')
-    const configModule = configText.replace('export default', 'module.exports =')
+    const configModule = configText.replace('export default', 'module.exports =');
     // Replace the config content
-    console.log('Replace the config in tmp directory')
-    fs.writeFileSync('tmp/AppConfig.js', configModule)
-    console.log('Config formatter success')
+    fs.writeFileSync('tmp/AppConfig.js', configModule);
 
-    const selectedDbConfig = firebaseConfig.bilditStaging
+    const selectedDbConfig = firebaseConfig.bilditStaging;
 
     // Make sure the service file is available in this directory
-    const serviceAccount = require(selectedDbConfig.serviceAccountFile)
+    const serviceAccount = require(selectedDbConfig.serviceAccountFile);
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       databaseURL: selectedDbConfig.databaseURL,
-    })
+    });
 
-    console.log('Read formatted config file')
     // eslint-disable-next-line import/no-unresolved
-    const appConfig = require('./tmp/AppConfig')
+    const appConfig = require('./tmp/AppConfig');
 
-    const { appId, components } = appConfig.remote
-    console.log(`Processing ${appId} components`)
+    const { appId, components } = appConfig.remote;
 
     // Loop through all components
-    const paths = keys(components)
-    console.log(`${paths.length} components available`)
+    const paths = keys(components);
     for (let index = 0; index < paths.length; index++) {
-      const path = paths[index]
+      const path = paths[index];
       // read if file exist
-      const filePath = `../App/${path}`
-      console.log(`Processing ${path}`)
+      const filePath = `../App/${path}`;
       if (fs.existsSync(filePath)) {
-        const componentsRef = await admin.database().ref(`apps/${appId}/components/`)
-        const componentObjectSnapshot = await componentsRef.orderByChild('path').equalTo(path).get()
+        const componentsRef = await admin.database().ref(`apps/${appId}/components/`);
+        const componentObjectSnapshot = await componentsRef.orderByChild('path').equalTo(path).get();
         if (componentObjectSnapshot.val() == null) {
           // if not registered, create a new data as version 1
           const component = {
@@ -120,48 +104,42 @@ async function transpile(baseUrl, filePath) {
             },
             type: 'Basic Component',
             versionCount: 1,
-          }
+          };
 
-          const newComponentRef = componentsRef.push(component)
-          const { raw, compiled } = await transpile(appConfig.remote.baseUrl, filePath)
+          const newComponentRef = componentsRef.push(component);
+          const { raw, compiled } = await transpile(appConfig.remote.baseUrl, filePath);
           await admin.database().ref(`apps/${appId}/componentRevisions/${newComponentRef.key}/v1`).set({
             raw,
             compiled,
-          })
+          });
         } else {
-          const updatedComponents = componentObjectSnapshot.val()
-          const componentKeys = keys(updatedComponents)
-          const key = componentKeys[0]
+          const updatedComponents = componentObjectSnapshot.val();
+          const componentKeys = keys(updatedComponents);
+          const key = componentKeys[0];
 
-          const updatedComponentSnapshot = await admin.database().ref(`apps/${appId}/components/${key}`).once('value')
-          const updatedComponent = updatedComponentSnapshot.val()
-          const newVersionCount = updatedComponent.versionCount + 1
-          console.log(`Creating a new version: v${newVersionCount}`)
-          const multiWrite = {}
+          const updatedComponentSnapshot = await admin.database().ref(`apps/${appId}/components/${key}`).once('value');
+          const updatedComponent = updatedComponentSnapshot.val();
+          const newVersionCount = updatedComponent.versionCount + 1;
+          const multiWrite = {};
           multiWrite[`apps/${appId}/components/${key}`] = {
             ...updatedComponent,
             versionCount: newVersionCount,
-          }
-          const { raw, compiled } = await transpile(appConfig.remote.baseUrl, filePath)
+          };
+          const { raw, compiled } = await transpile(appConfig.remote.baseUrl, filePath);
           multiWrite[`apps/${appId}/componentRevisions/${key}/v${newVersionCount}`] = {
             raw,
             compiled,
-          }
-          await admin.database().ref().update(multiWrite)
+          };
+          await admin.database().ref().update(multiWrite);
         }
-
-        console.log(`${path} is complete`)
       }
     }
 
     // Cleanup tmp directory
-    console.log('Clean up tmp directory')
-    fs.rmSync('tmp', { recursive: true })
-    console.log(`${os.EOL}Completed ! ${os.EOL}`)
-    exit()
+    fs.rmSync('tmp', { recursive: true });
+    exit();
   } catch (error) {
-    console.log('Something went wrong')
-    console.error(error)
-    exit()
+    console.error(error);
+    exit();
   }
-})()
+})();

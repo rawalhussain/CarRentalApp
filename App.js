@@ -19,6 +19,9 @@ import {AppProvider} from './src/api/app';
 import {PaperProvider} from 'react-native-paper';
 import analytics from '@react-native-firebase/analytics';
 import {Colors} from "react-native/Libraries/NewAppScreen";
+import useAuthStore from './src/store/useAuthStore';
+import useUserStore from './src/store/useUserStore';
+import {AuthProvider} from './src/Config/AuthContext';
 
 LogBox.ignoreAllLogs();
 LogBox.ignoreLogs([
@@ -52,11 +55,13 @@ const netInfoConfig = {
 };
 
 export const storage = new MMKV();
-
-const App = React.memo(() => {
+const App = () => {
     const initializeApp = useCallback(async () => {
         try {
             NetInfo.configure(netInfoConfig);
+            // Initialize Zustand persist
+            await useAuthStore.persist.rehydrate();
+            await useUserStore.persist.rehydrate();
         } catch (error) {
             console.error('Initialization error:', error);
         }
@@ -79,18 +84,20 @@ const App = React.memo(() => {
                 <BottomSheetModalProvider>
                     <PaperProvider>
                         <AppProvider>
-                            <Suspense>
-                                <FlashMessage position="top" />
-                            </Suspense>
-                            <SelectProvider>
-                                <Routes />
-                            </SelectProvider>
+                            <AuthProvider>
+                                <Suspense>
+                                    <FlashMessage position="top" />
+                                </Suspense>
+                                <SelectProvider>
+                                    <Routes />
+                                </SelectProvider>
+                            </AuthProvider>
                         </AppProvider>
                     </PaperProvider>
                 </BottomSheetModalProvider>
             </GestureHandlerRootView>
         </SafeAreaProvider>
     );
-});
+};
 
 export default App;

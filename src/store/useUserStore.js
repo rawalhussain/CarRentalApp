@@ -23,8 +23,9 @@ const useUserStore = create(
           storage.delete(name);
         },
       })),
+      skipHydration: true,
     }
   )
 );
 
-export default useUserStore; 
+export default useUserStore;

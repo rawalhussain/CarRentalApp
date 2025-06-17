@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,64 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
+import Loader from '../../Components/Loader';
+import { showMessageAlert } from '../../Lib/utils/CommonHelper';
+import useUserStore from '../../store/useUserStore';
+import useAuthStore from '../../store/useAuthStore';
+import { signOut, getAdminStats } from '../../Config/firebase';
 
 const AdminDashboard = ({ navigation }) => {
-  const stats = [
-    { title: 'Total Users', value: '1,234', icon: 'people-outline' },
-    { title: 'Active Vendors', value: '89', icon: 'business-outline' },
-    { title: 'Total Bookings', value: '456', icon: 'calendar-outline' },
-    { title: 'Revenue', value: '$45,678', icon: 'cash-outline' },
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeVendors: 0,
+    totalBookings: 0,
+    revenue: 0,
+  });
+  const { userData, clearUserData } = useUserStore();
+  const { clearAuth } = useAuthStore();
+
+  useEffect(() => {
+    // Check if user is admin
+    fetchStats();
+  }, [userData]);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const dashboardStats = await getAdminStats();
+      setStats(dashboardStats);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      showMessageAlert('Error', 'Failed to fetch dashboard stats', 'danger');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      setLoading(true);
+      clearUserData();
+      clearAuth();
+      await signOut();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+      showMessageAlert('Error', 'Failed to logout. Please try again.', 'danger');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statsData = [
+    { title: 'Total Users', value: stats.totalUsers.toString(), icon: 'people-outline' },
+    { title: 'Active Vendors', value: stats.activeVendors.toString(), icon: 'business-outline' },
+    { title: 'Total Bookings', value: '0', icon: 'calendar-outline' },
+    { title: 'Revenue', value: '$0', icon: 'cash-outline' },
   ];
 
   const recentActivities = [
@@ -39,12 +90,16 @@ const AdminDashboard = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {loading && <Loader />}
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Admin Dashboard</Text>
-          <TouchableOpacity style={styles.profileButton}>
-            <Ionicons name="person-circle-outline" size={32} color="#333" />
+          <TouchableOpacity
+            style={styles.profileButton}
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out-outline" size={32} color="#333" />
           </TouchableOpacity>
         </View>
       </View>
@@ -52,28 +107,13 @@ const AdminDashboard = ({ navigation }) => {
       <ScrollView style={styles.content}>
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
-          {stats.map((stat, index) => (
+          {statsData.map((stat, index) => (
             <View key={index} style={styles.statCard}>
               <Ionicons name={stat.icon} size={24} color="#E53935" />
               <Text style={styles.statValue}>{stat.value}</Text>
               <Text style={styles.statTitle}>{stat.title}</Text>
             </View>
           ))}
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="person-add-outline" size={24} color="#fff" />
-              <Text style={styles.actionButtonText}>Add Vendor</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="settings-outline" size={24} color="#fff" />
-              <Text style={styles.actionButtonText}>Settings</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Recent Activities */}
@@ -88,14 +128,14 @@ const AdminDashboard = ({ navigation }) => {
             <View key={activity.id} style={styles.activityCard}>
               <View style={styles.activityHeader}>
                 <View style={styles.activityType}>
-                  <Ionicons 
+                  <Ionicons
                     name={
                       activity.type === 'New Vendor' ? 'business-outline' :
                       activity.type === 'New Booking' ? 'calendar-outline' :
                       'cash-outline'
-                    } 
-                    size={20} 
-                    color="#E53935" 
+                    }
+                    size={20}
+                    color="#E53935"
                   />
                   <Text style={styles.activityTypeText}>{activity.type}</Text>
                 </View>
@@ -105,37 +145,9 @@ const AdminDashboard = ({ navigation }) => {
             </View>
           ))}
         </View>
-
-        {/* System Status */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>System Status</Text>
-          <View style={styles.systemStatusCard}>
-            <View style={styles.statusItem}>
-              <Text style={styles.statusLabel}>Server Status</Text>
-              <View style={styles.statusIndicator}>
-                <View style={[styles.statusDot, { backgroundColor: '#4CAF50' }]} />
-                <Text style={styles.statusText}>Online</Text>
-              </View>
-            </View>
-            <View style={styles.statusItem}>
-              <Text style={styles.statusLabel}>Database</Text>
-              <View style={styles.statusIndicator}>
-                <View style={[styles.statusDot, { backgroundColor: '#4CAF50' }]} />
-                <Text style={styles.statusText}>Connected</Text>
-              </View>
-            </View>
-            <View style={styles.statusItem}>
-              <Text style={styles.statusLabel}>API Services</Text>
-              <View style={styles.statusIndicator}>
-                <View style={[styles.statusDot, { backgroundColor: '#4CAF50' }]} />
-                <Text style={styles.statusText}>Running</Text>
-              </View>
-            </View>
-          </View>
-        </View>
       </ScrollView>
     </View>
   );
 };
 
-export default AdminDashboard; 
+export default AdminDashboard;
