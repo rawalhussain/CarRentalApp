@@ -1,0 +1,41 @@
+{
+  "rules": {
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "!data.exists() || auth != null",
+        ".validate": "newData.hasChildren(['fullName', 'email', 'phoneNumber', 'userType'])"
+      }
+    },
+    "cars": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'provider'",
+      "$carId": {
+        ".read": "auth != null",
+        ".write": "auth != null && (data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')",
+        "verified": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'"
+        }
+      }
+    },
+    "buses": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'provider'",
+      "$busId": {
+        ".read": "auth != null",
+        ".write": "auth != null && (data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')",
+        "verified": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'"
+        }
+      }
+    },
+    "bookings": {
+      ".read": "auth != null",
+      "$bookingId": {
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')",
+        ".write": "auth != null && (data.child('userId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')"
+      }
+    }
+  }
+} 
