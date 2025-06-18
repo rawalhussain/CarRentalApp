@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,37 @@ import {
   TouchableOpacity,
   Pressable,
   Modal,
-  ScrollView,
   SafeAreaView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import styles from '../Booking/styles';
+import styles from './styles';
+import DatePicker from 'react-native-ui-datepicker';
+import { showMessageAlert } from '../../../../Lib/utils/CommonHelper';
+import moment from 'moment';
+import { Colors } from '../../../../Themes/MyColors';
+import {getCars} from '../../../../Config/firebase';
 
 const BusBookingDetails = ({ navigation }) => {
+
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      header: () => (
+          <View style={styles.headerContainer}>
+            <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={styles.headerBack}
+            >
+              <Ionicons name="chevron-back" size={24} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Bus Booking Details</Text>
+            <TouchableOpacity style={styles.headerRight} />
+          </View>
+      ),
+    });
+  }, [navigation]);
+
+
   const [pickupAddress, setPickupAddress] = useState('');
   const [dropoffAddress, setDropoffAddress] = useState('');
   const [pickupDate, setPickupDate] = useState('');
@@ -20,14 +44,12 @@ const BusBookingDetails = ({ navigation }) => {
   const [hours, setHours] = useState('');
 
   const [isCalendarVisible, setCalendarVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState({ day: null, monthIndex: 0 });
-  const [currentMonthIndex, setCurrentMonthIndex] = useState(2); // March by default
+  const [selectedDate, setSelectedDate] = useState(moment());
 
   const [isTimeModalVisible, setTimeModalVisible] = useState(false);
-  const [selectedTime, setSelectedTime] = useState(null);
+  const [selectedHour, setSelectedHour] = useState('');
 
   const [isHourModalVisible, setHourModalVisible] = useState(false);
-  const [selectedHour, setSelectedHour] = useState(null);
 
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -36,58 +58,67 @@ const BusBookingDetails = ({ navigation }) => {
   const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   const daysInMonth = (monthIndex) => new Date(2025, monthIndex + 1, 0).getDate();
 
+  const defaultStyles = {
+    container: {
+      backgroundColor: 'white',
+    },
+    day: {
+      width: 40,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    day_label: {
+      fontSize: 14,
+    },
+  };
+
   const showCalendar = () => setCalendarVisible(true);
-  const confirmDate = () => {
-    const { day, monthIndex } = selectedDate;
-    if (day) setPickupDate(`${day} ${months[monthIndex]} 2025`);
+  const handleDateChange = (day) => {
+    let date = moment(new Date(day.date)).format('DD-MM-YYYY');
+    setPickupDate(date);
     setCalendarVisible(false);
   };
 
   const showTimePicker = () => setTimeModalVisible(true);
   const confirmTime = () => {
-    if (selectedTime) setPickupTime(selectedTime);
+    if (selectedHour) {setPickupTime(selectedHour);}
     setTimeModalVisible(false);
   };
-  const generateTimeSlots = () => ['1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'];
+  const generate24HourSlots = () => {
+    return Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+  };
 
   const showHourPicker = () => setHourModalVisible(true);
   const confirmHour = () => {
-    if (selectedHour) setHours(selectedHour);
+    if (selectedHour) {setHours(selectedHour);}
     setHourModalVisible(false);
   };
   const hourOptions = ['1 Hour', '2 Hour', '3 Hour', '4 Hour'];
 
-  const renderCalendarDays = () => {
-    const days = [];
-    const totalDays = daysInMonth(currentMonthIndex);
-    const firstDayIndex = new Date(2025, currentMonthIndex, 1).getDay();
-    for (let i = 0; i < firstDayIndex; i++) {
-      days.push(<View key={`empty-${i}`} style={styles.dayBoxEmpty} />);
+  const handleNext = async () => {
+    if (!pickupAddress || !pickupDate || !pickupTime || !hours) {
+      showMessageAlert('Error', 'Please fill all required fields.', 'warning');
+      return;
     }
-    for (let day = 1; day <= totalDays; day++) {
-      const isSelected = selectedDate.day === day && selectedDate.monthIndex === currentMonthIndex;
-      days.push(
-        <TouchableOpacity
-          key={day}
-          style={[styles.dayBox, isSelected && styles.dayBoxSelected]}
-          onPress={() => setSelectedDate({ day, monthIndex: currentMonthIndex })}
-        >
-          <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>{day}</Text>
-        </TouchableOpacity>
-      );
+    try {
+      const filters = { type: 'buses' };
+      const buses = await getCars(filters);
+      navigation.navigate('BusSearchResults', {
+        pickupAddress,
+        dropoffAddress,
+        pickupDate,
+        pickupTime,
+        hours,
+        buses,
+      });
+    } catch (error) {
+      showMessageAlert('Error', 'Error searching buses. Please try again.', 'danger');
     }
-    return days;
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.titleBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#E2282B" />
-        </TouchableOpacity>
-        <Text style={styles.pageTitle}>Booking Details</Text>
-        <Ionicons name="ellipsis-horizontal" size={24} color="#000" />
-      </View>
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Pickup Address:</Text>
         <TextInput
@@ -118,38 +149,39 @@ const BusBookingDetails = ({ navigation }) => {
         <Text style={styles.label}>Set Hours</Text>
         <Text style={styles.inputText}>{hours}</Text>
       </Pressable>
-      <TouchableOpacity style={styles.searchButton}>
+      <TouchableOpacity style={styles.searchButton} onPress={handleNext}>
         <Text style={styles.searchText}>Next</Text>
       </TouchableOpacity>
       {/* Calendar Modal */}
       <Modal visible={isCalendarVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.monthHeader}>
-              <TouchableOpacity
-                disabled={currentMonthIndex === 0}
-                onPress={() => setCurrentMonthIndex((prev) => Math.max(prev - 1, 0))}
-              >
-                <Ionicons name="chevron-back" size={24} color="#000" />
-              </TouchableOpacity>
-              <Text style={styles.modalTitle}>MARCH 2025</Text>
-              <TouchableOpacity
-                disabled={currentMonthIndex === 11}
-                onPress={() => setCurrentMonthIndex((prev) => Math.min(prev + 1, 11))}
-              >
-                <Ionicons name="chevron-forward" size={24} color="#000" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.weekdayRow}>
-              {weekdays.map((d) => (
-                <Text key={d} style={styles.weekdayText}>{d}</Text>
-              ))}
-            </View>
-            <View style={styles.calendarGrid}>{renderCalendarDays()}</View>
-            <Text style={styles.selectedDateText}>
-              {selectedDate.day !== null ? `${selectedDate.day} ${months[selectedDate.monthIndex]} 2025` : ''}
-            </Text>
-            <TouchableOpacity style={styles.nextButton} onPress={confirmDate}>
+            <Text style={styles.modalTitle}>Select Pickup Date</Text>
+            <DatePicker
+              mode="single"
+              date={!pickupDate ? moment() : moment(pickupDate, 'DD-MM-YYYY')}
+              minDate={moment()}
+              styles={{
+                container: {
+                  backgroundColor: 'white',
+                },
+                day: {
+                  width: 40,
+                  height: 40,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                },
+                today: {borderColor: Colors.PRIMARY, borderWidth: 1},
+                today_label: {color: Colors.PRIMARY},
+                selected: {backgroundColor: Colors.PRIMARY},
+                selected_label: {color: 'white'},
+                day_label: {color: Colors.PRIMARY},
+                button_next: {backgroundColor: Colors.PRIMARY, padding: 10, borderRadius: 5},
+                button_prev: {backgroundColor: Colors.PRIMARY, padding: 10, borderRadius: 5},
+              }}
+              onChange={handleDateChange}
+            />
+            <TouchableOpacity style={styles.nextButton} onPress={() => setCalendarVisible(false)}>
               <Text style={styles.nextButtonText}>Next</Text>
             </TouchableOpacity>
           </View>
@@ -160,19 +192,33 @@ const BusBookingDetails = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Set Pickup Time</Text>
-            <View style={styles.timeGrid}>
-              {generateTimeSlots().map((time) => (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {generate24HourSlots().map((time) => (
                 <TouchableOpacity
                   key={time}
-                  style={[styles.timeBox, selectedTime === time && styles.timeBoxSelected]}
-                  onPress={() => setSelectedTime(time)}
+                  style={[
+                    styles.timeBox,
+                    selectedHour === time && styles.timeBoxSelected,
+                  ]}
+                  onPress={() => setSelectedHour(time)}
                 >
-                  <Text style={[styles.timeText, selectedTime === time && styles.timeTextSelected]}>{time}</Text>
+                  <Text
+                    style={[
+                      styles.timeText,
+                      selectedHour === time && styles.timeTextSelected,
+                    ]}
+                  >
+                    {time}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.selectedDateText}>{selectedTime || ''}</Text>
-            <TouchableOpacity style={styles.nextButton} onPress={confirmTime}>
+            <Text style={styles.selectedDateText}>{selectedHour ? `Pickup Time: ${selectedHour}` : ''}</Text>
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={confirmTime}
+              disabled={!selectedHour}
+            >
               <Text style={styles.nextButtonText}>Next</Text>
             </TouchableOpacity>
           </View>
@@ -205,4 +251,4 @@ const BusBookingDetails = ({ navigation }) => {
   );
 };
 
-export default BusBookingDetails; 
+export default BusBookingDetails;

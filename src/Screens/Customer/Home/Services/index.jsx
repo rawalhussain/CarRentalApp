@@ -6,10 +6,10 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
-import useUserStore from '../../../store/useUserStore';
-import Loader from '../../../Components/Loader';
-import useAuthStore from '../../../store/useAuthStore';
-import { signOut } from '../../../Config/firebase';
+import useUserStore from '../../../../store/useUserStore';
+import Loader from '../../../../Components/Loader';
+import useAuthStore from '../../../../store/useAuthStore';
+import { signOut } from '../../../../Config/firebase';
 
 
 const ServiceScreen = ({ navigation }) => {
@@ -47,18 +47,18 @@ const ServiceScreen = ({ navigation }) => {
             {/* Center-aligned heading and buttons */}
             <View style={styles.centeredSection}>
                 <Text style={styles.title}>
-                    WHAT SERVICE YOU ARE{"\n"}LOOKING FOR?
+                    WHAT SERVICE YOU ARE{'\n'}LOOKING FOR?
                 </Text>
 
                 <TouchableOpacity
                     style={styles.rentalBtn}
-                    onPress={() => navigation.navigate('BookingDetails')}
+                    onPress={() => navigation.navigate('CarSearch')}
                 >
                     <Text style={styles.rentalBtnText}>RENTAL</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={styles.busBtn}
-                    onPress={() => navigation.navigate('BusBookingDetails')}
+                    onPress={() => navigation.navigate('BusSearch')}
                 >
                     <Text style={styles.busBtnText}>HIRE A BUS</Text>
                 </TouchableOpacity>

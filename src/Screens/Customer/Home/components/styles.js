@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import {Colors} from "../../../../Themes/MyColors";
 
 export default StyleSheet.create({
   container: {
@@ -6,7 +7,40 @@ export default StyleSheet.create({
     backgroundColor: '#fff',
     padding: 20,
   },
-
+  headerContainer: {
+    backgroundColor: Colors.BACKGROUND_GREY,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.LINE_GRAY,
+  },
+  headerBack: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.PRIMARY,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingRight: 3,
+    marginRight: 8,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.BLACK,
+    textAlign: 'center',
+    flex: 1,
+  },
+  headerRight: {
+    width: 40,
+    height: 40,
+  },
+  header: {
+    padding: 20,
+    paddingTop: 40,
+  },
   // Top Bar
   topBar: {
     flexDirection: 'row',
@@ -247,5 +281,106 @@ export default StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+
+  calendar: {
+    width: '100%',
+    height: 400,
+  },
+  calendarText: {
+    color: '#000',
+    fontSize: 16,
+  },
+  calendarHeaderText: {
+    color: '#000',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  calendarWeekDaysText: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  calendarSelectedText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+
+  // Bus Card Styles
+  busCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginVertical: 16,
+    marginHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  heartIconContainer: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    zIndex: 2,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 4,
+    elevation: 2,
+  },
+  busImage: {
+    width: '100%',
+    height: 140,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  busDetails: {
+    padding: 16,
+  },
+  busName: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 12,
+    color: '#222',
+    textAlign: 'left',
+  },
+  busInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  busInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  busInfoText: {
+    fontSize: 18,
+    color: '#d32f2f',
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  busPriceBox: {
+    backgroundColor: '#00b4f6',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 90,
+  },
+  busPriceLabel: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  busPriceValue: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 2,
   },
 });

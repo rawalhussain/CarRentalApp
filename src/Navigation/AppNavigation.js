@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -6,9 +6,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../Themes/MyColors';
 import useAuthStore from '../store/useAuthStore';
 import useUserStore from '../store/useUserStore';
-import {View, ActivityIndicator} from 'react-native';
 import {useMMKVBoolean} from 'react-native-mmkv';
-import {logEvent} from "../Config/firebase";
+import {logEvent} from '../Config/firebase';
 
 // Auth Screens
 import Login from '../Screens/Auth/Login';
@@ -16,9 +15,14 @@ import SignUp from '../Screens/Auth/SignUp';
 import ForgotPassword from '../Screens/Auth/ForgotPassword';
 
 // Customer Screens
-import CustomerHome from '../Screens/Customer/Services';
-import CustomerBookings from '../Screens/Customer/Booking';
+import CustomerHome from '../Screens/Customer/Home/Services';
+import BusSearch from '../Screens/Customer/Home/components/BusBookingDetails';
+import BusSearchResults from '../Screens/Customer/Home/components/BusSearchResults';
+import CarSearch from '../Screens/Customer/Home/components/CarBookingDetails';
 import CustomerCarDetails from '../Screens/Customer/CarDetails';
+import CustomerBookings from '../Screens/Customer/component/Booking';
+import ContactDetails from '../Screens/Customer/Home/components/ContactDetails';
+import BookingSummary from '../Screens/Customer/Home/components/BookingSummary';
 
 // Provider Screens
 import ProviderHome from '../Screens/Provider/Home/Home';
@@ -148,7 +152,7 @@ const Navigation = () => {
         if (!user) {
             return 'Login';
         }
-        
+
         if (!userData) {
             return 'Login';
         }
@@ -171,7 +175,7 @@ const Navigation = () => {
             onReady={async () => {
                 await BootSplash.hide({ fade: true });
             }}>
-            <Stack.Navigator 
+            <Stack.Navigator
                 screenOptions={{headerShown: false}}
                 initialRouteName={getInitialRoute()}>
                 {!hasCompletedOnboarding && (
@@ -194,6 +198,41 @@ const Navigation = () => {
                         {userData.userType === 'customer' && (
                             <>
                                 <Stack.Screen name="CustomerTabs" component={CustomerTabs} />
+                                <Stack.Screen
+                                    name="BusSearch"
+                                    component={BusSearch}
+                                    options={{
+                                        headerShown: true,
+                                    }}
+                                />
+                                <Stack.Screen
+                                    name="BusSearchResults"
+                                    component={BusSearchResults}
+                                    options={{
+                                        headerShown: true,
+                                    }}
+                                />
+                                <Stack.Screen
+                                    name="ContactDetails"
+                                    component={ContactDetails}
+                                    options={{
+                                        headerShown: true,
+                                    }}
+                                />
+                                <Stack.Screen
+                                    name="BookingSummary"
+                                    component={BookingSummary}
+                                    options={{
+                                        headerShown: true,
+                                    }}
+                                />
+                                <Stack.Screen
+                                    name="CarSearch"
+                                    component={CarSearch}
+                                    options={{
+                                        headerShown: true,
+                                    }}
+                                />
                                 <Stack.Screen
                                     name="CarDetails"
                                     component={CustomerCarDetails}

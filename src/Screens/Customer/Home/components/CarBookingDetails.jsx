@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,9 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
 import { useNavigation } from '@react-navigation/native';
+import {Colors} from "../../../../Themes/MyColors";
 
-const BookingDetails = () => {
+const CarBookingDetails = () => {
   const navigation = useNavigation();
 
   const [pickupDate, setPickupDate] = useState('');
@@ -23,6 +24,23 @@ const BookingDetails = () => {
   const [returnTime, setReturnTime] = useState('');
   const [deliveryOption, setDeliveryOption] = useState('');
   const [where, setWhere] = useState('');
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      header: () => (
+          <View style={styles.headerContainer}>
+            <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={styles.headerBack}
+            >
+              <Ionicons name="chevron-back" size={24} color={Colors.WHITE} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Payment States</Text>
+            <TouchableOpacity style={styles.headerRight} />
+          </View>
+      ),
+    });
+  }, [navigation]);
 
 
   const [isCalendarVisible, setCalendarVisible] = useState(false);
@@ -117,39 +135,15 @@ const BookingDetails = () => {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.topBar}>
-        <View style={styles.profileSection}>
-          <Image
-            source={{ uri: 'https://via.placeholder.com/40' }}
-            style={styles.profileImage}
-          />
-          <View>
-            <Text style={styles.welcomeText}>WELCOME</Text>
-            <Text style={styles.nameText}>NAME HERE</Text>
-          </View>
-        </View>
-        <TouchableOpacity>
-          <Ionicons name="notifications-outline" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.titleBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.pageTitle}>Booking Details</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
       <View style={styles.inputContainer}>
-  <Text style={styles.label}>Where</Text>
-  <TextInput
-    style={styles.input}
-    placeholder="Enter location"
-    value={where}
-    onChangeText={setWhere}
-  />
-</View>
+        <Text style={styles.label}>Where</Text>
+        <TextInput
+            style={styles.input}
+            placeholder="Enter location"
+            value={where}
+            onChangeText={setWhere}
+        />
+      </View>
 
 
       {/* Dates */}
@@ -299,4 +293,4 @@ const BookingDetails = () => {
   );
 };
 
-export default BookingDetails;
+export default CarBookingDetails;

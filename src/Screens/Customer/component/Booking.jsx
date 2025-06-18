@@ -1,27 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { Colors } from '../../Themes/MyColors';
-import { getBookings } from '../../Config/firebase';
-import useAuthStore from '../../store/useAuthStore';
-import Loader from '../../Components/Loader';
+import { Colors } from '../../../Themes/MyColors';
+import { getBookings } from '../../../Config/firebase';
+import useAuthStore from '../../../store/useAuthStore';
+import Loader from '../../../Components/Loader';
+import Button from '../../../Components/Button';
 
-const ProviderBookings = ({ navigation }) => {
+const CustomerBookings = ({ navigation }) => {
   const { user } = useAuthStore();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('CustomerBookings mounted');
+    console.log('Full user object:', user);
     if (user && (user.uid || user.user?.uid)) {
       fetchBookings();
+    } else {
+      console.log('User not ready, not fetching bookings');
     }
   }, [user]);
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (manual = false) => {
     setLoading(true);
+    if (manual) {
+      console.log('Manual refresh triggered');
+    }
+    console.log('fetchBookings called');
     const userId = user?.user?.uid || user?.uid;
+    console.log('Current userId:', userId);
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     try {
-      const data = await getBookings(userId, 'vendor');
+      const data = await getBookings(userId, 'customer');
+      console.log('Fetched bookings:', data);
       if (data) {
+        // Convert object to array with id
         const arr = Object.entries(data).map(([id, booking]) => ({ id, ...booking }));
         setBookings(arr);
       } else {
@@ -35,7 +51,6 @@ const ProviderBookings = ({ navigation }) => {
 
   const renderItem = ({ item }) => {
     const vehicle = item.vehicle || {};
-    const contact = item.contactDetails || {};
     return (
       <TouchableOpacity
         style={styles.card}
@@ -44,7 +59,7 @@ const ProviderBookings = ({ navigation }) => {
         <Text style={styles.model}>{vehicle.make || 'Vehicle'} {vehicle.model || ''} {vehicle.variant ? `(${vehicle.variant})` : ''}</Text>
         <Text style={styles.date}>{item.searchPreferences?.pickupDate || '-'} - {item.searchPreferences?.dropoffDate || '-'}</Text>
         <Text style={styles.status}>Status: {item.status || 'pending'}</Text>
-        <Text style={styles.customer}>Customer: {contact.firstName || ''} {contact.lastName || ''}</Text>
+        <Text style={styles.vendor}>Vendor ID: {vehicle.vendorId || '-'}</Text>
       </TouchableOpacity>
     );
   };
@@ -97,7 +112,7 @@ const styles = StyleSheet.create({
     color: Colors.PRIMARY,
     fontWeight: 'bold',
   },
-  customer: {
+  vendor: {
     fontSize: 13,
     color: Colors.PRIMARY_GREY,
     marginTop: 2,
@@ -125,4 +140,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProviderBookings;
+export default CustomerBookings;

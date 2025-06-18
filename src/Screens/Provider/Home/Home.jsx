@@ -47,7 +47,7 @@ const ProviderHome = ({ navigation }) => {
           <Text style={styles.rentalBtnText}>RENTAL</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.busBtn} onPress={() => navigation.navigate('AddCar', { type: 'bus' })}>
-          <Text style={styles.busBtnText}>HIRE A BUS</Text>
+          <Text style={styles.busBtnText}>BUS</Text>
         </TouchableOpacity>
       </View>
     </View>

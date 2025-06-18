@@ -127,9 +127,15 @@ export const deleteVehicle = async (vehicleId, type = 'cars') => {
 
 // Create booking
 export const createBooking = async (bookingData) => {
+  // Use a generic 'vehicle' field and always include customerId and vendorId
+  const { vehicle, customerId, ...rest } = bookingData;
+  const vendorId = vehicle?.vendorId || '';
   const bookingRef = databaseRef.ref('bookings').push();
   await bookingRef.set({
-    ...bookingData,
+    ...rest,
+    vehicle,
+    customerId,
+    vendorId,
     status: 'pending',
     createdAt: serverTimestamp(),
   });
@@ -146,7 +152,7 @@ export const getBookings = async (userId, userType) => {
     bookingsRef = databaseRef.ref('bookings').orderByChild('vendorId').equalTo(userId);
   }
 
-  const snapshot = await databaseRef.ref(bookingsRef).once('value');
+  const snapshot = await bookingsRef.once('value');
   return snapshot.val();
 };
 
