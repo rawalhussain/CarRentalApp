@@ -11,7 +11,7 @@ import Loader from '../../Components/Loader';
 import { showMessageAlert } from '../../Lib/utils/CommonHelper';
 import useUserStore from '../../store/useUserStore';
 import useAuthStore from '../../store/useAuthStore';
-import { signOut, getAdminStats } from '../../Config/firebase';
+import { signOut, getAdminStats, getDatabaseRef } from '../../Config/firebase';
 
 const AdminDashboard = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
@@ -23,10 +23,12 @@ const AdminDashboard = ({ navigation }) => {
   });
   const { userData, clearUserData } = useUserStore();
   const { clearAuth } = useAuthStore();
+  const [recentBookings, setRecentBookings] = useState([]);
 
   useEffect(() => {
     // Check if user is admin
     fetchStats();
+    fetchRecentBookings();
   }, [userData]);
 
   const fetchStats = async () => {
@@ -39,6 +41,22 @@ const AdminDashboard = ({ navigation }) => {
       showMessageAlert('Error', 'Failed to fetch dashboard stats', 'danger');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecentBookings = async () => {
+    try {
+      const ref = getDatabaseRef('bookings');
+      // Order by createdAt descending, limit to 5
+      const snapshot = await ref.orderByChild('createdAt').limitToLast(5).once('value');
+      const data = snapshot.val() || {};
+      // Convert to array and sort descending
+      const arr = Object.entries(data)
+        .map(([id, booking]) => ({ id, ...booking }))
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setRecentBookings(arr);
+    } catch (e) {
+      setRecentBookings([]);
     }
   };
 
@@ -63,30 +81,20 @@ const AdminDashboard = ({ navigation }) => {
   const statsData = [
     { title: 'Total Users', value: stats.totalUsers.toString(), icon: 'people-outline' },
     { title: 'Active Vendors', value: stats.activeVendors.toString(), icon: 'business-outline' },
-    { title: 'Total Bookings', value: '0', icon: 'calendar-outline' },
+    { title: 'Total Bookings', value: stats.totalBookings, icon: 'calendar-outline' },
     { title: 'Revenue', value: '$0', icon: 'cash-outline' },
   ];
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'New Vendor',
-      description: 'John\'s Auto Rental joined the platform',
-      time: '2 hours ago',
-    },
-    {
-      id: 2,
+  const recentActivities = recentBookings.map((booking) => {
+    const vehicle = booking.vehicle || {};
+    const contact = booking.contactDetails || {};
+    return {
+      id: booking.id,
       type: 'New Booking',
-      description: 'Booking #1234 created for Toyota Camry',
-      time: '3 hours ago',
-    },
-    {
-      id: 3,
-      type: 'Payment',
-      description: 'Payment received for Booking #1233',
-      time: '5 hours ago',
-    },
-  ];
+      description: `${contact.firstName || ''} ${contact.lastName || ''} booked ${vehicle.make || 'Vehicle'} ${vehicle.model || ''}`,
+      time: new Date(booking.createdAt).toLocaleDateString(),
+    };
+  });
 
   return (
     <View style={styles.container}>
@@ -124,26 +132,30 @@ const AdminDashboard = ({ navigation }) => {
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
-          {recentActivities.map((activity) => (
-            <View key={activity.id} style={styles.activityCard}>
-              <View style={styles.activityHeader}>
-                <View style={styles.activityType}>
-                  <Ionicons
-                    name={
-                      activity.type === 'New Vendor' ? 'business-outline' :
-                      activity.type === 'New Booking' ? 'calendar-outline' :
-                      'cash-outline'
-                    }
-                    size={20}
-                    color="#E53935"
-                  />
-                  <Text style={styles.activityTypeText}>{activity.type}</Text>
+          {recentActivities.length === 0 ? (
+            <Text style={styles.text}>No recent activities.</Text>
+          ) : (
+            recentActivities.map((activity) => (
+              <TouchableOpacity
+                key={activity.id}
+                style={styles.activityCard}
+                onPress={() => navigation.navigate('BookingSummary', { ...recentBookings.find(b => b.id === activity.id), bookingId: activity.id })}
+              >
+                <View style={styles.activityHeader}>
+                  <View style={styles.activityType}>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={20}
+                      color="#E53935"
+                    />
+                    <Text style={styles.activityTypeText}>{activity.type}</Text>
+                  </View>
+                  <Text style={styles.activityTime}>{activity.time}</Text>
                 </View>
-                <Text style={styles.activityTime}>{activity.time}</Text>
-              </View>
-              <Text style={styles.activityDescription}>{activity.description}</Text>
-            </View>
-          ))}
+                <Text style={styles.activityDescription}>{activity.description}</Text>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </ScrollView>
     </View>
