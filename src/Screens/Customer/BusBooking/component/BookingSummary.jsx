@@ -17,7 +17,7 @@ const BookingSummary = ({ navigation, route }) => {
             >
               <Ionicons name="chevron-back" size={24} color={Colors.WHITE} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Payment States</Text>
+            <Text style={styles.headerTitle}>Payment Status</Text>
             <TouchableOpacity style={styles.headerRight} />
           </View>
       ),

@@ -1,5 +1,5 @@
 import React, {useLayoutEffect, useState} from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
 import InputField from '../../../../Components/InputField';

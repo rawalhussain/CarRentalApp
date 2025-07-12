@@ -4,16 +4,15 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
   Pressable,
   Modal,
   ScrollView,
   SafeAreaView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import styles from './styles';
+import styles from '../BusBooking/component/styles';
 import { useNavigation } from '@react-navigation/native';
-import {Colors} from "../../../../Themes/MyColors";
+import {Colors} from '../../../Themes/MyColors';
 
 const CarBookingDetails = () => {
   const navigation = useNavigation();

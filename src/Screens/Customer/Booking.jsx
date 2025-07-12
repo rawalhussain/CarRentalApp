@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { Colors } from '../../../Themes/MyColors';
-import { getBookings } from '../../../Config/firebase';
-import useAuthStore from '../../../store/useAuthStore';
-import Loader from '../../../Components/Loader';
-import Button from '../../../Components/Button';
+import { Colors } from '../../Themes/MyColors';
+import { getBookings } from '../../Config/firebase';
+import useAuthStore from '../../store/useAuthStore';
+import Loader from '../../Components/Loader';
 
 const CustomerBookings = ({ navigation }) => {
   const { user } = useAuthStore();
@@ -12,8 +11,6 @@ const CustomerBookings = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('CustomerBookings mounted');
-    console.log('Full user object:', user);
     if (user && (user.uid || user.user?.uid)) {
       fetchBookings();
     } else {
@@ -135,7 +132,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.BLACK,
     marginBottom: 18,
-    marginTop: 8,
+    marginTop: 30,
     textAlign: 'left',
   },
 });
