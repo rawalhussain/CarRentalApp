@@ -15,14 +15,14 @@ import SignUp from '../Screens/Auth/SignUp';
 import ForgotPassword from '../Screens/Auth/ForgotPassword';
 
 // Customer Screens
-import CustomerHome from '../Screens/Customer/Home/Services';
-import BusSearch from '../Screens/Customer/Home/components/BusBookingDetails';
-import BusSearchResults from '../Screens/Customer/Home/components/BusSearchResults';
-import CarSearch from '../Screens/Customer/Home/components/CarBookingDetails';
-import CustomerCarDetails from '../Screens/Customer/CarDetails';
-import CustomerBookings from '../Screens/Customer/component/Booking';
-import ContactDetails from '../Screens/Customer/Home/components/ContactDetails';
-import BookingSummary from '../Screens/Customer/Home/components/BookingSummary';
+import CustomerHome from '../Screens/Customer/BusBooking';
+import BusSearch from '../Screens/Customer/BusBooking/component/BusBookingDetails';
+import BusSearchResults from '../Screens/Customer/BusBooking/component/BusSearchResults';
+import CarSearch from '../Screens/Customer/CarBooking/CarBookingDetails';
+import CustomerCarDetails from '../Screens/Customer/CarBooking/CarDetails';
+import CustomerBookings from '../Screens/Customer/Booking';
+import ContactDetails from '../Screens/Customer/BusBooking/component/ContactDetails';
+import BookingSummary from '../Screens/Customer/BusBooking/component/BookingSummary';
 
 // Provider Screens
 import ProviderHome from '../Screens/Provider/Home/Home';
@@ -39,6 +39,7 @@ import VehicleManagement from '../Screens/AdminDashboard/component/MyCars';
 import AdminDashboard from '../Screens/AdminDashboard';
 import AdminBookings from '../Screens/AdminDashboard/component/Booking';
 import Welcome from '../Screens/Welcome';
+import {SafeAreaView} from "react-native";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -170,115 +171,117 @@ const Navigation = () => {
     };
 
     return (
-        <NavigationContainer
-            onStateChange={handleNavigationStateChange}
-            onReady={async () => {
-                await BootSplash.hide({ fade: true });
-            }}>
-            <Stack.Navigator
-                screenOptions={{headerShown: false}}
-                initialRouteName={getInitialRoute()}>
-                {!hasCompletedOnboarding && (
-                    <Stack.Screen name="WelcomeScreen" component={Welcome} />
-                )}
-                {!user || !userData ? (
-                    // Auth Stack
-                    <>
-                        <Stack.Screen name="Login" component={Login} />
-                        <Stack.Screen name="SignUp" component={SignUp}  options={{
-                            headerShown: true,
-                        }} />
-                        <Stack.Screen name="ForgotPassword" component={ForgotPassword}  options={{
-                            headerShown: true,
-                        }} />
-                    </>
-                ) : (
-                    // User type specific stacks
-                    <>
-                        {userData.userType === 'customer' && (
-                            <>
-                                <Stack.Screen name="CustomerTabs" component={CustomerTabs} />
-                                <Stack.Screen
-                                    name="BusSearch"
-                                    component={BusSearch}
-                                    options={{
-                                        headerShown: true,
-                                    }}
-                                />
-                                <Stack.Screen
-                                    name="BusSearchResults"
-                                    component={BusSearchResults}
-                                    options={{
-                                        headerShown: true,
-                                    }}
-                                />
-                                <Stack.Screen
-                                    name="ContactDetails"
-                                    component={ContactDetails}
-                                    options={{
-                                        headerShown: true,
-                                    }}
-                                />
-                                <Stack.Screen
-                                    name="BookingSummary"
-                                    component={BookingSummary}
-                                    options={{
-                                        headerShown: true,
-                                    }}
-                                />
-                                <Stack.Screen
-                                    name="CarSearch"
-                                    component={CarSearch}
-                                    options={{
-                                        headerShown: true,
-                                    }}
-                                />
-                                <Stack.Screen
-                                    name="CarDetails"
-                                    component={CustomerCarDetails}
-                                    options={{
-                                        headerShown: true,
-                                    }}
-                                />
-                            </>
-                        )}
-                        {userData.userType === 'provider' && (
-                            <>
-                                <Stack.Screen name="ProviderTabs" component={ProviderTabs} />
-                                <Stack.Screen
-                                    name="AddCar"
-                                    component={ProviderAddCar}
-                                    options={{
-                                        headerShown: true,
-                                    }}
-                                />
-                                <Stack.Screen
-                                    name="CarDetails"
-                                    component={Cars}
-                                    options={{
-                                        headerShown: true,
-                                    }}
-                                />
-                                <Stack.Screen
-                                    name="BankDetails"
-                                    component={BankDetails}
-                                    options={{
-                                        headerShown: true,
-                                    }}
-                                />
-                                <Stack.Screen
-                                    name="SubmissionSuccess"
-                                    component={SubmissionSuccess}
-                                />
-                            </>
-                        )}
-                        {userData.userType === 'admin' && (
-                            <Stack.Screen name="AdminTabs" component={AdminTabs} />
-                        )}
-                    </>
-                )}
-            </Stack.Navigator>
-        </NavigationContainer>
+        <SafeAreaView style={{flex: 1}}>
+            <NavigationContainer
+                onStateChange={handleNavigationStateChange}
+                onReady={async () => {
+                    await BootSplash.hide({ fade: true });
+                }}>
+                <Stack.Navigator
+                    screenOptions={{headerShown: false}}
+                    initialRouteName={getInitialRoute()}>
+                    {!hasCompletedOnboarding && (
+                        <Stack.Screen name="WelcomeScreen" component={Welcome} />
+                    )}
+                    {!user || !userData ? (
+                        // Auth Stack
+                        <>
+                            <Stack.Screen name="Login" component={Login} />
+                            <Stack.Screen name="SignUp" component={SignUp}  options={{
+                                headerShown: true,
+                            }} />
+                            <Stack.Screen name="ForgotPassword" component={ForgotPassword}  options={{
+                                headerShown: true,
+                            }} />
+                        </>
+                    ) : (
+                        // User type specific stacks
+                        <>
+                            {userData.userType === 'customer' && (
+                                <>
+                                    <Stack.Screen name="CustomerTabs" component={CustomerTabs} />
+                                    <Stack.Screen
+                                        name="BusSearch"
+                                        component={BusSearch}
+                                        options={{
+                                            headerShown: true,
+                                        }}
+                                    />
+                                    <Stack.Screen
+                                        name="BusSearchResults"
+                                        component={BusSearchResults}
+                                        options={{
+                                            headerShown: true,
+                                        }}
+                                    />
+                                    <Stack.Screen
+                                        name="ContactDetails"
+                                        component={ContactDetails}
+                                        options={{
+                                            headerShown: true,
+                                        }}
+                                    />
+                                    <Stack.Screen
+                                        name="BookingSummary"
+                                        component={BookingSummary}
+                                        options={{
+                                            headerShown: true,
+                                        }}
+                                    />
+                                    <Stack.Screen
+                                        name="CarSearch"
+                                        component={CarSearch}
+                                        options={{
+                                            headerShown: true,
+                                        }}
+                                    />
+                                    <Stack.Screen
+                                        name="CarDetails"
+                                        component={CustomerCarDetails}
+                                        options={{
+                                            headerShown: true,
+                                        }}
+                                    />
+                                </>
+                            )}
+                            {userData.userType === 'provider' && (
+                                <>
+                                    <Stack.Screen name="ProviderTabs" component={ProviderTabs} />
+                                    <Stack.Screen
+                                        name="AddCar"
+                                        component={ProviderAddCar}
+                                        options={{
+                                            headerShown: true,
+                                        }}
+                                    />
+                                    <Stack.Screen
+                                        name="CarDetails"
+                                        component={Cars}
+                                        options={{
+                                            headerShown: true,
+                                        }}
+                                    />
+                                    <Stack.Screen
+                                        name="BankDetails"
+                                        component={BankDetails}
+                                        options={{
+                                            headerShown: true,
+                                        }}
+                                    />
+                                    <Stack.Screen
+                                        name="SubmissionSuccess"
+                                        component={SubmissionSuccess}
+                                    />
+                                </>
+                            )}
+                            {userData.userType === 'admin' && (
+                                <Stack.Screen name="AdminTabs" component={AdminTabs} />
+                            )}
+                        </>
+                    )}
+                </Stack.Navigator>
+            </NavigationContainer>
+        </SafeAreaView>
     );
 };
 

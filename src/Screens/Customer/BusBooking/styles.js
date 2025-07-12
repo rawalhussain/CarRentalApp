@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import {Colors} from "../../../../Themes/MyColors";
+import {Colors} from '../../../Themes/MyColors';
 
 export default StyleSheet.create({
   container: {
@@ -14,6 +14,7 @@ export default StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+    marginTop: 60,
   },
 
   profileSection: {

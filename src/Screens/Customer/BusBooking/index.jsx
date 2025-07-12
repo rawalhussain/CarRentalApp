@@ -6,10 +6,10 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
-import useUserStore from '../../../../store/useUserStore';
-import Loader from '../../../../Components/Loader';
-import useAuthStore from '../../../../store/useAuthStore';
-import { signOut } from '../../../../Config/firebase';
+import useUserStore from '../../../store/useUserStore';
+import Loader from '../../../Components/Loader';
+import useAuthStore from '../../../store/useAuthStore';
+import { signOut } from '../../../Config/firebase';
 
 
 const ServiceScreen = ({ navigation }) => {

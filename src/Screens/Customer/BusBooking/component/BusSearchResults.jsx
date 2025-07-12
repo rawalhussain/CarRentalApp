@@ -2,7 +2,7 @@ import React, { useLayoutEffect } from 'react';
 import {View, Text, FlatList, SafeAreaView, TouchableOpacity, Image, StatusBar} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
-import {Colors} from "../../../../Themes/MyColors";
+import {Colors} from '../../../../Themes/MyColors';
 
 const BusSearchResults = ({ navigation, route }) => {
   const { pickupAddress, dropoffAddress, pickupDate, pickupTime, hours, buses } = route.params;
@@ -55,11 +55,11 @@ const BusSearchResults = ({ navigation, route }) => {
               })}
             >
               <View style={styles.busCard}>
-                <Image
-                  source={bus.photo ? { uri: bus.photo } : {uri: 'https://via.placeholder.com/150'}}
-                  style={styles.busImage}
-                  resizeMode="cover"
-                />
+                {/*<Image*/}
+                {/*  source={bus.photo ? { uri: bus.photo } : {uri: 'https://via.placeholder.com/150'}}*/}
+                {/*  style={styles.busImage}*/}
+                {/*  resizeMode="cover"*/}
+                {/*/>*/}
                 <View style={styles.busDetails}>
                   <Text style={styles.busName}>{bus.make || 'Make'} {bus.model || 'Model'}{bus.variant ? ` (${bus.variant})` : ''}</Text>
                   <View style={styles.busInfoRow}>
