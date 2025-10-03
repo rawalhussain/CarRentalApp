@@ -52,6 +52,25 @@ export default StyleSheet.create({
     color: '#000',
     marginBottom: 40,
   },
+  bookRideBtn: {
+    backgroundColor: Colors.PRIMARY,
+    paddingVertical: 20,
+    paddingHorizontal: 60,
+    borderRadius: 25,
+    marginBottom: 25,
+    width: 260,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  bookRideBtnText: {
+    color: Colors.WHITE,
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  buttonIcon: {
+    marginRight: 10,
+  },
   rentalBtn: {
     backgroundColor: Colors.PRIMARY, // blue
     paddingVertical: 20,

@@ -5,6 +5,7 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Colors } from '../../../Themes/MyColors';
 import styles from './styles';
 import useUserStore from '../../../store/useUserStore';
 import Loader from '../../../Components/Loader';
@@ -49,6 +50,14 @@ const ServiceScreen = ({ navigation }) => {
                 <Text style={styles.title}>
                     WHAT SERVICE YOU ARE{'\n'}LOOKING FOR?
                 </Text>
+
+                <TouchableOpacity
+                    style={styles.bookRideBtn}
+                    onPress={() => navigation.navigate('Services')}
+                >
+                    <Ionicons name="car" size={24} color={Colors.WHITE} style={styles.buttonIcon} />
+                    <Text style={styles.bookRideBtnText}>BOOK RIDE</Text>
+                </TouchableOpacity>
 
                 <TouchableOpacity
                     style={styles.rentalBtn}
