@@ -44,9 +44,9 @@ const ProviderCars = ({navigation, route}) => {
                 onPress={() => navigation.goBack()}
                 style={styles.headerBack}
             >
-              <Ionicons name="chevron-back" size={24} color="#fff" />
+              <Ionicons name="chevron-back" size={24} color={Colors.WHITE} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{isEditMode ? 'Edit Car' : 'Add Car'}</Text>
+            <Text style={styles.headerTitle}>{isEditMode ? 'Edit Car' : 'Adddd Car'}</Text>
             <TouchableOpacity style={styles.headerRight} />
           </View>
       ),
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     margin: 16,
     padding: 16,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: Colors.BLACK,
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
@@ -293,6 +293,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 12,
+    paddingTop: 60,
     borderBottomWidth: 1,
     borderBottomColor: Colors.LINE_GRAY,
   },

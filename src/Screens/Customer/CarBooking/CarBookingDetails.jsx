@@ -24,7 +24,7 @@ const CarBookingDetails = () => {
   const [deliveryOption, setDeliveryOption] = useState('');
   const [where, setWhere] = useState('');
 
-  useLayoutEffect(() => {
+  useLayoutEffect(() => { 
     navigation.setOptions({
       header: () => (
           <View style={styles.headerContainer}>

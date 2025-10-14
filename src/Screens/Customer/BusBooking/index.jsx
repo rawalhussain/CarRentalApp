@@ -17,6 +17,7 @@ const ServiceScreen = ({ navigation }) => {
     const {userData, clearUserData} = useUserStore();
     const {clearAuth} = useAuthStore();
     const [loading, setLoading] = useState(false);
+    
     return (
         <View style={styles.container}>
             {loading && <Loader />}
