@@ -9,15 +9,15 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Colors } from '../Themes/MyColors';
 
-const BottomNavigationBar = ({ 
-  activeTab, 
-  onTabPress, 
+const BottomNavigationBar = ({
+  activeTab,
+  onTabPress,
   tabs = [
     { id: 'Home', icon: 'home', label: 'Home' },
     { id: 'Services', icon: 'grid', label: 'Services' },
     { id: 'Activity', icon: 'document-text', label: 'Activity' },
-    { id: 'Account', icon: 'person', label: 'Account' }
-  ]
+    { id: 'Account', icon: 'person', label: 'Account' },
+  ],
 }) => {
   return (
     <View style={styles.container}>

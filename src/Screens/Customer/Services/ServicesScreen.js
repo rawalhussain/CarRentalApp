@@ -7,11 +7,14 @@ import {
   StatusBar,
   Platform,
   TextInput,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Colors } from '../../../Themes/MyColors';
 import BottomNavigationBar from '../../../Components/BottomNavigationBar';
+import DestinationItem from '../../../Components/DestinationItem';
+import { Icons } from '../../../Themes/icons';
 
 export default function ServicesScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Services');
@@ -58,11 +61,26 @@ export default function ServicesScreen({ navigation }) {
     }, 150);
   };
 
+  const staticDestinations = [
+    {
+      id: 1,
+      title: 'Select Citywalk Mall',
+      address: 'Saket District Center, District Center, Sector 6, Pushp Vihar, New Delhi, Delhi 110017',
+      icon: 'time',
+    },
+    {
+      id: 2,
+      title: '5, Kullar Farms Rd',
+      address: 'New Manglapuri, Manglapuri Village, Sultanpur, New Delhi, Delhi',
+      icon: 'home',
+    },
+  ];
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaTop} edges={['top']}>
         <StatusBar barStyle="dark-content" backgroundColor={Colors.WHITE} />
-        
+
         {/* Header with Back Button and Logo */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton}>
@@ -75,14 +93,21 @@ export default function ServicesScreen({ navigation }) {
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color={Colors.PRIMARY_GREY} />
-            <TextInput 
+            <Ionicons name="search" size={20} color={Colors.BLACK} />
+            <TextInput
               style={styles.searchInput}
               placeholder="Where to?"
-              placeholderTextColor={Colors.PRIMARY_GREY}
+              placeholderTextColor={Colors.placeholder}
+                keyboardType="default"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="off"
+                autoFocus={false}
+                autoCompleteType="off"
+                autoCompleteSuggestionsType="off"
             />
-            <TouchableOpacity style={styles.laterButton}>
-              <Ionicons name="time" size={16} color={Colors.WHITE} />
+            <TouchableOpacity style={styles.laterButton} activeOpacity={0.6}>
+              <Ionicons name="time" size={20} color={Colors.BLACK} />
               <Text style={styles.laterText}>Later</Text>
             </TouchableOpacity>
           </View>
@@ -90,35 +115,30 @@ export default function ServicesScreen({ navigation }) {
 
         {/* Recent Destinations */}
         <View style={styles.destinationsSection}>
-          <View style={styles.destinationItem}>
-            <View style={styles.destinationIcon}>
-              <Ionicons name="time" size={16} color={Colors.WHITE} />
-            </View>
-            <View style={styles.destinationText}>
-              <Text style={styles.destinationTitle}>Select Citywalk Mall</Text>
-              <Text style={styles.destinationAddress}>Saket Disctrict Center, District Center, Sector 6, Pushp Vihar, New Delhi, Delhi 110017</Text>
-            </View>
-          </View>
-          
-          <View style={styles.divider} />
-          
-          <View style={styles.destinationItem}>
-            <View style={styles.destinationIcon}>
-              <Ionicons name="time" size={16} color={Colors.WHITE} />
-            </View>
-            <View style={styles.destinationText}>
-              <Text style={styles.destinationTitle}>5, Kullar Farms Rd</Text>
-              <Text style={styles.destinationAddress}>New Manglapuri, Manglapuri Village, Sultanpur, New Delhi, Delhi</Text>
-            </View>
-          </View>
+          {staticDestinations.map((destination, index) => (
+            <React.Fragment key={destination.id}>
+              <DestinationItem
+                title={destination.title}
+                address={destination.address}
+                icon={destination.icon}
+                onPress={() => {
+                  // Handle destination selection
+                  console.log('Selected destination:', destination.title);
+                }}
+              />
+              {index < staticDestinations.length - 1 && (
+                <View style={styles.divider} />
+              )}
+            </React.Fragment>
+          ))}
         </View>
 
         {/* Two Lines Above Suggestions */}
-        <View style={styles.twoLinesContainer}>
+        {/* <View style={styles.twoLinesContainer}>
           <View style={styles.line} />
           <View style={styles.gapLine} />
           <View style={styles.line} />
-        </View>
+        </View> */}
 
         {/* Suggestions Section */}
         <View style={styles.suggestionsSection}>
@@ -128,53 +148,56 @@ export default function ServicesScreen({ navigation }) {
               <Text style={styles.seeAllText}>See all</Text>
             </TouchableOpacity>
           </View>
-          
+
           {/* Service Cards */}
           <View style={styles.cardsContainer}>
-            {/* Ride Card */}
             <TouchableOpacity
               style={[
                 styles.serviceCard,
-                selectedCard === 'Ride' && styles.selectedCard
               ]}
               onPress={() => handleServicePress('Ride')}
-              activeOpacity={0.8}
+              activeOpacity={0.6}
             >
               <View style={styles.cardIcon}>
-                <Ionicons name="car" size={40} color={selectedCard === 'Ride' ? Colors.WHITE : Colors.BLACK} />
+                <Image source={Icons.car} style={styles.cardIconImage} />
               </View>
-              <Text style={[styles.cardText, selectedCard === 'Ride' && styles.selectedCardText]}>Ride</Text>
+              <Text style={styles.cardText }>Ride</Text>
             </TouchableOpacity>
 
             {/* Reserve Card */}
             <TouchableOpacity
               style={[
                 styles.serviceCard,
-                selectedCard === 'Reserve' && styles.selectedCard
               ]}
               onPress={() => handleServicePress('Reserve')}
-              activeOpacity={0.8}
+              activeOpacity={0.6}
             >
               <View style={styles.cardIcon}>
-                <Ionicons name="calendar" size={40} color={selectedCard === 'Reserve' ? Colors.WHITE : Colors.BLACK} />
+              <Image source={Icons.calendar} style={styles.calendarIconImage} />
               </View>
-              <Text style={[styles.cardText, selectedCard === 'Reserve' && styles.selectedCardText]}>Reserve</Text>
+              <Text style={styles.cardText}>Reserve</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Full Width Divider */}
-        <View style={styles.fullWidthDivider} />
+        {/* <View style={styles.fullWidthDivider} /> */}
 
           {/* Promotional Banner */}
           <View style={styles.bannerContainer}>
             <View style={styles.banner}>
               <View style={styles.bannerLeft}>
-                <Text style={styles.bannerText}>Welcome to</Text>
-                <Text style={styles.bannerText}>Lowest Transport</Text>
+                <Text style={styles.bannerTextFirst}>Welcome to Lowest</Text>
+                <Text style={styles.bannerTextSecond}>Transport</Text>
               </View>
               <View style={styles.bannerRight}>
-                <Ionicons name="car-sport" size={70} color={Colors.WHITE} />
+                {/* Circular background elements */}
+                <View style={styles.circleContainer}>
+                  <View style={styles.outerCircle} />
+                  <View style={styles.innerCircle} />
+                  <View style={styles.centerCircle} />
+                </View>
+                <Image source={Icons.car2} style={styles.bannerIconImage} />
               </View>
             </View>
           </View>
@@ -194,7 +217,7 @@ export default function ServicesScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.WHITE,
+    backgroundColor: Colors.BACKGROUND_GREY,
   },
   safeAreaTop: {
     flex: 1,
@@ -206,13 +229,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 16,
+    // paddingVertical: 15,
     backgroundColor: Colors.WHITE,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 41,
+    height: 41,
     borderRadius: 20,
     backgroundColor: Colors.PRIMARY,
     alignItems: 'center',
@@ -220,142 +243,134 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontSize: 25,
-    fontWeight: '500',
+    fontWeight: '400',
     color: Colors.BLACK,
   },
   placeholder: {
     width: 40,
   },
   searchContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 15,
+    alignItems:'center',
+    justifyContent:'center',
+    backgroundColor: Colors.WHITE,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEEEEE',
-    borderRadius: 25,
+    backgroundColor: Colors.lightGray,
+    borderRadius: 26,
     paddingHorizontal: 15,
-    paddingVertical: 10,
+    height: 56,
+    paddingVertical: 8,
+    maxHeight:56,
   },
   searchInput: {
     flex: 1,
     marginLeft: 10,
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: 'bold',
     color: Colors.BLACK,
+    textAlign: 'left',
+    justifyContent:'center',
+    alignItems:'center',
   },
   laterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.PRIMARY_GREY,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
+    justifyContent: 'center',
+    alignSelf: 'center',
+    backgroundColor: Colors.WHITE,
+    borderRadius: 47,
+    height: 41,
+    width: 101,
     marginLeft: 10,
+    maxHeight: 41,
+    maxWidth: 101,
   },
   laterText: {
-    color: Colors.WHITE,
-    fontSize: 12,
-    fontWeight: '500',
+    color: Colors.BLACK,
+    fontSize: 18,
+    fontWeight: '400',
     marginLeft: 4,
   },
   scrollContent: {
     flex: 1,
   },
   destinationsSection: {
-    paddingHorizontal: 20,
-  },
-  destinationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  destinationIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.SECONDARY,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 15,
-  },
-  destinationText: {
-    flex: 1,
-  },
-  destinationTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.BLACK,
-    marginBottom: 4,
-  },
-  destinationAddress: {
-    fontSize: 14,
-    color: Colors.PRIMARY_GREY,
-    lineHeight: 18,
+    paddingHorizontal: 0,
+    backgroundColor: Colors.WHITE,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.dividerGray,
+    // backgroundColor: 'red',
   },
   divider: {
     height: 1,
-    backgroundColor: '#E0E0E0',
-    marginLeft: 47,
+    backgroundColor: Colors.dividerGray,
+    // marginLeft: 47,
     marginRight: 20,
+    width: '80%',
+    alignSelf: 'flex-end',
   },
   suggestionsSection: {
-    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: Colors.dividerGray,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.dividerGray,
+    backgroundColor: Colors.WHITE,
+    marginTop: 10,
+    // paddingHorizontal: 20,
     paddingTop: 10,
+    paddingBottom: 10,
   },
   suggestionsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
+    paddingHorizontal: 16,
+
   },
   suggestionsTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: Colors.BLACK,
   },
   seeAllText: {
     fontSize: 14,
     color: Colors.BLACK,
-    fontWeight: '500',
+    fontWeight: '400',
   },
   cardsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+
+    paddingHorizontal: 20,
+    paddingBottom: 15,
   },
   serviceCard: {
-    backgroundColor: '#EEEEEE',
-    borderRadius: 8,
-    padding: 20,
-    height: 100,
-    width: '48%',
-    position: 'relative',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {
-          width: 0,
-          height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    backgroundColor: Colors.lightGray,
+    borderRadius: 12,
+    height: 95,
+    width: '47%',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
   cardIcon: {
-    position: 'absolute',
-
-    right: 15,
+  alignItems: 'flex-end',
+  justifyContent: 'flex-end',
+  // backgroundColor: 'red'
+    // paddingRight: 6,
   },
   cardText: {
-    position: 'absolute',
-    bottom: 15,
-    left: 15,
+  textAlign: 'left',
+  paddingLeft: 6,
+  paddingTop: 15,
+  alignContent:'flex-end',
     fontSize: 20,
-    fontWeight: '500',
+    fontWeight: '400',
     color: Colors.BLACK,
   },
   selectedCard: {
@@ -388,28 +403,98 @@ const styles = StyleSheet.create({
   bannerContainer: {
     paddingHorizontal: 20,
     paddingTop: 15,
-    paddingBottom: 15,
+    // paddingBottom: 15,
   },
   banner: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.SECONDARY,
-    borderRadius: 15,
-    padding: 20,
-    height: 120,
+    // alignItems: 'center',
+    backgroundColor: Colors.BANNER_BLUE,
+    borderRadius: 16,
+    // padding: 20,
+    height: 140,
     overflow: 'hidden',
+    position: 'relative',
+    // borderTopLeftRadius: 30,
+    // borderBottomLeftRadius: 30,
+    // borderTopRightRadius: 20,
+    // borderBottomRightRadius: 15,
   },
   bannerLeft: {
     flex: 1,
+    paddingTop: 13,
+    paddingLeft: 13,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    // backgroundColor: 'red',
   },
-  bannerText: {
+  bannerTextFirst: {
     fontSize: 20,
     fontWeight: 'bold',
     color: Colors.WHITE,
-    lineHeight: 24,
+    lineHeight: 22,
+  },
+  bannerTextSecond: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.WHITE,
+    lineHeight: 25,
   },
   bannerRight: {
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+    width: 140,
+    height: 120,
   },
+  circleContainer: {
+    position: 'absolute',
+    right: -70,
+    top: -20,
+    width: 200,
+    height: 180,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outerCircle: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 75,
+    backgroundColor: Colors.CIRCLE_RED,
+    opacity: 1,
+  },
+  innerCircle: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 60,
+    backgroundColor: Colors.CIRCLE_GREY,
+    opacity: 1,
+  },
+  centerCircle: {
+    position: 'absolute',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: Colors.WHITE,
+  },
+  cardIconImage:{
+    width: 84,
+    height: 48,
+  },
+  calendarIconImage:{
+    width: 44,
+    height: 44,
+ marginTop: 5,
+  },
+  bannerIconImage:{
+    width: 213,
+    height: 122,
+    position: 'absolute',
+    right: -10,
+    top: 20,
+    zIndex: 10,
+    // transform: [{ rotate: '5deg' }],
+  },
+
 });

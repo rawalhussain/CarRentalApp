@@ -18,7 +18,7 @@ const RideBookingScreen = ({ navigation }) => {
 
   const handleTabPress = (tabId) => {
     setActiveTab(tabId);
-    
+
     // Handle navigation based on tab selection
     switch (tabId) {
       case 'Home':
@@ -45,9 +45,9 @@ const RideBookingScreen = ({ navigation }) => {
           <View style={styles.contentContainer}>
             <Text style={styles.welcomeText}>Welcome to Ride Booking</Text>
             <Text style={styles.subtitle}>Choose your preferred service</Text>
-            
+
             <View style={styles.serviceCards}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.serviceCard}
                 onPress={() => navigation.navigate('ReserveRide')}
               >
@@ -56,7 +56,7 @@ const RideBookingScreen = ({ navigation }) => {
                 <Text style={styles.serviceDescription}>Quick and convenient rides</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.serviceCard}
                 onPress={() => navigation.navigate('Services')}
               >
@@ -67,26 +67,26 @@ const RideBookingScreen = ({ navigation }) => {
             </View>
           </View>
         );
-      
+
       case 'Services':
         return (
           <View style={styles.contentContainer}>
             <Text style={styles.welcomeText}>Services</Text>
             <Text style={styles.subtitle}>Available transportation services</Text>
-            
+
             <View style={styles.serviceList}>
               <TouchableOpacity style={styles.serviceItem}>
                 <Ionicons name="car" size={24} color={Colors.PRIMARY} />
                 <Text style={styles.serviceItemText}>Car Rental</Text>
                 <Ionicons name="chevron-forward" size={20} color={Colors.PRIMARY_GREY} />
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.serviceItem}>
                 <Ionicons name="bus" size={24} color={Colors.PRIMARY} />
                 <Text style={styles.serviceItemText}>Bus Hire</Text>
                 <Ionicons name="chevron-forward" size={20} color={Colors.PRIMARY_GREY} />
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.serviceItem}>
                 <Ionicons name="bicycle" size={24} color={Colors.PRIMARY} />
                 <Text style={styles.serviceItemText}>Bike Rental</Text>
@@ -95,13 +95,13 @@ const RideBookingScreen = ({ navigation }) => {
             </View>
           </View>
         );
-      
+
       case 'Activity':
         return (
           <View style={styles.contentContainer}>
             <Text style={styles.welcomeText}>Activity</Text>
             <Text style={styles.subtitle}>Your recent bookings and activity</Text>
-            
+
             <View style={styles.activityList}>
               <View style={styles.activityItem}>
                 <Ionicons name="time" size={24} color={Colors.PRIMARY} />
@@ -110,7 +110,7 @@ const RideBookingScreen = ({ navigation }) => {
                   <Text style={styles.activityDescription}>Car rental - Yesterday</Text>
                 </View>
               </View>
-              
+
               <View style={styles.activityItem}>
                 <Ionicons name="checkmark-circle" size={24} color={Colors.SECONDARY} />
                 <View style={styles.activityContent}>
@@ -121,26 +121,26 @@ const RideBookingScreen = ({ navigation }) => {
             </View>
           </View>
         );
-      
+
       case 'Account':
         return (
           <View style={styles.contentContainer}>
             <Text style={styles.welcomeText}>Account</Text>
             <Text style={styles.subtitle}>Manage your account settings</Text>
-            
+
             <View style={styles.accountList}>
               <TouchableOpacity style={styles.accountItem}>
                 <Ionicons name="person" size={24} color={Colors.PRIMARY} />
                 <Text style={styles.accountItemText}>Profile</Text>
                 <Ionicons name="chevron-forward" size={20} color={Colors.PRIMARY_GREY} />
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.accountItem}>
                 <Ionicons name="settings" size={24} color={Colors.PRIMARY} />
                 <Text style={styles.accountItemText}>Settings</Text>
                 <Ionicons name="chevron-forward" size={20} color={Colors.PRIMARY_GREY} />
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.accountItem}>
                 <Ionicons name="help-circle" size={24} color={Colors.PRIMARY} />
                 <Text style={styles.accountItemText}>Help & Support</Text>
@@ -149,7 +149,7 @@ const RideBookingScreen = ({ navigation }) => {
             </View>
           </View>
         );
-      
+
       default:
         return null;
     }
@@ -158,10 +158,10 @@ const RideBookingScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.WHITE} />
-      
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -177,14 +177,14 @@ const RideBookingScreen = ({ navigation }) => {
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <BottomNavigationBar 
+      <BottomNavigationBar
         activeTab={activeTab}
         onTabPress={handleTabPress}
         tabs={[
           { id: 'Home', icon: 'home', label: 'Home' },
           { id: 'Services', icon: 'grid', label: 'Services' },
           { id: 'Activity', icon: 'document-text', label: 'Activity' },
-          { id: 'Account', icon: 'person', label: 'Account' }
+          { id: 'Account', icon: 'person', label: 'Account' },
         ]}
       />
     </SafeAreaView>

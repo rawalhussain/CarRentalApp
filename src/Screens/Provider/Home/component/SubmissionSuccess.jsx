@@ -15,7 +15,7 @@ const SubmissionSuccess = ({ navigation }) => {
         />
       </View>
       <Text style={styles.message}>
-        YOUR CARS WILL BE LIVE{"\n"}AFTER A REVIEW THANK YOU.
+        YOUR CARS WILL BE LIVE{'\n'}AFTER A REVIEW THANK YOU.
       </Text>
       <View style={styles.buttonWrapper}>
         <Button

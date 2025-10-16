@@ -61,7 +61,7 @@ const CarDetailsScreen = () => {
         <TouchableOpacity
           style={styles.button}
           onPress={() => navigation.navigate('Verification')}
-          
+
         >
           <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>

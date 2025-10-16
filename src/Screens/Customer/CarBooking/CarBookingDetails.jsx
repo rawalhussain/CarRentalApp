@@ -24,7 +24,7 @@ const CarBookingDetails = () => {
   const [deliveryOption, setDeliveryOption] = useState('');
   const [where, setWhere] = useState('');
 
-  useLayoutEffect(() => { 
+  useLayoutEffect(() => {
     navigation.setOptions({
       header: () => (
           <View style={styles.headerContainer}>
@@ -69,8 +69,8 @@ const CarBookingDetails = () => {
   const confirmDate = () => {
     const { day, monthIndex } = selectedDate;
     const fullDate = `${day} ${months[monthIndex]} 2025`;
-    if (calendarTarget === 'pickup') setPickupDate(fullDate);
-    else setReturnDate(fullDate);
+    if (calendarTarget === 'pickup') {setPickupDate(fullDate);}
+    else {setReturnDate(fullDate);}
     setCalendarVisible(false);
     setSelectedDate({ day: null, monthIndex: 0 });
   };
@@ -81,8 +81,8 @@ const CarBookingDetails = () => {
   };
 
   const confirmTime = () => {
-    if (timeTarget === 'pickup') setPickupTime(selectedTime);
-    else setReturnTime(selectedTime);
+    if (timeTarget === 'pickup') {setPickupTime(selectedTime);}
+    else {setReturnTime(selectedTime);}
     setTimeModalVisible(false);
     setSelectedTime(null);
   };

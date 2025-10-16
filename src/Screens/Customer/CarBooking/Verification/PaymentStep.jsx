@@ -59,7 +59,7 @@ const PaymentStep = ({ onNext }) => {
         <TextInput placeholder="Full Name" style={styles.phoneInput} placeholderTextColor="#999" />
         <TextInput placeholder="Email Address" style={styles.phoneInput} placeholderTextColor="#999" />
         <TextInput placeholder="Card Number 💳💰💲" style={styles.phoneInput} placeholderTextColor="#999" />
-        
+
         <View style={styles.row}>
           <TextInput placeholder="MM / YY" style={[styles.phoneInput, { flex: 1, marginRight: 8 }]} placeholderTextColor="#999" />
           <TextInput placeholder="CVC" style={[styles.phoneInput, { flex: 1 }]} placeholderTextColor="#999" />

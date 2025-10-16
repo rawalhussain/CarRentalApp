@@ -29,6 +29,5 @@ const carData = {
     },
     address: '123 Main Street, City, State',
   };
-  
+
   export default carData;
-  

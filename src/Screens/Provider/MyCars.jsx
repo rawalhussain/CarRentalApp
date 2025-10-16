@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  StatusBar
+  StatusBar,
 } from 'react-native';
 import { Colors } from '../../Themes/MyColors';
 import { getCars, updateVehicle, deleteVehicle, uploadVehicleImage } from '../../Config/firebase';

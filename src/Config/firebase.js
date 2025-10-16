@@ -355,7 +355,7 @@ export const updateVehicle = async (vehicleId, updates, type = 'cars') => {
     const vehicleRef = databaseRef.ref(`${type}/${vehicleId}`);
     const updateData = {
       ...updates,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     };
 
     await vehicleRef.update(updateData);
@@ -392,7 +392,7 @@ export const getVendorDetails = async (vendorId) => {
 export const getVehiclesWithVendorDetails = async ({ type = 'cars' }) => {
   try {
     const data = await getCars({ type });
-    
+
     if (!data) {
       return [];
     }
@@ -405,7 +405,7 @@ export const getVehiclesWithVendorDetails = async ({ type = 'cars' }) => {
             return {
               id,
               ...vehicle,
-              vendorName: 'Unknown Vendor'
+              vendorName: 'Unknown Vendor',
             };
           }
 
@@ -413,14 +413,14 @@ export const getVehiclesWithVendorDetails = async ({ type = 'cars' }) => {
           return {
             id,
             ...vehicle,
-            vendorName: vendorData?.fullName || 'Unknown Vendor'
+            vendorName: vendorData?.fullName || 'Unknown Vendor',
           };
         } catch (error) {
           console.error('Error fetching vendor details:', error);
           return {
             id,
             ...vehicle,
-            vendorName: 'Unknown Vendor'
+            vendorName: 'Unknown Vendor',
           };
         }
       })

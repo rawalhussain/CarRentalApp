@@ -48,7 +48,7 @@ import VehicleManagement from '../Screens/AdminDashboard/component/MyCars';
 import AdminDashboard from '../Screens/AdminDashboard';
 import AdminBookings from '../Screens/AdminDashboard/component/Booking';
 import Welcome from '../Screens/Welcome';
-import { SafeAreaView } from "react-native";
+import { SafeAreaView } from 'react-native';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -150,8 +150,8 @@ const Navigation = () => {
 
   // Initial Route Setup
   const getInitialRoute = () => {
-    if (!user) return 'Login';
-    if (!userData) return 'Login';
+    if (!user) {return 'Login';}
+    if (!userData) {return 'Login';}
 
     switch (userData.userType) {
       case 'customer':

@@ -19,4 +19,13 @@ export const Colors = {
   dark3: '#7F7F7F',
   error: '#BE1E2D',
   info: '#0A91C9',
+  placeholder: '#545454',
+  lightGray: '#EEEEEE',
+  dividerGray: '#E2E2E2',
+  // Banner design colors
+  BANNER_BLUE: '#0A91C9',
+  CIRCLE_RED: '#FF4B55',
+  CIRCLE_GREY: '#CA8084',
+  SLIDER_GRAY: '#777575',
+
 };

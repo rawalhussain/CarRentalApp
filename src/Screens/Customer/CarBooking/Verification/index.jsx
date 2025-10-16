@@ -20,11 +20,11 @@ const VerificationScreen = () => {
   const handleIntroContinue = () => {
     setCurrentScreen('phone');
   };
-  
+
   const handleLicenseContinue = () => {
     setCurrentScreen('payment'); // ✅ NEW
   };
-  
+
   // Move from phone step to OTP input
   const handlePhoneContinue = () => {
     setCurrentScreen('otp');
@@ -34,11 +34,11 @@ const VerificationScreen = () => {
   const handleOtpContinue = () => {
     setCurrentScreen('license'); // ✅ Correct logic to go to next screen
   };
-  
+
   const handlePaymentContinue = () => {
     alert('✅ All verification steps completed!');
   };
-  
+
   // ===== Render Logic =====
   if (currentScreen === 'phone') {
     return <PhoneStep onNext={handlePhoneContinue} />;
@@ -50,12 +50,12 @@ const VerificationScreen = () => {
   if (currentScreen === 'license') {
     return <LicenseStep onNext={handleLicenseContinue} />;
   }
-  
+
   if (currentScreen === 'payment') {
     return <PaymentStep onNext={handlePaymentContinue} />;
   }
- 
-  
+
+
   // ===== Intro screen (emoji steps layout) =====
   return (
     <View style={styles.container}>

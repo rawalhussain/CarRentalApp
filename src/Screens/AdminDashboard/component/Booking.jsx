@@ -44,11 +44,11 @@ const Bookings = ({ navigation }) => {
           >
             <Text style={styles.bookingText}>
               <Text style={{ fontWeight: 'bold' }}>{contact.firstName || ''} {contact.lastName || ''}</Text>
-              {` booked `}
+              {' booked '}
               <Text style={{ fontWeight: 'bold' }}>{vehicle.make || 'Vehicle'} {vehicle.model || ''}</Text>
-              {` on `}
+              {' on '}
               <Text style={{ color: Colors.PRIMARY_GREY }}>{new Date(booking.createdAt).toLocaleDateString()}</Text>
-              {` - `}
+              {' - '}
               <Text style={{ color: Colors.PRIMARY }}>{booking.status || 'pending'}</Text>
             </Text>
           </TouchableOpacity>

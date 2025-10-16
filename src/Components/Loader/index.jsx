@@ -24,4 +24,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Loader; 
+export default Loader;

@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useCallback, useState } from 'react';
+import React, { useRef, useMemo, useCallback, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,88 +10,247 @@ import {
   Dimensions,
   Image,
   ScrollView,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { Colors } from '../../../Themes/MyColors';
+import MapViewComponent from '../../../Components/MapView';
+import ModalHeader from '../../../Components/ModalHeader';
+import LocationService from '../../../services/LocationService';
+import { GOOGLE_MAPS_API_KEY } from '../../../Config/constants';
+
+// Polyfill for crypto.getRandomValues
+if (typeof global.crypto === 'undefined') {
+  global.crypto = {
+    getRandomValues: (arr) => {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 256);
+      }
+      return arr;
+    }
+  };
+}
 
 const { width: screenWidth } = Dimensions.get('window');
 
-export default function PickupScreen({ navigation }) {
+export default function PickupScreen({ navigation, route }) {
   // Bottom sheet ref
   const bottomSheetRef = useRef(null);
-  const insets = useSafeAreaInsets();
+  const mapViewRef = useRef(null);
+  const googlePlacesRef = useRef(null);
   
-  // Dummy locations data
-  const [dummyLocations] = useState([
-    { id: 1, name: 'Home', address: '123 Main Street, Downtown', type: 'home' },
-    { id: 2, name: 'Office', address: '456 Business Ave, Financial District', type: 'work' },
-    { id: 3, name: 'Airport', address: '789 Airport Blvd, Terminal 1', type: 'airport' },
-    { id: 4, name: 'Mall', address: '321 Shopping Center, Westfield', type: 'shopping' },
-    { id: 5, name: 'Hospital', address: '654 Medical Drive, City Hospital', type: 'medical' },
-  ]);
+  // Get navigation parameters
+  const { showCurrentLocation = false, currentLocation = null } = route?.params || {};
   
-  // Selected location state
+  // State for selected location and map region
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [mapRegion, setMapRegion] = useState(
+    currentLocation || {
+      latitude: 31.5204, 
+      longitude: 74.3587,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    }
+  );
+ 
+  
+  // State for tracking keyboard and sheet
+  const [currentSheetIndex, setCurrentSheetIndex] = useState(0);
+  
+  // Debug selectedLocation changes
+  useEffect(() => {
+    console.log('Selected location changed:', selectedLocation);
+  }, [selectedLocation]);
+  
+  // Debug mapRegion changes
+  useEffect(() => {
+    console.log('Map region changed:', mapRegion);
+  }, [mapRegion]);
   
   // Snap points for the bottom sheet
-  const snapPoints = useMemo(() => ['65%', '90%'], []);
+  const snapPoints = useMemo(() => ['45%', '85%', '89%'], []);
+  
+  // Keyboard listeners
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (event) => {
+        console.log('Keyboard will show:', event);
+        // Expand bottom sheet to 95% when keyboard opens
+        setTimeout(() => {
+          bottomSheetRef.current?.snapToIndex(2);
+        }, 100);
+      }
+    );
+
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      (event) => {
+        console.log('Keyboard will hide:', event);
+        // Return to original size when keyboard closes (if at index 1 or 2)
+        if (currentSheetIndex === 1 || currentSheetIndex === 2) {
+          setTimeout(() => {
+            bottomSheetRef.current?.snapToIndex(0);
+          }, 100);
+        }
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, [currentSheetIndex]);
   
   // Handle sheet changes
   const handleSheetChanges = useCallback((index) => {
+    setCurrentSheetIndex(index);
     if (index === -1) {
       // Sheet is closed, navigate back
       navigation.goBack();
     }
+    console.log('Bottom sheet index changed to:', index);
   }, [navigation]);
-
-  // Backdrop component
-  const renderBackdrop = useCallback(
-    (props) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.3}
-      />
-    ),
-    []
-  );
 
   const handleBack = () => {
     bottomSheetRef.current?.close();
+  };
+
+  const handleMapPress = () => {
+    // Close keyboard and return sheet to original size when map is pressed
+    Keyboard.dismiss();
+    if (currentSheetIndex === 1 || currentSheetIndex === 2) {
+      bottomSheetRef.current?.snapToIndex(0);
+    }
   };
 
   const handleLocationSelect = (location) => {
     setSelectedLocation(location);
   };
 
+  const handlePlaceSelect = (data, details = null) => {
+    if (details) {
+      const { lat, lng } = details.geometry.location;
+      const newRegion = {
+        latitude: lat,
+        longitude: lng,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      };
+      setMapRegion(newRegion);
+      const selectedLocationData = {
+        name: details.name || data.description,
+        address: details.formatted_address || data.description,
+        coordinates: { latitude: lat, longitude: lng }
+      };
+      setSelectedLocation(selectedLocationData);
+      // Set the search text to show the selected location with multiline support
+      setSearchText(details.formatted_address || data.description);
+      
+      // Set the text in the GooglePlacesAutocomplete input
+      if (googlePlacesRef.current) {
+        googlePlacesRef.current.setAddressText(details.formatted_address || data.description);
+      }
+      
+      // Animate map to the new location
+      if (mapViewRef.current) {
+        console.log('Animating map to region:', newRegion);
+        console.log('Selected location:', selectedLocationData);
+        setTimeout(() => {
+          mapViewRef.current.animateToRegion(newRegion, 1000);
+        }, 300);
+      }
+    }
+  };
+
   const handleConfirmPickup = () => {
     if (selectedLocation) {
-      navigation.navigate('Destination');
+      // Navigate back to ReserveRideScreen with updated pickup location
+      navigation.navigate('ReserveRide', {
+        updatedPickupLocation: selectedLocation.coordinates,
+        updatedPickupAddress: selectedLocation.address,
+      });
+    } else if (currentLocation) {
+      // If no new location selected, use current location
+      navigation.navigate('ReserveRide', {
+        updatedPickupLocation: currentLocation,
+        updatedPickupAddress: 'Current Location',
+      });
     } else {
       alert('Please select a pickup location');
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.WHITE} />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       
-      {/* Map Background */}
-      <View style={styles.mapContainer}>
-        <Image 
-          source={require('../../../../assets/image.png')}
-          style={styles.mapImage}
-        />
-        <View style={styles.mapOverlay}>
-          <View style={styles.locationCard}>
-            <Text style={styles.locationText}>Current Location</Text>
-            <Ionicons name="chevron-forward" size={16} color={Colors.BLACK} />
+      {/* Map Background - Behind Status Bar */}
+      <TouchableWithoutFeedback onPress={handleMapPress}>
+        <View style={styles.mapContainer} pointerEvents="box-none">
+          <MapViewComponent
+            ref={mapViewRef}
+            style={styles.map}
+            initialRegion={mapRegion}
+            showCurrentLocationMarker={true}
+            currentLocation={selectedLocation?.coordinates || currentLocation}
+            draggableMarker={true}
+            destinationMarker={selectedLocation ? (() => {
+              console.log('Rendering destination marker for:', selectedLocation);
+              return {
+                coordinate: selectedLocation.coordinates,
+                title: selectedLocation.name,
+                description: selectedLocation.address
+              };
+            })() : null}
+            onMarkerDragEnd={(location) => {
+              console.log('Marker dragged to:', location);
+              setSelectedLocation({
+                name: 'Selected Location',
+                address: `Lat: ${location.latitude.toFixed(4)}, Lng: ${location.longitude.toFixed(4)}`,
+                coordinates: { latitude: location.latitude, longitude: location.longitude }
+              });
+              setSearchText(`${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`);
+            }}
+            onPress={handleMapPress}
+          />
+          
+          {/* Map Overlay Buttons */}
+          <View style={styles.mapOverlay}>
+            {/* Back Button - Top Left */}
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={handleBack}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="chevron-back" size={24} color={Colors.BLACK} />
+            </TouchableOpacity>
+
+            {/* Center Location Button - Top Right */}
+            <TouchableOpacity 
+              style={styles.centerLocationButton}
+              onPress={() => {
+                if (currentLocation && mapViewRef.current) {
+                  const newRegion = {
+                    ...currentLocation,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                  };
+                  mapViewRef.current.animateToRegion(newRegion, 500);
+                  setMapRegion(newRegion);
+                }
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="locate" size={20} color={Colors.BLACK} />
+            </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
 
       {/* Bottom Sheet */}
       <BottomSheet
@@ -99,110 +258,161 @@ export default function PickupScreen({ navigation }) {
         index={0}
         snapPoints={snapPoints}
         onChange={handleSheetChanges}
-        backdropComponent={renderBackdrop}
-        enablePanDownToClose={true}
+        enablePanDownToClose={false}
         handleIndicatorStyle={styles.dragHandle}
         backgroundStyle={styles.bottomSheetBackground}
+        enableOverDrag={false}
+        android_keyboardInputMode="adjustResize"
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
       >
-        <BottomSheetView style={[styles.bottomSheetContent, { paddingBottom: Math.max(insets.bottom, 20) + 20 }]}>
+        <BottomSheetView style={styles.bottomSheetContent}>
           {/* Modal Header */}
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <Ionicons name="chevron-back" size={24} color={Colors.BLACK} />
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Set your pickup spot</Text>
-            <View style={styles.placeholder} />
-          </View>
+          <ModalHeader 
+            title="Set your pickup spot" 
+            onBack={handleBack}
+            description="Drag marker or search to set location"
+          />
 
-          {/* Instructions */}
-          <View style={styles.instructionsContainer}>
-            <Text style={styles.instructionsText}>Drag map to move pin</Text>
-          </View>
-
-          {/* Location Input Field */}
+          {/* Google Places Autocomplete */}
           <View style={styles.locationInputs}>
             <View style={styles.locationInput}>
               <View style={styles.locationIcon}>
                 <View style={styles.currentLocationDot} />
               </View>
               <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.locationTextInput}
-                  placeholder="Current Location?"
-                  placeholderTextColor={Colors.PRIMARY_GREY}
-                  value={selectedLocation ? selectedLocation.name : ''}
-                  editable={false}
-                />
-                <View style={styles.inputUnderline} />
+                {selectedLocation ? (
+                  <View style={styles.selectedLocationContainer}>
+                    <Text style={styles.selectedLocationText} numberOfLines={2}>
+                      {selectedLocation.address}
+                    </Text>
+                    <TouchableOpacity 
+                      style={styles.clearButton}
+                      onPress={() => {
+                        setSelectedLocation(null);
+                        setSearchText('');
+                        if (googlePlacesRef.current) {
+                          googlePlacesRef.current.setAddressText('');
+                        }
+                      }}
+                    >
+                      <Ionicons name="close-circle" size={20} color={Colors.PRIMARY_GREY} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <GooglePlacesAutocomplete
+                    ref={googlePlacesRef}
+                    placeholder="Search for pickup location..."
+                    onPress={(data, details = null) => {
+                      console.log('Place selected:', data, details);
+                      handlePlaceSelect(data, details);
+                    }}
+                    onChangeText={(text) => {
+                      setSearchText(text);
+                      if (!text) {
+                        setSelectedLocation(null);
+                      }
+                    }}
+                  query={{
+                    key: GOOGLE_MAPS_API_KEY,
+                    language: 'en',
+                    components: 'country:pk',
+                  }}
+                  styles={{
+                    container: styles.googlePlacesContainer,
+                    textInputContainer: styles.googlePlacesTextInputContainer,
+                    textInput: styles.googlePlacesInput,
+                    listView: styles.googlePlacesList,
+                    row: styles.googlePlacesRow,
+                    description: styles.googlePlacesDescription,
+                    separator: styles.googlePlacesSeparator,
+                    loader: styles.googlePlacesLoader,
+                    poweredContainer: styles.googlePlacesPoweredContainer,
+                  }}
+                  fetchDetails={true}
+                  enablePoweredByContainer={false}
+                  debounce={500}
+                  minLength={3}
+                  predefinedPlaces={[]}
+                  predefinedPlacesAlwaysVisible={false}
+                  currentLocation={false}
+                  currentLocationLabel=""
+                  renderRow={(rowData) => {
+                    const title = rowData.structured_formatting?.main_text || rowData.description;
+                    const address = rowData.structured_formatting?.secondary_text || '';
+                    return (
+                      <View style={styles.searchResultRow}>
+                        {/* <View style={styles.searchResultIconContainer}>
+                          <Ionicons name="location-outline" size={22} color={Colors.SECONDARY} />
+                        </View> */}
+                        <View style={styles.searchResultTextContainer}>
+                          <Text style={styles.searchResultTitle} numberOfLines={1}>{title}</Text>
+                          {address ? (
+                            <Text style={styles.searchResultAddress} numberOfLines={2}>{address}</Text>
+                          ) : null}
+                        </View>
+                      </View>
+                    );
+                  }}
+                  listEmptyComponent={() => (
+                    <View style={styles.emptyComponent}>
+                      <Text style={styles.emptyText}>No results found</Text>
+                    </View>
+                  )}
+                  timeout={10000}
+                  textInputProps={{
+                    placeholderTextColor: Colors.PRIMARY_GREY,
+                    returnKeyType: 'search',
+                    autoCorrect: false,
+                    autoCapitalize: 'none',
+                    clearButtonMode: 'while-editing',
+                    multiline: true,
+                    numberOfLines: 2,
+                    textAlignVertical: 'top',
+                    onFocus: () => {
+                      console.log('Input focused - expanding sheet to 95%');
+                      // Expand bottom sheet to 95% when input is focused
+                      setTimeout(() => {
+                        bottomSheetRef.current?.snapToIndex(2);
+                      }, 100);
+                    },
+                    onBlur: () => {
+                      console.log('Input blurred');
+                      // Don't collapse here, let keyboard hide listener handle it
+                    },
+                  }}
+                  onFail={(error) => {
+                    console.log('GooglePlacesAutocomplete Error:', error);
+                    console.log('API Key being used:', GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
+                  }}
+                  onNotFound={() => console.log('No results found')}
+                  onTimeout={() => console.log('Request timeout')}
+                  onQueryChange={(query) => {
+                    console.log('Query changed:', query);
+                    console.log('API Key:', GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
+                  }}
+                  />
+                )}
+                {/* <View style={styles.inputUnderline} /> */}
               </View>
             </View>
           </View>
 
-          {/* Fat Divider Above Locations */}
-          <View style={styles.fullWidthContainer}>
-            <View style={styles.fatDivider} />
-          </View>
+           
+           {/* Fat Divider Above Button */}
+           <View style={styles.fullWidthContainer}>
+             <View style={styles.fatDivider} />
+           </View>
 
-          {/* Dummy Locations List */}
-          <ScrollView style={styles.locationsList} showsVerticalScrollIndicator={false}>
-            <Text style={styles.locationsTitle}>Recent Locations</Text>
-            {dummyLocations.map((location) => (
-              <TouchableOpacity 
-                key={location.id} 
-                style={[
-                  styles.locationItem,
-                  selectedLocation?.id === location.id && styles.selectedLocationItem
-                ]}
-                onPress={() => handleLocationSelect(location)}
-              >
-                <View style={[
-                  styles.locationIconContainer,
-                  selectedLocation?.id === location.id && styles.selectedLocationIcon
-                ]}>
-                  <Ionicons 
-                    name={
-                      location.type === 'home' ? 'home' :
-                      location.type === 'work' ? 'briefcase' :
-                      location.type === 'airport' ? 'airplane' :
-                      location.type === 'shopping' ? 'bag' :
-                      'medical'
-                    } 
-                    size={20} 
-                    color={selectedLocation?.id === location.id ? Colors.WHITE : Colors.PRIMARY} 
-                  />
-                </View>
-                <View style={styles.locationDetails}>
-                  <Text style={[
-                    styles.locationName,
-                    selectedLocation?.id === location.id && styles.selectedLocationName
-                  ]}>
-                    {location.name}
-                  </Text>
-                  <Text style={styles.locationAddress}>{location.address}</Text>
-                </View>
-                {selectedLocation?.id === location.id ? (
-                  <Ionicons name="checkmark-circle" size={20} color={Colors.PRIMARY} />
-                ) : (
-                  <Ionicons name="chevron-forward" size={16} color={Colors.PRIMARY_GREY} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          {/* Fat Divider Above Button */}
-          <View style={styles.fullWidthContainer}>
-            <View style={styles.fatDivider} />
-          </View>
-
-          {/* Confirm Pickup Button */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmPickup}>
-              <Text style={styles.confirmButtonText}>Confirm pickup</Text>
-            </TouchableOpacity>
-          </View>
+           {/* Confirm Pickup Button */}
+           <View style={styles.buttonContainer}>
+             <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmPickup}>
+               <Text style={styles.confirmButtonText}>Confirm pickup</Text>
+             </TouchableOpacity>
+           </View>
         </BottomSheetView>
       </BottomSheet>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -213,9 +423,16 @@ const styles = StyleSheet.create({
   },
   mapContainer: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
   },
   mapText: {
     fontSize: 18,
@@ -223,22 +440,25 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   mapImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    flex: 1,
   },
   mapOverlay: {
     position: 'absolute',
-    top: 100,
-    right: 20,
-  },
-  locationCard: {
+    top: 50,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    pointerEvents: 'box-none',
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: Colors.WHITE,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -251,10 +471,24 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  locationText: {
-    fontSize: 14,
-    color: Colors.BLACK,
-    marginRight: 8,
+  centerLocationButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.WHITE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   bottomSheetBackground: {
     backgroundColor: Colors.WHITE,
@@ -263,53 +497,35 @@ const styles = StyleSheet.create({
   },
   bottomSheetContent: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
   },
   dragHandle: {
     width: 100,
     height: 4,
-    backgroundColor: '#777575',
+    backgroundColor: Colors.SLIDER_GRAY,
     borderRadius: 2,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-    paddingTop: 5,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.BLACK,
-  },
-  placeholder: {
-    width: 40,
-  },
-  instructionsContainer: {
-    marginBottom: 20,
-  },
-  instructionsText: {
-    fontSize: 14,
-    color: Colors.PRIMARY_GREY,
-    textAlign: 'center',
   },
   locationInputs: {
     marginBottom: 15,
-    backgroundColor: '#FFFFFF',
+    marginTop: 15,
+    backgroundColor: '#EEEEEE',
+    position: 'relative',
+    zIndex: 9998,
+    minHeight: 59,
+    maxHeight: 100,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    marginHorizontal: 20,
+    borderRadius: 7,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   locationInput: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    width: '100%',
   },
   locationIcon: {
     width: 24,
@@ -317,11 +533,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
+    marginTop: 8,
   },
   currentLocationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: Colors.PRIMARY_GREY,
   },
   inputContainer: {
@@ -349,9 +566,11 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: Colors.PRIMARY,
-    paddingVertical: 16,
-    borderRadius: 12,
+    height: 50,
+    maxHeight: 50,
+    borderRadius: 7,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   confirmButtonText: {
     fontSize: 18,
@@ -412,6 +631,155 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   buttonContainer: {
+    paddingHorizontal: 20,
     paddingBottom: Platform.OS === 'ios' ? 0 : 10,
+  },
+  googlePlacesContainer: {
+    flex: 1,
+    zIndex: 9999,
+    position: 'relative',
+  },
+  googlePlacesTextInputContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderBottomWidth: 0,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    alignItems: 'center',
+  },
+  googlePlacesInput: {
+    fontSize: 16,
+    color: Colors.BLACK,
+    paddingVertical: 8,
+    backgroundColor: 'transparent',
+    flex: 1,
+    borderWidth: 0,
+    margin: 0,
+    paddingHorizontal: 0,
+    minHeight: 40,
+    maxHeight: 80,
+    textAlignVertical: 'top',
+  },
+  googlePlacesList: {
+    backgroundColor: Colors.WHITE,
+    borderRadius: 7,
+    // marginTop: 8,
+    maxHeight: 265,
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 15,
+      },
+    }),
+  },
+  googlePlacesRow: {
+    backgroundColor: Colors.WHITE,
+    // padding: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#F5F5F5',
+    // minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  googlePlacesDescription: {
+    fontSize: 15,
+    color: Colors.BLACK,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  googlePlacesSeparator: {
+    height: 0.5,
+    backgroundColor: '#F0F0F0',
+    marginHorizontal: 16,
+  },
+  googlePlacesLoader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    height: 40,
+    // paddingVertical: 8,
+    alignItems: 'center',
+  },
+  googlePlacesPoweredContainer: {
+    display: 'none',
+  },
+  emptyComponent: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: Colors.PRIMARY_GREY,
+    textAlign: 'center',
+  },
+  // Custom Search Result Styles
+  searchResultRow: {
+    // backgroundColor: 'red',
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '95%',
+    // paddingVertical: 12,
+    // paddingHorizontal: 16,
+    // minHeight: 56,
+  },
+  searchResultIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    flexShrink: 0,
+  },
+  searchResultTextContainer: {
+    flex: 1,
+    // paddingRight: 8,
+  },
+  searchResultTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.BLACK,
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+  searchResultAddress: {
+    fontSize: 14,
+    color: Colors.PRIMARY_GREY,
+    lineHeight: 18,
+  },
+  // Selected Location Display Styles
+  selectedLocationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+    minHeight: 40,
+    maxHeight: 80,
+  },
+  selectedLocationText: {
+    fontSize: 16,
+    color: Colors.BLACK,
+    flex: 1,
+    lineHeight: 20,
+    paddingRight: 8,
+  },
+  clearButton: {
+    padding: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

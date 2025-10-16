@@ -78,7 +78,7 @@ const LicenseStep = ({ onNext }) => {
             display="default"
             onChange={(event, selectedDate) => {
               setShowDobPicker(false);
-              if (selectedDate) setDob(selectedDate);
+              if (selectedDate) {setDob(selectedDate);}
             }}
           />
         )}
@@ -90,7 +90,7 @@ const LicenseStep = ({ onNext }) => {
             display="default"
             onChange={(event, selectedDate) => {
               setShowExpiryPicker(false);
-              if (selectedDate) setExpiry(selectedDate);
+              if (selectedDate) {setExpiry(selectedDate);}
             }}
           />
         )}

@@ -19,56 +19,56 @@ export default function CarsScreen({ navigation }) {
   // Bottom sheet ref
   const bottomSheetRef = useRef(null);
   const insets = useSafeAreaInsets();
-  
+
   // Dummy ride options data
   const [rideOptions] = useState([
-    { 
-      id: 1, 
-      name: 'Lowest TransportX', 
-      capacity: 4, 
-      price: '$32.90', 
+    {
+      id: 1,
+      name: 'Lowest TransportX',
+      capacity: 4,
+      price: '$32.90',
       time: '21:12 - 3 min away',
       description: 'Affordable rides all to yourself',
-      type: 'economy'
+      type: 'economy',
     },
-    { 
-      id: 2, 
-      name: 'Lowest TransportXL', 
-      capacity: 6, 
-      price: '$60.90', 
+    {
+      id: 2,
+      name: 'Lowest TransportXL',
+      capacity: 6,
+      price: '$60.90',
       time: '21:12 - 3 min away',
       description: 'Affordable rides for groups up to 6',
-      type: 'xl'
+      type: 'xl',
     },
-    { 
-      id: 3, 
-      name: 'Lowest Transport Premier', 
-      capacity: 4, 
-      price: '$67.90', 
+    {
+      id: 3,
+      name: 'Lowest Transport Premier',
+      capacity: 4,
+      price: '$67.90',
       time: '21:12 - 3 min away',
       description: 'Luxury rides with highly-rated drivers',
-      type: 'premier'
+      type: 'premier',
     },
   ]);
-  
+
   // Selected ride state
   const [selectedRide, setSelectedRide] = useState(null);
-  
+
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Simulate API loading
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000); // 2 second loading simulation
-    
+
     return () => clearTimeout(timer);
   }, []);
-  
+
   // Snap points for the bottom sheet
   const snapPoints = useMemo(() => ['85%', '90%'], []);
-  
+
   // Handle sheet changes
   const handleSheetChanges = useCallback((index) => {
     if (index === -1) {
@@ -109,10 +109,10 @@ export default function CarsScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.WHITE} />
-      
+
       {/* Map Background */}
       <View style={styles.mapContainer}>
-        <Image 
+        <Image
           source={require('../../../../assets/image.png')}
           style={styles.mapImage}
         />
@@ -163,16 +163,16 @@ export default function CarsScreen({ navigation }) {
               </View>
             ) : (
               rideOptions.map((ride) => (
-              <TouchableOpacity 
-                key={ride.id} 
+              <TouchableOpacity
+                key={ride.id}
                 style={[
                   styles.rideItem,
-                  selectedRide?.id === ride.id && styles.selectedRideItem
+                  selectedRide?.id === ride.id && styles.selectedRideItem,
                 ]}
                 onPress={() => handleRideSelect(ride)}
               >
                 <View style={styles.rideIconContainer}>
-                  <Image 
+                  <Image
                     source={require('../../../../assets/car11.png')}
                     style={styles.carImage}
                     resizeMode="contain"
@@ -181,23 +181,23 @@ export default function CarsScreen({ navigation }) {
                   />
                   <Text style={styles.capacityText}>{ride.capacity}</Text>
                 </View>
-                
+
                 <View style={styles.rideDetails}>
                   <Text style={[
                     styles.rideName,
-                    selectedRide?.id === ride.id && styles.selectedRideName
+                    selectedRide?.id === ride.id && styles.selectedRideName,
                   ]}>
                     {ride.name}
                   </Text>
-                  
+
                   <Text style={styles.rideTime}>{ride.time}</Text>
                   <Text style={styles.rideDescription}>{ride.description}</Text>
                 </View>
-                
+
                 <View style={styles.ridePricing}>
                   <Text style={styles.ridePrice}>{ride.price}</Text>
                 </View>
-                
+
                 {selectedRide?.id === ride.id ? (
                   <Ionicons name="checkmark-circle" size={24} color={Colors.PRIMARY} />
                 ) : (

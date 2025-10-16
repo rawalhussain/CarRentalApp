@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import {Colors} from "../../../../Themes/MyColors";
+import {Colors} from '../../../../Themes/MyColors';
 
 export default StyleSheet.create({
   container: {
@@ -13,7 +13,7 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 12,
-    paddingTop: 60, 
+    paddingTop: 60,
     borderBottomWidth: 1,
     borderBottomColor: Colors.LINE_GRAY,
   },

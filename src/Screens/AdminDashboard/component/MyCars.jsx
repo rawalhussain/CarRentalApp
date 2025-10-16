@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  StatusBar
+  StatusBar,
 } from 'react-native';
 import { Colors } from '../../../Themes/MyColors';
 import { getVehiclesWithVendorDetails, updateVehicle, deleteVehicle, uploadVehicleImage } from '../../../Config/firebase';
@@ -35,12 +35,12 @@ const VehicleManagement = ({ navigation }) => {
       setLoading(true);
       const [carsArray, busesArray] = await Promise.all([
         getVehiclesWithVendorDetails({ type: 'cars' }),
-        getVehiclesWithVendorDetails({ type: 'buses' })
+        getVehiclesWithVendorDetails({ type: 'buses' }),
       ]);
 
       setVehicles({
         cars: carsArray || [],
-        buses: busesArray || []
+        buses: busesArray || [],
       });
 
       // Update vendor names state
@@ -66,7 +66,7 @@ const VehicleManagement = ({ navigation }) => {
       await updateVehicle(vehicle.id, {
         verified: true,
         approvedAt: database.ServerValue.TIMESTAMP,
-        approvedBy: user?.user?.uid
+        approvedBy: user?.user?.uid,
       }, activeTab);
       await fetchVehicles();
       showMessageAlert('Success', `${activeTab === 'cars' ? 'Car' : 'Bus'} approved successfully`, 'success');

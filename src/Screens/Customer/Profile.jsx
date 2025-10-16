@@ -23,4 +23,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CustomerProfile; 
+export default CustomerProfile;

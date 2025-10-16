@@ -40,7 +40,7 @@ const CarList = () => {
   ];
 
   const formatDate = (date) => {
-    if (!date) return '';
+    if (!date) {return '';}
     const parts = date.split(' ');
     return `${parts[0]} ${parts[1]}`;
   };

@@ -197,4 +197,4 @@ export default StyleSheet.create({
     color: '#4CAF50',
     fontWeight: '500',
   },
-}); 
+});
