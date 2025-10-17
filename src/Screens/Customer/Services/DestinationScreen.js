@@ -12,14 +12,16 @@ import {
   ScrollView,
   Keyboard,
   TouchableWithoutFeedback,
+  AsyncStorage,
 } from 'react-native';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView, BottomSheetScrollView, BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { Colors } from '../../../Themes/MyColors';
 import ModalHeader from '../../../Components/ModalHeader';
 import MapViewComponent from '../../../Components/MapView';
 import { GOOGLE_MAPS_API_KEY } from '../../../Config/constants';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -46,19 +48,55 @@ export default function DestinationScreen({ navigation, route }) {
   
   // State for tracking keyboard and sheet
   const [currentSheetIndex, setCurrentSheetIndex] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   
   // Route line state
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   
   // Saved destinations data
-  const [savedDestinations] = useState([
-    { id: 1, name: 'Downtown Mall', address: '789 Shopping Street, Downtown', type: 'shopping', coordinates: { latitude: 29.4050, longitude: 71.6900 } },
-    { id: 2, name: 'Central Park', address: '456 Park Avenue, Green District', type: 'park', coordinates: { latitude: 29.3950, longitude: 71.6750 } },
-    { id: 3, name: 'City Hospital', address: '321 Medical Center, Health District', type: 'medical', coordinates: { latitude: 29.4100, longitude: 71.6850 } },
-  ]);
+  const [savedDestinations, setSavedDestinations] = useState([]);
   
   // Snap points for the bottom sheet
-  const snapPoints = useMemo(() => ['50%', '85%', '90%'], []);
+  const snapPoints = useMemo(() => ['65%', '85%', '89%'], []);
+
+  useEffect(() => {
+    bottomSheetRef.current?.present();
+  }, []);
+  
+  // Load saved destinations from AsyncStorage
+  useEffect(() => {
+    loadSavedDestinations();
+  }, []);
+
+  const loadSavedDestinations = async () => {
+    try {
+      const saved = await AsyncStorage.getItem('savedDestinations');
+      if (saved) {
+        const parsedDestinations = JSON.parse(saved);
+        setSavedDestinations(parsedDestinations);
+      }
+    } catch (error) {
+      console.log('Error loading saved destinations:', error);
+    }
+  };
+
+  const saveDestination = async (destination) => {
+    try {
+      const newDestination = {
+        ...destination,
+        id: Date.now(), // Generate unique ID
+        type: 'custom', // Mark as custom saved location
+      };
+      
+      const updatedDestinations = [newDestination, ...savedDestinations];
+      setSavedDestinations(updatedDestinations);
+      
+      await AsyncStorage.setItem('savedDestinations', JSON.stringify(updatedDestinations));
+      console.log('Destination saved successfully');
+    } catch (error) {
+      console.log('Error saving destination:', error);
+    }
+  };
   
   // Keyboard listeners
   useEffect(() => {
@@ -66,9 +104,10 @@ export default function DestinationScreen({ navigation, route }) {
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       (event) => {
         console.log('Keyboard will show:', event);
-        // Expand bottom sheet to 85% when keyboard opens
+        setIsKeyboardVisible(true);
+        // Expand bottom sheet to 95% when keyboard opens
         setTimeout(() => {
-          bottomSheetRef.current?.snapToIndex(1);
+          bottomSheetRef.current?.snapToIndex(2);
         }, 100);
       }
     );
@@ -77,11 +116,13 @@ export default function DestinationScreen({ navigation, route }) {
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
       (event) => {
         console.log('Keyboard will hide:', event);
-        // Keep height at 85% when keyboard closes, don't go back to 50%
-        // User can manually drag it down if they want
-        setTimeout(() => {
-          bottomSheetRef.current?.snapToIndex(1);
-        }, 100);
+        setIsKeyboardVisible(false);
+        // Return to original size when keyboard closes (if at index 1 or 2)
+        if (currentSheetIndex === 1 || currentSheetIndex === 2) {
+          setTimeout(() => {
+            bottomSheetRef.current?.snapToIndex(0);
+          }, 100);
+        }
       }
     );
 
@@ -89,7 +130,7 @@ export default function DestinationScreen({ navigation, route }) {
       keyboardWillShow.remove();
       keyboardWillHide.remove();
     };
-  }, []);
+  }, [currentSheetIndex]);
   
   // Handle sheet changes
   const handleSheetChanges = useCallback((index) => {
@@ -173,6 +214,11 @@ export default function DestinationScreen({ navigation, route }) {
     setSelectedDestination(destination);
     setSearchText(destination.address);
     
+    // Update the GooglePlacesAutocomplete input to show the selected destination
+    if (googlePlacesRef.current) {
+      googlePlacesRef.current.setAddressText(destination.address);
+    }
+    
     // Update map region to show destination
     if (destination.coordinates && mapViewRef.current) {
       mapViewRef.current.animateToRegion({
@@ -205,6 +251,9 @@ export default function DestinationScreen({ navigation, route }) {
       setSelectedDestination(newDestination);
       setSearchText(newDestination.name || newDestination.address);
       
+      // Save the destination to AsyncStorage
+      saveDestination(newDestination);
+      
       // Set the text in the GooglePlacesAutocomplete input
       if (googlePlacesRef.current) {
         googlePlacesRef.current.setAddressText(newDestination.name || newDestination.address);
@@ -231,19 +280,20 @@ export default function DestinationScreen({ navigation, route }) {
   };
 
   const handleConfirmDestination = () => {
-    if (selectedDestination) {
-      // Navigate back to ReserveRideScreen with destination data
-      navigation.navigate('ReserveRide', {
-        destination: selectedDestination,
-        currentLocation: currentLocation,
-      });
-    } else {
+    if (!selectedDestination) {
       alert('Please select a destination');
+      return;
     }
+ 
+    
+    // Navigate back to ReserveRideScreen with destination data
+    navigation.navigate('ReserveRide', {
+      destination: selectedDestination,
+    });
   };
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       
       {/* Map Background - Behind Status Bar */}
@@ -298,149 +348,131 @@ export default function DestinationScreen({ navigation, route }) {
         </View>
       </TouchableWithoutFeedback>
 
-      {/* Bottom Sheet */}
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={0}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}
-        enablePanDownToClose={false}
-        handleIndicatorStyle={styles.dragHandle}
-        backgroundStyle={styles.bottomSheetBackground}
-        enableOverDrag={false}
-        android_keyboardInputMode="adjustResize"
-        keyboardBehavior="interactive"
-        keyboardBlurBehavior="restore"
-      >
-        <BottomSheetView style={styles.bottomSheetContent}>
+      {/* Bottom Sheet Modal */}
+      <BottomSheetModalProvider>
+        <BottomSheetModal
+          ref={bottomSheetRef}
+          snapPoints={snapPoints}
+          onChange={handleSheetChanges}
+        >
+        <BottomSheetScrollView 
+          style={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           {/* Modal Header */}
           <ModalHeader 
             title="Set your destination" 
-            onBack={handleBack}
+            // onBack={handleBack} 
+            showBackButton={false}
             description="Search or select from saved places"
           />
-
-          {/* Google Places Autocomplete */}
-          <View style={styles.locationInputs}>
-            <View style={styles.locationInput}>
-              <View style={styles.locationIcon}>
-                <View style={styles.destinationSquare} />
-              </View>
-              <View style={styles.inputContainer}>
-                {selectedDestination ? (
-                  <View style={styles.selectedLocationContainer}>
-                    <Text style={styles.selectedLocationText} numberOfLines={2}>
-                      {selectedDestination.address}
-                    </Text>
-                    <TouchableOpacity 
-                      style={styles.clearButton}
-                      onPress={() => {
-                        setSelectedDestination(null);
-                        setSearchText('');
-                        setRouteCoordinates([]);
-                        if (googlePlacesRef.current) {
-                          googlePlacesRef.current.setAddressText('');
-                        }
-                      }}
-                    >
-                      <Ionicons name="close-circle" size={20} color={Colors.PRIMARY_GREY} />
-                    </TouchableOpacity>
+          
+          <GooglePlacesAutocomplete
+            ref={googlePlacesRef}
+            placeholderTextColor={Colors.PRIMARY_GREY}
+            placeholder="Search for destination..."
+            onPress={(data, details = null) => {
+              console.log('Place selected:', data, details);
+              handlePlaceSelect(data, details);
+            }}
+            onChangeText={(text) => {
+              setSearchText(text);
+              if (!text) {
+                setSelectedDestination(null);
+                setRouteCoordinates([]);
+              }
+            }}
+            query={{
+              key: GOOGLE_MAPS_API_KEY,
+              language: 'en',
+              components: 'country:pk',
+            }}
+            keyboardShouldPersistTaps="handled"
+            listViewDisplayed="auto"
+            styles={{
+              container: styles.googlePlacesContainer,
+              textInputContainer: styles.googlePlacesTextInputContainer,
+              textInput: styles.googlePlacesInput,
+              listView: styles.googlePlacesList,
+              row: styles.googlePlacesRow,
+              description: styles.googlePlacesDescription,
+              separator: styles.googlePlacesSeparator,
+              loader: styles.googlePlacesLoader,
+              poweredContainer: styles.googlePlacesPoweredContainer,
+            }}
+            fetchDetails={true}
+            enablePoweredByContainer={false}
+            debounce={500}
+            minLength={3}
+            predefinedPlaces={[]}
+            predefinedPlacesAlwaysVisible={false}
+            currentLocation={false}
+            currentLocationLabel=""
+            renderRow={(rowData) => {
+              const title = rowData.structured_formatting?.main_text || rowData.description;
+              const address = rowData.structured_formatting?.secondary_text || '';
+              return (
+                <View style={styles.searchResultRow}>
+                  <View style={styles.searchResultTextContainer}>
+                    <Text style={styles.searchResultTitle} numberOfLines={1}>{title}</Text>
+                    {address ? (
+                      <Text style={styles.searchResultAddress} numberOfLines={2}>{address}</Text>
+                    ) : null}
                   </View>
-                ) : (
-                  <GooglePlacesAutocomplete
-                    ref={googlePlacesRef}
-                    placeholder="Where to?"
-                    onPress={(data, details = null) => {
-                      console.log('Place selected:', data, details);
-                      handlePlaceSelect(data, details);
-                    }}
-                    onChangeText={(text) => {
-                      setSearchText(text);
-                      if (!text) {
-                        setSelectedDestination(null);
-                        setRouteCoordinates([]);
-                      }
-                    }}
-                    query={{
-                      key: GOOGLE_MAPS_API_KEY,
-                      language: 'en',
-                      components: 'country:pk',
-                    }}
-                    styles={{
-                      container: styles.googlePlacesContainer,
-                      textInputContainer: styles.googlePlacesTextInputContainer,
-                      textInput: styles.googlePlacesInput,
-                      listView: styles.googlePlacesList,
-                      row: styles.googlePlacesRow,
-                      description: styles.googlePlacesDescription,
-                      separator: styles.googlePlacesSeparator,
-                      loader: styles.googlePlacesLoader,
-                      poweredContainer: styles.googlePlacesPoweredContainer,
-                    }}
-                    fetchDetails={true}
-                    enablePoweredByContainer={false}
-                    debounce={500}
-                    minLength={3}
-                    predefinedPlaces={[]}
-                    predefinedPlacesAlwaysVisible={false}
-                    currentLocation={false}
-                    currentLocationLabel=""
-                    renderRow={(rowData) => {
-                      const title = rowData.structured_formatting?.main_text || rowData.description;
-                      const address = rowData.structured_formatting?.secondary_text || '';
-                      return (
-                        <View style={styles.searchResultRow}>
-                          <View style={styles.searchResultTextContainer}>
-                            <Text style={styles.searchResultTitle} numberOfLines={1}>{title}</Text>
-                            {address ? (
-                              <Text style={styles.searchResultAddress} numberOfLines={2}>{address}</Text>
-                            ) : null}
-                          </View>
-                        </View>
-                      );
-                    }}
-                    listEmptyComponent={() => (
-                      <View style={styles.emptyComponent}>
-                        <Text style={styles.emptyText}>No results found</Text>
-                      </View>
-                    )}
-                    timeout={10000}
-                    textInputProps={{
-                      placeholderTextColor: Colors.PRIMARY_GREY,
-                      returnKeyType: 'search',
-                      autoCorrect: false,
-                      autoCapitalize: 'none',
-                      clearButtonMode: 'while-editing',
-                      multiline: true,
-                      numberOfLines: 2,
-                      textAlignVertical: 'top',
-                      onFocus: () => {
-                        console.log('Input focused - expanding sheet to 85%');
-                        // Expand bottom sheet to 85% when input is focused
-                        setTimeout(() => {
-                          bottomSheetRef.current?.snapToIndex(1);
-                        }, 100);
-                      },
-                      onBlur: () => {
-                        console.log('Input blurred');
-                        // Don't collapse here, let keyboard hide listener handle it
-                      },
-                    }}
-                    onFail={(error) => {
-                      console.log('GooglePlacesAutocomplete Error:', error);
-                      console.log('API Key being used:', GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
-                    }}
-                    onNotFound={() => console.log('No results found')}
-                    onTimeout={() => console.log('Request timeout')}
-                    onQueryChange={(query) => {
-                      console.log('Query changed:', query);
-                      console.log('API Key:', GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
-                    }}
-                  />
-                )}
+                </View>
+              );
+            }}
+            listEmptyComponent={() => (
+              <View style={styles.emptyComponent}>
+                <Text style={styles.emptyText}>No results found</Text>
               </View>
-            </View>
-          </View>
+            )}
+            timeout={10000}
+            textInputProps={{
+              placeholderTextColor: Colors.PRIMARY_GREY,
+              returnKeyType: 'done',
+              autoCorrect: false,
+              autoCapitalize: 'none',
+              clearButtonMode: 'while-editing',
+              multiline: true,
+              numberOfLines: 2,
+              textAlignVertical: 'center',
+              onFocus: () => {
+                console.log('Input focused - expanding sheet to 95%');
+                // Expand bottom sheet to 95% when input is focused
+                setTimeout(() => {
+                  bottomSheetRef.current?.snapToIndex(2);
+                }, 100);
+              },
+              onBlur: () => {
+                console.log('Input blurred');
+                // Keep sheet at expanded size when input loses focus
+                setTimeout(() => {
+                  bottomSheetRef.current?.snapToIndex(1);
+                }, 100);
+              },
+              onSubmitEditing: () => {
+                console.log('Done button pressed');
+                // Close keyboard and keep sheet at expanded size
+                Keyboard.dismiss();
+                setTimeout(() => {
+                  bottomSheetRef.current?.snapToIndex(1);
+                }, 100);
+              },
+            }}
+            onFail={(error) => {
+              console.log('GooglePlacesAutocomplete Error:', error);
+              console.log('API Key being used:', GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
+            }}
+            onNotFound={() => console.log('No results found')}
+            onTimeout={() => console.log('Request timeout')}
+            onQueryChange={(query) => {
+              console.warn('Query changed:', query);
+              console.log('API Key:', GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
+            }}
+          />
+
 
           {/* Fat Divider Above Destinations */}
           <View style={styles.fullWidthContainer}>
@@ -448,74 +480,79 @@ export default function DestinationScreen({ navigation, route }) {
           </View>
 
           {/* Saved Destinations List */}
-          <ScrollView style={styles.destinationsList} showsVerticalScrollIndicator={false}>
+        { savedDestinations.length > 0 && <View style={styles.destinationsContainer}>
             <View style={styles.savedDestinationsHeader}>
               <Ionicons name="star" size={18} color={Colors.SECONDARY} />
               <Text style={styles.destinationsTitle}>Saved Places</Text>
             </View>
-            {savedDestinations.map((destination) => (
-              <TouchableOpacity 
-                key={destination.id} 
-                style={[
-                  styles.destinationItem,
-                  selectedDestination?.id === destination.id && styles.selectedDestinationItem
-                ]}
-                onPress={() => handleDestinationSelect(destination)}
-              >
-                <View style={[
-                  styles.destinationIconContainer,
-                  selectedDestination?.id === destination.id && styles.selectedDestinationIcon
-                ]}>
-                  <Ionicons 
-                    name={
-                      destination.type === 'shopping' ? 'bag' :
-                      destination.type === 'park' ? 'leaf' :
-                      destination.type === 'medical' ? 'medical' :
-                      destination.type === 'education' ? 'school' :
-                      'restaurant'
-                    } 
-                    size={20} 
-                    color={selectedDestination?.id === destination.id ? Colors.WHITE : Colors.SECONDARY} 
-                  />
-                </View>
-                <View style={styles.destinationDetails}>
-                  <Text style={[
-                    styles.destinationName,
-                    selectedDestination?.id === destination.id && styles.selectedDestinationName
+            <ScrollView style={styles.destinationsList} showsVerticalScrollIndicator={false}>
+              {savedDestinations.map((destination) => (
+                <TouchableOpacity 
+                  key={destination.id} 
+                  style={[
+                    styles.destinationItem,
+                    selectedDestination?.id === destination.id && styles.selectedDestinationItem
+                  ]}
+                  onPress={() => handleDestinationSelect(destination)}
+                >
+                  <View style={[
+                    styles.destinationIconContainer,
+                    selectedDestination?.id === destination.id && styles.selectedDestinationIcon
                   ]}>
-                    {destination.name}
-                  </Text>
-                  <Text style={styles.destinationAddress}>{destination.address}</Text>
-                </View>
-                {selectedDestination?.id === destination.id ? (
-                  <Ionicons name="checkmark-circle" size={24} color={Colors.SECONDARY} />
-                ) : (
-                  <Ionicons name="chevron-forward" size={20} color={Colors.PRIMARY_GREY} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                    <Ionicons 
+                      name={
+                        destination.type === 'shopping' ? 'bag' :
+                        destination.type === 'park' ? 'leaf' :
+                        destination.type === 'medical' ? 'medical' :
+                        destination.type === 'education' ? 'school' :
+                        destination.type === 'custom' ? 'bookmark' :
+                        'restaurant'
+                      } 
+                      size={20} 
+                      color={selectedDestination?.id === destination.id ? Colors.WHITE : Colors.SECONDARY} 
+                    />
+                  </View>
+                  <View style={styles.destinationDetails}>
+                    <Text style={[
+                      styles.destinationName,
+                      selectedDestination?.id === destination.id && styles.selectedDestinationName
+                    ]}>
+                      {destination.name}
+                    </Text>
+                    <Text style={styles.destinationAddress}>{destination.address}</Text>
+                  </View>
+                  {selectedDestination?.id === destination.id ? (
+                    <Ionicons name="checkmark-circle" size={24} color={Colors.SECONDARY} />
+                  ) : (
+                    <Ionicons name="chevron-forward" size={20} color={Colors.PRIMARY_GREY} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>}
 
-          {/* Fat Divider Above Button */}
-          <View style={styles.fullWidthContainer}>
-            <View style={styles.fatDivider} />
-          </View>
+        </BottomSheetScrollView>
+        </BottomSheetModal>
+      </BottomSheetModalProvider>
 
-          {/* Confirm Destination Button */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.confirmButton, !selectedDestination && styles.disabledButton]} 
-              onPress={handleConfirmDestination}
-              disabled={!selectedDestination}
-            >
-              <Text style={styles.confirmButtonText}>
-                Confirm destination
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </BottomSheetView>
-      </BottomSheet>
-    </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={[
+            styles.confirmButton, 
+            !selectedDestination && styles.disabledButton
+          ]} 
+          onPress={handleConfirmDestination}
+          disabled={!selectedDestination}
+        >
+          <Text style={[
+            styles.confirmButtonText,
+            !selectedDestination && styles.disabledButtonText
+          ]}>
+            Confirm destination
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -590,67 +627,19 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
+  contentContainer: {
+    flex: 1,
+  },
   bottomSheetContent: {
     flex: 1,
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    minHeight: 300
   },
   dragHandle: {
     width: 100,
     height: 4,
     backgroundColor: Colors.SLIDER_GRAY,
     borderRadius: 2,
-  },
-  locationInputs: {
-    marginBottom: 15,
-    marginTop: 15,
-    backgroundColor: 'transparent',
-    position: 'relative',
-    zIndex: 1,
-    minHeight: 59,
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    marginHorizontal: 20,
-    borderRadius: 7,
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    overflow: 'visible',
-  },
-  locationInput: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    width: '100%',
-    backgroundColor: '#EEEEEE',
-    borderRadius: 7,
-    paddingHorizontal: 10,
-  },
-  locationIcon: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-    marginTop: 8,
-  },
-  destinationSquare: {
-    width: 10,
-    height: 10,
-    backgroundColor: '#EA4335',
-    borderRadius: 2,
-  },
-  inputContainer: {
-    flex: 1,
-  },
-  locationTextInput: {
-    fontSize: 16,
-    color: Colors.BLACK,
-    paddingVertical: 8,
-  },
-  inputUnderline: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-    width: '100%',
   },
   fullWidthContainer: {
     width: screenWidth,
@@ -675,17 +664,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.WHITE,
   },
+  destinationsContainer: {
+    flex: 1,
+    marginHorizontal: 20,
+    marginBottom: 10,
+  },
   destinationsList: {
     flex: 1,
-    marginBottom: 10,
-    // paddinghorizontal: 20,
-    // backgroundColor: 'red',
-    marginHorizontal: 20,
   },
   savedDestinationsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    // marginBottom: 15,
+    marginBottom: 5,
+    paddingLeft: 10,
     gap: 8,
   },
   destinationsTitle: {
@@ -737,65 +728,103 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   buttonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.WHITE,
     paddingHorizontal: 20,
-    paddingBottom: Platform.OS === 'ios' ? 0 : 10,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   disabledButton: {
     backgroundColor: Colors.PRIMARY_GREY,
     opacity: 0.5,
   },
+  disabledButtonText: {
+    color: Colors.WHITE,
+    opacity: 0.7,
+  },
   // Google Places Autocomplete Styles
   googlePlacesContainer: {
-    flex: 1,
-    zIndex: 1,
-    position: 'relative',
+    flex: 0,
+    width: '100%',
+    minHeight: 180
   },
   googlePlacesTextInputContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    borderBottomWidth: 0,
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    alignItems: 'center',
+    // flexDirection: 'row',
+    // backgroundColor: 'transparent',
+    // borderWidth: 0,
+    // borderBottomWidth: 0,
+    // paddingHorizontal: 0,
+    // paddingVertical: 0,
+    // alignItems: 'center',
+    // justifyContent: 'center',
   },
   googlePlacesInput: {
     fontSize: 16,
     color: Colors.BLACK,
     paddingVertical: 8,
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.lightGray,
     flex: 1,
     borderWidth: 0,
     margin: 0,
     paddingHorizontal: 0,
-    minHeight: 40,
+    minHeight: 59,
     maxHeight: 80,
-    textAlignVertical: 'top',
+    textAlignVertical: 'center',
+    marginHorizontal: 20,
+    paddingHorizontal: 16,
+    marginTop: 20,
   },
   googlePlacesList: {
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.WHITE,
     borderRadius: 7,
-    maxHeight: 200,
-    position: 'relative',
-    top: 0,
-    left: 0,
+    // marginTop: 8,
+    // maxHeight: 305,
+    // position: 'absolute',
+    // top: 35,
+    // left: -50,
     right: 0,
-    zIndex: 1,
-    borderWidth: 0,
-    borderColor: 'transparent',
-    marginTop: 8,
-    width: '95%',
-    alignSelf: 'center',
+    // zIndex: 9999,
+    // borderWidth: 1,  
+    width: '100%',
+    // borderColor: '#E5E5E5',
+    // ...Platform.select({
+    //   ios: {
+    //     shadowColor: '#000',
+    //     shadowOffset: { width: 0, height: 6 },
+    //     shadowOpacity: 0.12,
+    //     shadowRadius: 12,
+    //   },
+    //   android: {
+    //     elevation: 15,
+    //   },
+    // }),
   },
   googlePlacesRow: {
-    backgroundColor: 'transparent',
+    // backgroundColor: Colors.WHITE,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
     borderBottomWidth: 0.5,
     borderBottomColor: '#F5F5F5',
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    // width: '95%',
-    // paddingHorizontal: 16,
+    width: '100%',
   },
   googlePlacesDescription: {
     fontSize: 15,
@@ -806,7 +835,7 @@ const styles = StyleSheet.create({
   googlePlacesSeparator: {
     height: 0.5,
     backgroundColor: '#F0F0F0',
-    marginHorizontal: 16,
+    marginHorizontal: 0,
   },
   googlePlacesLoader: {
     flexDirection: 'row',
@@ -830,44 +859,33 @@ const styles = StyleSheet.create({
   searchResultRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 0,
-    paddingHorizontal: 0,
+    width: '100%',
+    paddingVertical: 2,
+  },
+  searchResultIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    flexShrink: 0,
   },
   searchResultTextContainer: {
     flex: 1,
+    // paddingRight: 8,
   },
   searchResultTitle: {
     fontSize: 16,
     fontWeight: '500',
     color: Colors.BLACK,
-    marginBottom: 4,
-    lineHeight: 20,
+    marginBottom: 2,
+    lineHeight: 18,
   },
   searchResultAddress: {
     fontSize: 14,
     color: Colors.PRIMARY_GREY,
-    lineHeight: 18,
-  },
-  // Selected Location Display Styles
-  selectedLocationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 0,
-    minHeight: 40,
-    maxHeight: 80,
-  },
-  selectedLocationText: {
-    fontSize: 16,
-    color: Colors.BLACK,
-    flex: 1,
-    lineHeight: 20,
-    paddingRight: 8,
-  },
-  clearButton: {
-    padding: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
+    lineHeight: 16,
   },
 });

@@ -9,11 +9,12 @@ import {
   TextInput,
   Dimensions,
   Image,
+  AsyncStorage,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import { Colors } from '../../../Themes/MyColors';
 import MapViewComponent from '../../../Components/MapView';
@@ -39,6 +40,7 @@ export default function ReserveRideScreen({ navigation, route }) {
   const [currentLocationText, setCurrentLocationText] = useState('Detecting location...');
   const [currentLocationCoordinates, setCurrentLocationCoordinates] = useState('');
   const [isLoadingAddress, setIsLoadingAddress] = useState(true);
+  const [locationWatchId, setLocationWatchId] = useState(null);
   
   // State for destination
   const [destination, setDestination] = useState(null);
@@ -57,7 +59,26 @@ export default function ReserveRideScreen({ navigation, route }) {
   // Snap points for the bottom sheet
   const snapPoints = useMemo(() => ['62%', '95%'], []);
   
-  // Get current location on component mount (detect once)
+  // Load saved destinations from AsyncStorage
+  useEffect(() => {
+    loadSavedDestinations();
+  }, []);
+
+  const loadSavedDestinations = async () => {
+    try {
+      const saved = await AsyncStorage.getItem('savedDestinations');
+      if (saved) {
+        const parsedDestinations = JSON.parse(saved);
+        setSavedDestinations(parsedDestinations);
+      }
+    } catch (error) {
+      console.log('Error loading saved destinations:', error);
+    }
+  };
+
+  // Get current location on component mount and start real-time tracking
+  // This implementation provides dynamic location fetching with automatic updates
+  // when the user's location changes, and real-time polyline drawing between markers
   useEffect(() => {
     const initializeLocation = async () => {
       setIsLoadingAddress(true);
@@ -68,6 +89,7 @@ export default function ReserveRideScreen({ navigation, route }) {
         const location = await LocationService.getCurrentLocation();
         if (location) {
           console.log('Initial Location Coordinates:', location);
+          console.log('Setting current location for markers:', location);
           setCurrentLocation(location);
           
           // Set coordinates for display
@@ -108,6 +130,56 @@ export default function ReserveRideScreen({ navigation, route }) {
     initializeLocation();
   }, []);
 
+  // Start real-time location tracking
+  useEffect(() => {
+    const startLocationWatching = () => {
+      console.log('Starting real-time location tracking...');
+      
+      const watchId = LocationService.watchLocation(
+        (newLocation) => {
+          console.log('Real-time location update:', newLocation);
+          setCurrentLocation(newLocation);
+          
+          // Update coordinates display
+          const coordText = `${newLocation.latitude.toFixed(6)}, ${newLocation.longitude.toFixed(6)}`;
+          setCurrentLocationCoordinates(coordText);
+          
+          // Update address periodically (not on every location update to avoid API calls)
+          if (Math.random() < 0.1) { // 10% chance to update address
+            LocationService.getCurrentLocationAddress().then(address => {
+              setCurrentLocationText(address);
+            });
+          }
+          
+          // If destination exists, update the route automatically
+          if (destination && destination.coordinates && mapRef.current) {
+            // The MapViewDirections component will automatically recalculate the route
+            console.log('Location changed, route will be recalculated automatically');
+          }
+        },
+        (error) => {
+          console.warn('Real-time location tracking error:', error);
+        }
+      );
+      
+      if (watchId) {
+        setLocationWatchId(watchId);
+        console.log('Location watching started with ID:', watchId);
+      }
+    };
+
+    // Start watching after initial location is set
+    const timer = setTimeout(startLocationWatching, 2000);
+    
+    return () => {
+      clearTimeout(timer);
+      if (locationWatchId) {
+        console.log('Stopping location watching...');
+        LocationService.stopWatchingLocation(locationWatchId);
+      }
+    };
+  }, []);
+
 
   // Handle route params - destination from DestinationScreen
   useEffect(() => {
@@ -138,11 +210,10 @@ export default function ReserveRideScreen({ navigation, route }) {
       const updatedLocation = route.params.updatedPickupLocation;
       const updatedAddress = route.params.updatedPickupAddress || 'Selected Location';
       
+      console.log('Pickup location updated dynamically:', updatedLocation);
       setCurrentLocation(updatedLocation);
       setCurrentLocationText(updatedAddress);
       setCurrentLocationCoordinates(`${updatedLocation.latitude.toFixed(6)}, ${updatedLocation.longitude.toFixed(6)}`);
-      
-      console.log('Pickup location updated:', updatedLocation);
       
       // Animate to new location in upper visible area
       if (mapRef.current) {
@@ -169,6 +240,51 @@ export default function ReserveRideScreen({ navigation, route }) {
       }
     }
   }, [route?.params?.updatedPickupLocation]);
+
+  // Update map region when current location changes
+  useEffect(() => {
+    if (currentLocation && mapRef.current) {
+      console.log('Current location changed, updating map region:', currentLocation);
+      // Only update if no destination is selected to avoid conflicts
+      if (!destination || !destination.coordinates) {
+        setTimeout(() => {
+          mapRef.current.animateToRegion({
+            latitude: currentLocation.latitude - 0.003,
+            longitude: currentLocation.longitude,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+          }, 1000);
+        }, 500);
+      }
+    }
+  }, [currentLocation]);
+
+  // Force map to show markers when they are added
+  useEffect(() => {
+    if (currentLocation && mapRef.current) {
+      console.log('Ensuring markers are visible on map');
+      // // Force a small region update to ensure markers are rendered
+      // setTimeout(() => {
+      //   const currentRegion = {
+      //     latitude: currentLocation.latitude,
+      //     longitude: currentLocation.longitude,
+      //     latitudeDelta: 0.01,
+      //     longitudeDelta: 0.01,
+      //   };
+      //   mapRef.current.animateToRegion(currentRegion, 500);
+      // }, 1000);
+    }
+  }, [currentLocation, destination]);
+
+  // Cleanup location watching on component unmount
+  useEffect(() => {
+    return () => {
+      if (locationWatchId) {
+        console.log('Component unmounting - stopping location watching...');
+        LocationService.stopWatchingLocation(locationWatchId);
+      }
+    };
+  }, [locationWatchId]);
 
   // Handle sheet changes
   const handleSheetChanges = useCallback((index) => {
@@ -239,7 +355,22 @@ export default function ReserveRideScreen({ navigation, route }) {
   };
 
   const handleNext = () => {
-    navigation.navigate('Pickup');
+    if (!destination) {
+      alert('Please select a destination');
+      return;
+    }
+    
+    if (!currentLocation) {
+      alert('Current location is required to proceed');
+      return;
+    }
+    
+    navigation.navigate('Cars', {
+      currentLocation,
+      destination,
+      currentLocationText,
+      destinationText,
+    });
   };
 
   const handleCurrentLocationPress = () => {
@@ -277,21 +408,30 @@ export default function ReserveRideScreen({ navigation, route }) {
     console.log('Selected passenger:', passengerOption);
   };
 
-
-  const staticDestinations = [
-    {
-      id: 1,
-      title: "Select Citywalk Mall",
-      address: "Saket District Center, District Center, Sector 6, Pushp Vihar, New Delhi, Delhi 110017",
-      icon: "time"
-    },
-    {
-      id: 2,
-      title: "5, Kullar Farms Rd",
-      address: "New Manglapuri, Manglapuri Village, Sultanpur, New Delhi, Delhi",
-      icon: "home"
+  const handleSavedDestinationSelect = (selectedDestination) => {
+    // Set the destination
+    setDestination(selectedDestination);
+    setDestinationText(selectedDestination.address || selectedDestination.title);
+    
+    console.log('Selected saved destination dynamically:', selectedDestination);
+    
+    // Fit map to show both pickup and destination
+    if (currentLocation && selectedDestination.coordinates && mapRef.current) {
+      setTimeout(() => {
+        console.log('Animating map to show both pickup and destination');
+        mapRef.current.fitToCoordinates(
+          [currentLocation, selectedDestination.coordinates],
+          {
+            edgePadding: { top: 150, right: 80, bottom: 500, left: 80 },
+            animated: true,
+          }
+        );
+      }, 300);
     }
-  ];
+  };
+
+
+  const [savedDestinations, setSavedDestinations] = useState([]);
 
   return (
     <View style={styles.container}>
@@ -304,9 +444,14 @@ export default function ReserveRideScreen({ navigation, route }) {
           ref={mapRef}
           provider={PROVIDER_GOOGLE}
           style={styles.map}
-          initialRegion={{
-            latitude: 37.421998,
-            longitude: -122.084000,
+          initialRegion={currentLocation ? {
+            latitude: currentLocation.latitude,
+            longitude: currentLocation.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          } : {
+            latitude: 0, // Will be set dynamically when location is available
+            longitude: 0,
             latitudeDelta: 0.0922,
             longitudeDelta: 0.0421,
           }}
@@ -318,55 +463,54 @@ export default function ReserveRideScreen({ navigation, route }) {
         >
           {/* Current Location Marker */}
           {currentLocation && (
-            <MapView.Marker
+            <Marker
               coordinate={currentLocation}
-              title="Pickup Location"
+              title="Current Location"
               description={currentLocationText}
             >
               <View style={styles.currentLocationMarker}>
-                <View style={styles.locationPinContainer}>
-                  <Ionicons name="car" size={40} color="#2196F3" />
+                <View style={styles.currentLocationIconBackground}>
+                  <Ionicons name="location" size={24} color={Colors.WHITE} />
                 </View>
               </View>
-            </MapView.Marker>
+            </Marker>
           )}
-          
+
           {/* Destination Marker */}
           {destination && destination.coordinates && (
-            <MapView.Marker
+            <Marker
               coordinate={destination.coordinates}
               title="Destination"
-              description={destinationText}
+              description={destination.address || destination.name}
             >
-              <View style={styles.destinationMarkerPin}>
-                <View style={styles.destinationPinHead}>
-                  <View style={styles.destinationPinInner} />
+              <View style={styles.destinationMarkerContainer}>
+                <View style={styles.destinationIconBackground}>
+                  <Ionicons name="flag" size={24} color={Colors.WHITE} />
                 </View>
-                <View style={styles.destinationPinPoint} />
               </View>
-            </MapView.Marker>
+            </Marker>
           )}
-          
-          {/* Route Line */}
+
+          {/* Route Directions */}
           {currentLocation && destination && destination.coordinates && (
             <MapViewDirections
               origin={currentLocation}
               destination={destination.coordinates}
               apikey={GOOGLE_MAPS_API_KEY}
               strokeWidth={4}
-              strokeColor={Colors.SECONDARY}
+              strokeColor={Colors.PRIMARY}
               onReady={(result) => {
-                console.log('Route ready:', result);
                 setDistance(result.distance);
                 setDuration(result.duration);
+                console.log('Route calculated:', result);
               }}
               onError={(errorMessage) => {
-                console.log('Directions Error:', errorMessage);
+                console.warn('Directions error:', errorMessage);
               }}
             />
           )}
         </MapView>
-        
+                
         {/* Map Overlay Buttons */}
         <View style={styles.mapOverlay}>
           {/* Back Button - Top Left */}
@@ -398,7 +542,8 @@ export default function ReserveRideScreen({ navigation, route }) {
         <BottomSheetView style={styles.bottomSheetContent}>
           <ModalHeader 
             title="Plan your ride" 
-            onBack={handleBack} 
+            // onBack={handleBack} 
+            showBackButton={false}
           />
 
           <View style={styles.headerAndButtonsContainer}>
@@ -529,37 +674,48 @@ export default function ReserveRideScreen({ navigation, route }) {
           {/* <View style={styles.fullWidthContainer}>
             <View style={styles.fatDivider} />
           </View> */}
-        <ScrollView showsVerticalScrollIndicator={false} style={styles.destinationsSection}>
-          <View style={styles.destinationsTitleContainer}>
-            <View style={styles.destinationsTitleIcon}>
-              <Ionicons name="star" size={12} color={Colors.WHITE} />
+        {savedDestinations.length > 0 && (
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.destinationsSection}>
+            <View style={styles.destinationsTitleContainer}>
+              <View style={styles.destinationsTitleIcon}>
+                <Ionicons name="star" size={12} color={Colors.WHITE} />
+              </View>
+               <Text style={styles.destinationsTitle}>Saved Destinations</Text>
             </View>
-             <Text style={styles.destinationsTitle}>Saved Destinations</Text>
-          </View>
-          {staticDestinations.map((destination, index) => (
-            <React.Fragment key={destination.id}>
-              <DestinationItem
-                title={destination.title}
-                address={destination.address}
-                icon={destination.icon}
-                onPress={() => {
-                  // Handle destination selection
-                  console.log('Selected destination:', destination.title);
-                }}
-              />
-              {index < staticDestinations.length - 1 && (
-                <View style={styles.destinationsDivider} />
-              )}
-            </React.Fragment>
-          ))}
-        </ScrollView>
+            {savedDestinations.map((destination, index) => (
+              <React.Fragment key={destination.id}>
+                <DestinationItem
+                  title={destination.title}
+                  address={destination.address}
+                  icon={destination.icon}
+                  onPress={() => handleSavedDestinationSelect(destination)}
+                />
+                {index < savedDestinations.length - 1 && (
+                  <View style={styles.destinationsDivider} />
+                )}
+              </React.Fragment>
+            ))}
+          </ScrollView>
+        )}
         </BottomSheetView>
       </BottomSheet>
 
       {/* Fixed Next Button */}
       <View style={styles.fixedButtonContainer}>
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.nextButtonText}>Next</Text>
+        <TouchableOpacity 
+          style={[
+            styles.nextButton, 
+            (!destination || !currentLocation) && styles.disabledButton
+          ]} 
+          onPress={handleNext}
+          disabled={!destination || !currentLocation}
+        >
+          <Text style={[
+            styles.nextButtonText,
+            (!destination || !currentLocation) && styles.disabledButtonText
+          ]}>
+            Next
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -891,6 +1047,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.WHITE,
   },
+  disabledButton: {
+    backgroundColor: Colors.PRIMARY_GREY,
+    opacity: 0.5,
+  },
+  disabledButtonText: {
+    color: Colors.WHITE,
+    opacity: 0.7,
+  },
   currentLocationTex:{
     textAlign: 'left',
     fontSize: 14,
@@ -977,65 +1141,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  locationPinContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
-  },
-  destinationMarkerPin: {
-    width: 30,
-    height: 45,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  destinationPinHead: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#EA4335',
-    borderWidth: 3,
+  currentLocationIconBackground: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#4285F4', // Google Blue
+    borderWidth: 4,
     borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 6,
       },
       android: {
-        elevation: 5,
+        elevation: 8,
       },
     }),
   },
-  destinationPinInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#FFFFFF',
+  destinationMarkerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  destinationPinPoint: {
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 10,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#EA4335',
-    marginTop: -3,
+  destinationIconBackground: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#EA4335', // Google Red
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
 });

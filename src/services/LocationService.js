@@ -198,9 +198,22 @@ class LocationService {
       return null;
     }
 
+    // Performance optimization: Throttle location updates
+    let lastUpdateTime = 0;
+    const UPDATE_THROTTLE_MS = 2000; // Minimum 2 seconds between updates
+
     const watchId = Geolocation.watchPosition(
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
+        const currentTime = Date.now();
+        
+        // Throttle updates to save battery
+        if (currentTime - lastUpdateTime < UPDATE_THROTTLE_MS) {
+          return;
+        }
+        
+        lastUpdateTime = currentTime;
+        
         const locationData = {
           latitude,
           longitude,
@@ -219,13 +232,13 @@ class LocationService {
           onError(error);
         }
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 5000,
-        distanceFilter: 5, // Update when user moves 5 meters
-        interval: 10000, // Check every 10 seconds
-      }
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 3000, // Reduced for more frequent updates
+          distanceFilter: 3, // Update when user moves 3 meters (more sensitive)
+          interval: 5000, // Check every 5 seconds (more frequent)
+        }
     );
 
     return watchId;

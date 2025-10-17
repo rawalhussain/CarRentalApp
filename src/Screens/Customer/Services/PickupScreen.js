@@ -13,7 +13,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetScrollView, BottomSheetView, BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { Colors } from '../../../Themes/MyColors';
@@ -21,6 +21,7 @@ import MapViewComponent from '../../../Components/MapView';
 import ModalHeader from '../../../Components/ModalHeader';
 import LocationService from '../../../services/LocationService';
 import { GOOGLE_MAPS_API_KEY } from '../../../Config/constants';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // Polyfill for crypto.getRandomValues
 if (typeof global.crypto === 'undefined') {
@@ -56,7 +57,10 @@ export default function PickupScreen({ navigation, route }) {
       longitudeDelta: 0.0421,
     }
   );
- 
+
+  useEffect(() => {
+    bottomSheetRef.current?.present();
+  }, []);
   
   // State for tracking keyboard and sheet
   const [currentSheetIndex, setCurrentSheetIndex] = useState(0);
@@ -64,6 +68,9 @@ export default function PickupScreen({ navigation, route }) {
   // Debug selectedLocation changes
   useEffect(() => {
     console.log('Selected location changed:', selectedLocation);
+    if (selectedLocation) {
+      console.log('Marker should be displayed at:', selectedLocation.coordinates);
+    }
   }, [selectedLocation]);
   
   // Debug mapRegion changes
@@ -72,7 +79,7 @@ export default function PickupScreen({ navigation, route }) {
   }, [mapRegion]);
   
   // Snap points for the bottom sheet
-  const snapPoints = useMemo(() => ['45%', '85%', '89%'], []);
+  const snapPoints = useMemo(() => ['65%', '85%', '89%'], []);
   
   // Keyboard listeners
   useEffect(() => {
@@ -156,6 +163,12 @@ export default function PickupScreen({ navigation, route }) {
         googlePlacesRef.current.setAddressText(details.formatted_address || data.description);
       }
       
+      // Close keyboard but keep sheet at expanded size (index 1 - 85%)
+      Keyboard.dismiss();
+      setTimeout(() => {
+        bottomSheetRef.current?.snapToIndex(1);
+      }, 100);
+      
       // Animate map to the new location
       if (mapViewRef.current) {
         console.log('Animating map to region:', newRegion);
@@ -186,7 +199,7 @@ export default function PickupScreen({ navigation, route }) {
   };
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       
       {/* Map Background - Behind Status Bar */}
@@ -199,14 +212,11 @@ export default function PickupScreen({ navigation, route }) {
             showCurrentLocationMarker={true}
             currentLocation={selectedLocation?.coordinates || currentLocation}
             draggableMarker={true}
-            destinationMarker={selectedLocation ? (() => {
-              console.log('Rendering destination marker for:', selectedLocation);
-              return {
-                coordinate: selectedLocation.coordinates,
-                title: selectedLocation.name,
-                description: selectedLocation.address
-              };
-            })() : null}
+            destinationMarker={selectedLocation ? {
+              coordinate: selectedLocation.coordinates,
+              title: selectedLocation.name,
+              description: selectedLocation.address
+            } : null}
             onMarkerDragEnd={(location) => {
               console.log('Marker dragged to:', location);
               setSelectedLocation({
@@ -217,6 +227,11 @@ export default function PickupScreen({ navigation, route }) {
               setSearchText(`${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`);
             }}
             onPress={handleMapPress}
+            marker={selectedLocation ? {
+              coordinate: selectedLocation.coordinates,
+              title: selectedLocation.name,
+              description: selectedLocation.address
+            } : null}
           />
           
           {/* Map Overlay Buttons */}
@@ -252,72 +267,46 @@ export default function PickupScreen({ navigation, route }) {
         </View>
       </TouchableWithoutFeedback>
 
-      {/* Bottom Sheet */}
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={0}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}
-        enablePanDownToClose={false}
-        handleIndicatorStyle={styles.dragHandle}
-        backgroundStyle={styles.bottomSheetBackground}
-        enableOverDrag={false}
-        android_keyboardInputMode="adjustResize"
-        keyboardBehavior="interactive"
-        keyboardBlurBehavior="restore"
-      >
-        <BottomSheetView style={styles.bottomSheetContent}>
-          {/* Modal Header */}
+        <BottomSheetModalProvider>
+          <BottomSheetModal
+            ref={bottomSheetRef}
+            snapPoints={snapPoints}
+            onChange={handleSheetChanges}
+          >
+            <BottomSheetScrollView 
+              style={styles.contentContainer}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+               {/* Modal Header */}
           <ModalHeader 
             title="Set your pickup spot" 
-            onBack={handleBack}
+            // onBack={handleBack} 
+            showBackButton={false}
             description="Drag marker or search to set location"
           />
-
-          {/* Google Places Autocomplete */}
-          <View style={styles.locationInputs}>
-            <View style={styles.locationInput}>
-              <View style={styles.locationIcon}>
-                <View style={styles.currentLocationDot} />
-              </View>
-              <View style={styles.inputContainer}>
-                {selectedLocation ? (
-                  <View style={styles.selectedLocationContainer}>
-                    <Text style={styles.selectedLocationText} numberOfLines={2}>
-                      {selectedLocation.address}
-                    </Text>
-                    <TouchableOpacity 
-                      style={styles.clearButton}
-                      onPress={() => {
-                        setSelectedLocation(null);
-                        setSearchText('');
-                        if (googlePlacesRef.current) {
-                          googlePlacesRef.current.setAddressText('');
-                        }
-                      }}
-                    >
-                      <Ionicons name="close-circle" size={20} color={Colors.PRIMARY_GREY} />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <GooglePlacesAutocomplete
-                    ref={googlePlacesRef}
-                    placeholder="Search for pickup location..."
-                    onPress={(data, details = null) => {
-                      console.log('Place selected:', data, details);
-                      handlePlaceSelect(data, details);
-                    }}
-                    onChangeText={(text) => {
-                      setSearchText(text);
-                      if (!text) {
-                        setSelectedLocation(null);
-                      }
-                    }}
+          
+          <GooglePlacesAutocomplete
+                  ref={googlePlacesRef}
+                  placeholderTextColor={Colors.PRIMARY_GREY}
+                  placeholder="Search for pickup location..."
+                  onPress={(data, details = null) => {
+                    console.log('Place selected:', data, details);
+                    handlePlaceSelect(data, details);
+                  }}
+                  onChangeText={(text) => {
+                    setSearchText(text);
+                    if (!text) {
+                      setSelectedLocation(null);
+                    }
+                  }}
                   query={{
                     key: GOOGLE_MAPS_API_KEY,
                     language: 'en',
                     components: 'country:pk',
                   }}
+                  keyboardShouldPersistTaps="handled"
+                  listViewDisplayed="auto"
                   styles={{
                     container: styles.googlePlacesContainer,
                     textInputContainer: styles.googlePlacesTextInputContainer,
@@ -362,13 +351,13 @@ export default function PickupScreen({ navigation, route }) {
                   timeout={10000}
                   textInputProps={{
                     placeholderTextColor: Colors.PRIMARY_GREY,
-                    returnKeyType: 'search',
+                    returnKeyType: 'done',
                     autoCorrect: false,
                     autoCapitalize: 'none',
                     clearButtonMode: 'while-editing',
                     multiline: true,
                     numberOfLines: 2,
-                    textAlignVertical: 'top',
+                    textAlignVertical: 'center',
                     onFocus: () => {
                       console.log('Input focused - expanding sheet to 95%');
                       // Expand bottom sheet to 95% when input is focused
@@ -378,7 +367,18 @@ export default function PickupScreen({ navigation, route }) {
                     },
                     onBlur: () => {
                       console.log('Input blurred');
-                      // Don't collapse here, let keyboard hide listener handle it
+                      // Keep sheet at expanded size when input loses focus
+                      setTimeout(() => {
+                        bottomSheetRef.current?.snapToIndex(1);
+                      }, 100);
+                    },
+                    onSubmitEditing: () => {
+                      console.log('Done button pressed');
+                      // Close keyboard and keep sheet at expanded size
+                      Keyboard.dismiss();
+                      setTimeout(() => {
+                        bottomSheetRef.current?.snapToIndex(1);
+                      }, 100);
                     },
                   }}
                   onFail={(error) => {
@@ -388,31 +388,38 @@ export default function PickupScreen({ navigation, route }) {
                   onNotFound={() => console.log('No results found')}
                   onTimeout={() => console.log('Request timeout')}
                   onQueryChange={(query) => {
-                    console.log('Query changed:', query);
+                    console.warn('Query changed:', query);
                     console.log('API Key:', GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
                   }}
-                  />
-                )}
-                {/* <View style={styles.inputUnderline} /> */}
-              </View>
-            </View>
-          </View>
+                />
+            </BottomSheetScrollView>
+        </BottomSheetModal>
+        </BottomSheetModalProvider>
 
-           
-           {/* Fat Divider Above Button */}
-           <View style={styles.fullWidthContainer}>
-             <View style={styles.fatDivider} />
-           </View>
-
-           {/* Confirm Pickup Button */}
-           <View style={styles.buttonContainer}>
+      {/* Bottom Sheet */}
+      {/* <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        onChange={handleSheetChanges}
+        enablePanDownToClose={false}
+        handleIndicatorStyle={styles.dragHandle}
+        backgroundStyle={styles.bottomSheetBackground}
+        enableOverDrag={false}
+        android_keyboardInputMode="adjustResize"
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        enableTouchThrough={true}
+      >
+        <BottomSheetScrollView style={styles.bottomSheetContent}>
+         
+        </BottomSheetScrollView>
+      </BottomSheet> */}
+      <View style={styles.buttonContainer}>
              <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmPickup}>
                <Text style={styles.confirmButtonText}>Confirm pickup</Text>
              </TouchableOpacity>
            </View>
-        </BottomSheetView>
-      </BottomSheet>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -420,6 +427,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.WHITE,
+  },
+  contentContainer: {
+    flex: 1,
   },
   mapContainer: {
     flex: 1,
@@ -498,6 +508,7 @@ const styles = StyleSheet.create({
   bottomSheetContent: {
     flex: 1,
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    minHeight: 300
   },
   dragHandle: {
     width: 100,
@@ -506,26 +517,27 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   locationInputs: {
-    marginBottom: 15,
+    marginBottom: 75,
+    // paddingBottom: 100,
     marginTop: 15,
     backgroundColor: '#EEEEEE',
-    position: 'relative',
-    zIndex: 9998,
+    // position: 'relative',
+    // zIndex: 9998,
+    maxHeight: 59,
     minHeight: 59,
-    maxHeight: 100,
+    // maxHeight: 100,
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginHorizontal: 20,
     borderRadius: 7,
     paddingHorizontal: 10,
-    paddingVertical: 8,
   },
   locationInput: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    paddingVertical: 8,
+    alignItems: 'center',
+    paddingVertical: 12,
     width: '100%',
+    
   },
   locationIcon: {
     width: 24,
@@ -533,7 +545,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
-    marginTop: 8,
   },
   currentLocationDot: {
     width: 10,
@@ -543,11 +554,14 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flex: 1,
+    justifyContent: 'center',
   },
   locationTextInput: {
     fontSize: 16,
     color: Colors.BLACK,
-    paddingVertical: 8,
+    // paddingVertical: 8,
+    textAlign: 'center',
+    textAlignVertical: 'center',
   },
   inputUnderline: {
     height: 1,
@@ -631,68 +645,94 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   buttonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.WHITE,
     paddingHorizontal: 20,
-    paddingBottom: Platform.OS === 'ios' ? 0 : 10,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   googlePlacesContainer: {
-    flex: 1,
-    zIndex: 9999,
-    position: 'relative',
+    flex: 0,
+    width: '100%',
+    minHeight: 180
   },
   googlePlacesTextInputContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    borderBottomWidth: 0,
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    alignItems: 'center',
+    // flexDirection: 'row',
+    // backgroundColor: 'transparent',
+    // borderWidth: 0,
+    // borderBottomWidth: 0,
+    // paddingHorizontal: 0,
+    // paddingVertical: 0,
+    // alignItems: 'center',
+    // justifyContent: 'center',
   },
   googlePlacesInput: {
     fontSize: 16,
     color: Colors.BLACK,
     paddingVertical: 8,
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.lightGray,
     flex: 1,
     borderWidth: 0,
     margin: 0,
     paddingHorizontal: 0,
-    minHeight: 40,
+    minHeight: 59,
     maxHeight: 80,
-    textAlignVertical: 'top',
+    textAlignVertical: 'center',
+    marginHorizontal: 20,
+    paddingHorizontal: 16,
+    marginTop: 20,
   },
   googlePlacesList: {
     backgroundColor: Colors.WHITE,
     borderRadius: 7,
     // marginTop: 8,
-    maxHeight: 265,
-    position: 'absolute',
-    top: 50,
-    left: 0,
+    // maxHeight: 305,
+    // position: 'absolute',
+    // top: 35,
+    // left: -50,
     right: 0,
-    zIndex: 9999,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 15,
-      },
-    }),
+    // zIndex: 9999,
+    // borderWidth: 1,  
+    width: '100%',
+    // borderColor: '#E5E5E5',
+    // ...Platform.select({
+    //   ios: {
+    //     shadowColor: '#000',
+    //     shadowOffset: { width: 0, height: 6 },
+    //     shadowOpacity: 0.12,
+    //     shadowRadius: 12,
+    //   },
+    //   android: {
+    //     elevation: 15,
+    //   },
+    // }),
   },
   googlePlacesRow: {
-    backgroundColor: Colors.WHITE,
-    // padding: 16,
+    // backgroundColor: Colors.WHITE,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
     borderBottomWidth: 0.5,
     borderBottomColor: '#F5F5F5',
-    // minHeight: 56,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
   },
   googlePlacesDescription: {
     fontSize: 15,
@@ -703,7 +743,7 @@ const styles = StyleSheet.create({
   googlePlacesSeparator: {
     height: 0.5,
     backgroundColor: '#F0F0F0',
-    marginHorizontal: 16,
+    marginHorizontal: 0,
   },
   googlePlacesLoader: {
     flexDirection: 'row',
@@ -726,13 +766,10 @@ const styles = StyleSheet.create({
   },
   // Custom Search Result Styles
   searchResultRow: {
-    // backgroundColor: 'red',
     flexDirection: 'row',
     alignItems: 'center',
-    width: '95%',
-    // paddingVertical: 12,
-    // paddingHorizontal: 16,
-    // minHeight: 56,
+    width: '100%',
+    paddingVertical: 2,
   },
   searchResultIconContainer: {
     width: 40,
@@ -752,13 +789,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: Colors.BLACK,
-    marginBottom: 4,
-    lineHeight: 20,
+    marginBottom: 2,
+    lineHeight: 18,
   },
   searchResultAddress: {
     fontSize: 14,
     color: Colors.PRIMARY_GREY,
-    lineHeight: 18,
+    lineHeight: 16,
   },
   // Selected Location Display Styles
   selectedLocationContainer: {

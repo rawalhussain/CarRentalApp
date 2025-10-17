@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   optionsContainer: {
-    // paddingHorizontal: 20,
+    paddingHorizontal: 20,
     paddingVertical: 20,
   },
   optionRow: {
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     // paddingVertical: 16,
     marginVertical: 5,
-    // paddingHorizontal: 12,
+    paddingHorizontal: 12,
     paddingVertical: 2,
     borderRadius: 7,
     backgroundColor: '#EEEEEE',
