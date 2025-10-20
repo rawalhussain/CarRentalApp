@@ -45,7 +45,7 @@ const MapViewComponent = forwardRef(({
       marker,
       markers: markers?.length || 0,
       showCurrentLocationMarker,
-      currentLocation
+      currentLocation,
     });
   }, [destinationMarker, marker, markers, showCurrentLocationMarker, currentLocation]);
 
@@ -68,7 +68,7 @@ const MapViewComponent = forwardRef(({
     },
   }));
 
-  useEffect(() => {  
+  useEffect(() => {
     if (currentLocation && showCurrentLocationMarker) {
       setRegion(currentLocation);
       setUserLocation({
@@ -92,20 +92,20 @@ const MapViewComponent = forwardRef(({
     if (showCurrentLocationMarker && !currentLocation) {
       // Performance optimization: Throttle location updates
       let lastUpdateTime = 0;
-      const UPDATE_THROTTLE_MS = 2000; // Minimum 2 seconds between updates
-      
+      const UPDATE_THROTTLE_MS = 20000; // Minimum 2 seconds between updates
+
       const watchId = Geolocation.watchPosition(
         (position) => {
           const { latitude, longitude, accuracy } = position.coords;
           const currentTime = Date.now();
-          
+
           // Throttle updates to save battery
           if (currentTime - lastUpdateTime < UPDATE_THROTTLE_MS) {
             return;
           }
-          
+
           lastUpdateTime = currentTime;
-          
+
           const newLocation = { latitude, longitude };
           const newRegion = {
             ...newLocation,
@@ -136,14 +136,14 @@ const MapViewComponent = forwardRef(({
         {
           enableHighAccuracy: true,
           timeout: 20000,
-          maximumAge: 5000,
+          maximumAge: 500000,
           distanceFilter: 5, // Update when user moves 5 meters
-          interval: 10000, // Check every 10 seconds
+          interval: 100000, // Check every 10 seconds
         }
       );
-      
+
       setLocationWatchId(watchId);
-      
+
       return () => {
         if (watchId) {
           Geolocation.clearWatch(watchId);
@@ -239,7 +239,7 @@ const MapViewComponent = forwardRef(({
     if (onPress) {
       onPress(event);
     }
-    
+
     // Also call onLocationSelect for backward compatibility
     if (event.nativeEvent?.coordinate) {
       const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -252,7 +252,7 @@ const MapViewComponent = forwardRef(({
   const handleMarkerDrag = (event) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
     setUserLocation({ latitude, longitude });
-    
+
     // Update coordinates display
     const coordText = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
     setCoordinates(coordText);
@@ -282,10 +282,10 @@ const MapViewComponent = forwardRef(({
         pitchEnabled={true}
         rotateEnabled={true}
       >
-         {userLocation && (showCurrentLocationMarker || showUserLocation) && 
-          typeof userLocation.latitude === 'number' && 
+         {userLocation && (showCurrentLocationMarker || showUserLocation) &&
+          typeof userLocation.latitude === 'number' &&
           typeof userLocation.longitude === 'number' &&
-          !isNaN(userLocation.latitude) && 
+          !isNaN(userLocation.latitude) &&
           !isNaN(userLocation.longitude) && (
             <>
               {/* Accuracy Circle */}
@@ -311,10 +311,10 @@ const MapViewComponent = forwardRef(({
               />
             </>
           )}
-        
+
         {/* Dynamic Route Line */}
-        {routeCoordinates && routeCoordinates.length > 0 && routeCoordinates.every(coord => 
-          coord && typeof coord.latitude === 'number' && typeof coord.longitude === 'number' && 
+        {routeCoordinates && routeCoordinates.length > 0 && routeCoordinates.every(coord =>
+          coord && typeof coord.latitude === 'number' && typeof coord.longitude === 'number' &&
           !isNaN(coord.latitude) && !isNaN(coord.longitude)
         ) && (
           <Polyline
@@ -330,8 +330,8 @@ const MapViewComponent = forwardRef(({
         )}
 
         {/* Simple polyline between current location and destination */}
-        {userLocation && destinationMarker && destinationMarker.coordinate && 
-         !routeCoordinates && 
+        {userLocation && destinationMarker && destinationMarker.coordinate &&
+         !routeCoordinates &&
          typeof userLocation.latitude === 'number' && typeof userLocation.longitude === 'number' &&
          typeof destinationMarker.coordinate.latitude === 'number' && typeof destinationMarker.coordinate.longitude === 'number' &&
          !isNaN(userLocation.latitude) && !isNaN(userLocation.longitude) &&
@@ -348,14 +348,14 @@ const MapViewComponent = forwardRef(({
         )}
 
         {/* Destination Marker */}
-        {destinationMarker && destinationMarker.coordinate && 
-         typeof destinationMarker.coordinate.latitude === 'number' && 
+        {destinationMarker && destinationMarker.coordinate &&
+         typeof destinationMarker.coordinate.latitude === 'number' &&
          typeof destinationMarker.coordinate.longitude === 'number' &&
-         !isNaN(destinationMarker.coordinate.latitude) && 
+         !isNaN(destinationMarker.coordinate.latitude) &&
          !isNaN(destinationMarker.coordinate.longitude) && (
-          <Marker 
+          <Marker
             coordinate={destinationMarker.coordinate}
-            title={destinationMarker.title || "Destination"}
+            title={destinationMarker.title || 'Destination'}
             description={destinationMarker.description}
             tracksViewChanges={false}
             onPress={() => console.log('Destination marker pressed:', destinationMarker)}
@@ -364,14 +364,14 @@ const MapViewComponent = forwardRef(({
         )}
 
         {/* Single Marker */}
-        {marker && marker.coordinate && 
-         typeof marker.coordinate.latitude === 'number' && 
+        {marker && marker.coordinate &&
+         typeof marker.coordinate.latitude === 'number' &&
          typeof marker.coordinate.longitude === 'number' &&
-         !isNaN(marker.coordinate.latitude) && 
+         !isNaN(marker.coordinate.latitude) &&
          !isNaN(marker.coordinate.longitude) && (
           <Marker
             coordinate={marker.coordinate}
-            title={marker.title || "Selected Location"}
+            title={marker.title || 'Selected Location'}
             description={marker.description}
             tracksViewChanges={false}
             onPress={() => console.log('Single marker pressed:', marker)}
@@ -379,12 +379,12 @@ const MapViewComponent = forwardRef(({
           />
         )}
 
-        
+
         {markers.map((marker, index) => (
-          marker && marker.coordinate && 
-          typeof marker.coordinate.latitude === 'number' && 
+          marker && marker.coordinate &&
+          typeof marker.coordinate.latitude === 'number' &&
           typeof marker.coordinate.longitude === 'number' &&
-          !isNaN(marker.coordinate.latitude) && 
+          !isNaN(marker.coordinate.latitude) &&
           !isNaN(marker.coordinate.longitude) && (
             <Marker
               key={index}

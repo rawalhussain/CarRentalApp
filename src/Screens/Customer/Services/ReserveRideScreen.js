@@ -29,6 +29,9 @@ import { ScrollView } from 'react-native-gesture-handler';
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function ReserveRideScreen({ navigation, route }) {
+  // Get service type from route params
+  const { serviceType = 'Ride' } = route?.params || {};
+  
   // Bottom sheet refs
   const bottomSheetRef = useRef(null);
   const pickupTimeBottomSheetRef = useRef(null);
@@ -51,7 +54,7 @@ export default function ReserveRideScreen({ navigation, route }) {
   const [duration, setDuration] = useState(null);
   
   // State for pickup time
-  const [selectedPickupTime, setSelectedPickupTime] = useState('now');
+  const [selectedPickupTime, setSelectedPickupTime] = useState(serviceType === 'Ride' ? 'now' : 'later');
   
   // State for passenger selection
   const [selectedPassenger, setSelectedPassenger] = useState('for_me');
@@ -192,7 +195,7 @@ export default function ReserveRideScreen({ navigation, route }) {
       // Fit map to show both pickup and destination in upper visible area
       if (currentLocation && dest.coordinates && mapRef.current) {
         setTimeout(() => {
-          mapRef.current.fitToCoordinates(
+          mapRef?.current?.fitToCoordinates(
             [currentLocation, dest.coordinates],
             {
               edgePadding: { top: 150, right: 80, bottom: 500, left: 80 },
@@ -220,7 +223,7 @@ export default function ReserveRideScreen({ navigation, route }) {
         setTimeout(() => {
           if (destination && destination.coordinates) {
             // If destination exists, fit both points in upper visible area
-            mapRef.current.fitToCoordinates(
+            mapRef.current?.fitToCoordinates(
               [updatedLocation, destination.coordinates],
               {
                 edgePadding: { top: 150, right: 80, bottom: 500, left: 80 },
@@ -229,7 +232,7 @@ export default function ReserveRideScreen({ navigation, route }) {
             );
           } else {
             // Otherwise just center on new pickup with offset for bottom sheet
-            mapRef.current.animateToRegion({
+            mapRef.current?.animateToRegion({
               latitude: updatedLocation.latitude - 0.003,
               longitude: updatedLocation.longitude,
               latitudeDelta: 0.015,
@@ -248,7 +251,7 @@ export default function ReserveRideScreen({ navigation, route }) {
       // Only update if no destination is selected to avoid conflicts
       if (!destination || !destination.coordinates) {
         setTimeout(() => {
-          mapRef.current.animateToRegion({
+          mapRef.current?.animateToRegion({
             latitude: currentLocation.latitude - 0.003,
             longitude: currentLocation.longitude,
             latitudeDelta: 0.015,
@@ -259,28 +262,11 @@ export default function ReserveRideScreen({ navigation, route }) {
     }
   }, [currentLocation]);
 
-  // Force map to show markers when they are added
-  useEffect(() => {
-    if (currentLocation && mapRef.current) {
-      console.log('Ensuring markers are visible on map');
-      // // Force a small region update to ensure markers are rendered
-      // setTimeout(() => {
-      //   const currentRegion = {
-      //     latitude: currentLocation.latitude,
-      //     longitude: currentLocation.longitude,
-      //     latitudeDelta: 0.01,
-      //     longitudeDelta: 0.01,
-      //   };
-      //   mapRef.current.animateToRegion(currentRegion, 500);
-      // }, 1000);
-    }
-  }, [currentLocation, destination]);
 
   // Cleanup location watching on component unmount
   useEffect(() => {
     return () => {
       if (locationWatchId) {
-        console.log('Component unmounting - stopping location watching...');
         LocationService.stopWatchingLocation(locationWatchId);
       }
     };
@@ -302,9 +288,8 @@ export default function ReserveRideScreen({ navigation, route }) {
   const handleMyLocationPress = async () => {
     // Focus map on current location in upper visible area
     if (currentLocation && mapRef.current) {
-      console.log('Focusing on current location:', currentLocation);
       // Animate to current location with offset so marker shows in upper part
-      mapRef.current.animateToRegion({
+      mapRef.current?.animateToRegion({
         latitude: currentLocation.latitude - 0.003, // Offset for bottom sheet
         longitude: currentLocation.longitude,
         latitudeDelta: 0.015,
@@ -312,7 +297,6 @@ export default function ReserveRideScreen({ navigation, route }) {
       }, 1000);
     } else {
       // If no current location, try to get it again
-      console.log('No current location available, trying to get location...');
       setIsLoadingAddress(true);
       setCurrentLocationText('Detecting location...');
       
@@ -330,7 +314,7 @@ export default function ReserveRideScreen({ navigation, route }) {
           
           // Now animate to the new location with offset
           if (mapRef.current) {
-            mapRef.current.animateToRegion({
+            mapRef.current?.animateToRegion({
               latitude: location.latitude - 0.003,
               longitude: location.longitude,
               latitudeDelta: 0.015,
@@ -365,12 +349,25 @@ export default function ReserveRideScreen({ navigation, route }) {
       return;
     }
     
-    navigation.navigate('Cars', {
-      currentLocation,
-      destination,
-      currentLocationText,
-      destinationText,
-    });
+    // For Reserve service, navigate directly to TimeSelection screen
+    if (serviceType === 'Reserve') {
+      navigation.navigate('TimeSelection', {
+        currentLocation,
+        destination,
+        currentLocationText,
+        destinationText,
+        serviceType,
+      });
+    } else {
+      // For Ride service, go directly to Cars screen
+      navigation.navigate('Cars', {
+        currentLocation,
+        destination,
+        currentLocationText,
+        destinationText,
+        serviceType,
+      });
+    }
   };
 
   const handleCurrentLocationPress = () => {
@@ -397,6 +394,29 @@ export default function ReserveRideScreen({ navigation, route }) {
   const handlePickupTimeSelect = (timeOption) => {
     setSelectedPickupTime(timeOption);
     console.log('Selected pickup time:', timeOption);
+    
+    // Close the time selection modal
+    pickupTimeBottomSheetRef.current?.close();
+    
+    // If this was triggered from Reserve service and "later" is selected, navigate to time selection screen
+    if (timeOption !== 'now') {
+      navigation.navigate('TimeSelection', {
+        currentLocation,
+        destination,
+        currentLocationText,
+        destinationText,
+        serviceType,
+      });
+    } else if (timeOption === 'now') {
+      navigation.navigate('Cars', {
+        currentLocation,
+        destination,
+        currentLocationText,
+        destinationText,
+        serviceType,
+        selectedPickupTime: timeOption,
+      });
+    }
   };
 
   const handlePassengerPress = () => {

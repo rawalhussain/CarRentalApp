@@ -9,8 +9,10 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
-  Dimensions,
+  Dimensions, Alert,
 } from 'react-native';
+import { createBooking } from '../../../Config/firebase';
+import useAuthStore from '../../../store/useAuthStore';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -26,31 +28,24 @@ export default function CarsScreen({ navigation, route }) {
   const bottomSheetRef = useRef(null);
   const mapRef = useRef(null);
   const insets = useSafeAreaInsets();
+  
+  // Get user data
+  const { user } = useAuthStore();
 
   // Get route params
   const { currentLocation, destination, currentLocationText, destinationText } = route?.params || {};
-  
+
   // State for route info
   const [distance, setDistance] = useState(null);
   const [duration, setDuration] = useState(null);
 
-  // Debug logging for coordinates
-  useEffect(() => {
-    console.log('Cars Screen - Route params:', {
-      currentLocation,
-      destination,
-      currentLocationText,
-      destinationText,
-    });
-  }, [currentLocation, destination, currentLocationText, destinationText]);
-
   // Fit map to show both pickup and destination when they are available
   useEffect(() => {
-    if (currentLocation && destination && destination.coordinates && mapRef.current) {
+    if (currentLocation && destination && destination?.coordinates && mapRef?.current) {
       setTimeout(() => {
         console.log('Fitting map to show both pickup and destination');
         mapRef.current.fitToCoordinates(
-          [currentLocation, destination.coordinates],
+          [currentLocation, destination?.coordinates],
           {
             edgePadding: { top: 150, right: 80, bottom: 500, left: 80 },
             animated: true,
@@ -141,6 +136,9 @@ export default function CarsScreen({ navigation, route }) {
   // Selected ride state
   const [selectedRide, setSelectedRide] = useState(null);
   const [showDetailSheet, setShowDetailSheet] = useState(false);
+  const [showBookingSummary, setShowBookingSummary] = useState(false);
+  const [bookingId, setBookingId] = useState(null);
+  const [isBooking, setIsBooking] = useState(false);
 
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
@@ -184,10 +182,9 @@ export default function CarsScreen({ navigation, route }) {
 
   const handleMyLocationPress = async () => {
     // Focus map on current location in upper visible area
-    if (currentLocation && mapRef.current) {
-      console.log('Focusing on current location:', currentLocation);
+    if (currentLocation && mapRef?.current) {
       // Animate to current location with offset so marker shows in upper part
-      mapRef.current.animateToRegion({
+      mapRef?.current?.animateToRegion({
         latitude: currentLocation.latitude - 0.003, // Offset for bottom sheet
         longitude: currentLocation.longitude,
         latitudeDelta: 0.015,
@@ -206,18 +203,49 @@ export default function CarsScreen({ navigation, route }) {
     setShowDetailSheet(true);
   };
 
-  const handleBookRide = () => {
+  const handleBookRide = async () => {
     if (selectedRide) {
-      // Navigate to next screen with selected ride data
-      navigation.navigate('BookingConfirmation', {
-        selectedRide,
-        currentLocation,
-        destination,
-        currentLocationText,
-        destinationText,
-      });
+      setIsBooking(true);
+      try {
+        // Create booking data using existing structure
+        const bookingData = {
+          vehicle: {
+            id: selectedRide.id,
+            name: selectedRide.name,
+            price: selectedRide.price,
+            capacity: selectedRide.capacity,
+            description: selectedRide.description,
+            type: 'ride',
+            vendorId: '', // No vendor for ride services
+          },
+          customerId: user?.user?.uid || user?.uid,
+          pickupLocation: currentLocationText,
+          destination: destinationText,
+          pickupCoordinates: currentLocation,
+          destinationCoordinates: destination?.coordinates,
+          serviceType: route?.params?.serviceType || 'Ride',
+          pickupTime: route?.params?.selectedPickupTime,
+          dropoffTime: route?.params?.selectedDropoffTime,
+          pickupDate: route?.params?.selectedPickupDate,
+          dropoffDate: route?.params?.selectedDropoffDate,
+        };
+
+        // Use existing createBooking function
+        const newBookingId = await createBooking(bookingData);
+        setBookingId(newBookingId);
+
+        // Show booking summary
+        setShowBookingSummary(true);
+        setShowDetailSheet(false);
+        
+      } catch (error) {
+        console.error('Error creating booking:', error);
+        Alert.alert('Error', 'Failed to create booking. Please try again.');
+      } finally {
+        setIsBooking(false);
+      }
     } else {
-      alert('Please select a ride option');
+      Alert.alert('Please select a ride option');
     }
   };
 
@@ -302,14 +330,14 @@ export default function CarsScreen({ navigation, route }) {
             />
           )}
         </MapView>
-                
+
         {/* Map Overlay Buttons */}
         <View style={styles.mapOverlay}>
           {/* Back Button - Top Left */}
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Ionicons name="chevron-back" size={24} color={Colors.BLACK} />
           </TouchableOpacity>
-          
+
           {/* My Location Button - Top Right */}
           <TouchableOpacity style={styles.myLocationButton} onPress={handleMyLocationPress}>
             <Ionicons name="locate" size={20} color={Colors.BLACK} />
@@ -340,7 +368,7 @@ export default function CarsScreen({ navigation, route }) {
             <View style={styles.placeholder} />
           </View>
 
-          {!showDetailSheet ? (
+          {!showDetailSheet && !showBookingSummary ? (
             <>
               {/* Subtitle */}
               <View style={styles.subtitleContainer}>
@@ -350,48 +378,188 @@ export default function CarsScreen({ navigation, route }) {
           ) : null}
 
           {/* Ride Options List or Detail View */}
-          <ScrollView style={styles.ridesList} showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            style={styles.ridesList} 
+            contentContainerStyle={styles.ridesListContent}
+            showsVerticalScrollIndicator={false}
+          >
             {isLoading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={Colors.PRIMARY} />
                 <Text style={styles.loadingText}>Finding available rides...</Text>
               </View>
             ) : showDetailSheet && selectedRide ? (
-              // Detail Sheet View
-              <View style={styles.detailView}>
-                <View style={styles.selectedRideDetail}>
-                  <View style={styles.rideIconContainer}>
+              // Confirm Details View
+              <View style={styles.confirmDetailsView}>
+                {/* Header */}
+                <View style={styles.confirmHeader}>
+                  <Text style={styles.confirmTitle}>Confirm details</Text>
+                </View>
+
+                {/* Ride Details Card */}
+                <View style={styles.rideDetailsCard}>
+                  {/* Car Image */}
+                  <View style={styles.carImageContainer}>
                     <Image
                       source={require('../../../../assets/car11.png')}
-                      style={styles.carImage}
+                      style={styles.carImageLarge}
                       resizeMode="contain"
                     />
-                    <Text style={styles.capacityText}>{selectedRide.capacity}</Text>
                   </View>
 
-                  <View style={styles.rideDetails}>
-                    <Text style={styles.rideName}>{selectedRide.name}</Text>
-                    <Text style={styles.rideTime}>{selectedRide.time}</Text>
-                    <Text style={styles.rideDescription}>{selectedRide.description}</Text>
-                  </View>
-
-                  <View style={styles.ridePricing}>
-                    <Text style={styles.ridePrice}>{selectedRide.price}</Text>
+                  {/* Ride Info */}
+                  <View style={styles.rideInfoContainer}>
+                    <View style={styles.rideNameContainer}>
+                      <Text style={styles.rideNameLarge}>{selectedRide.name}</Text>
+                      <View style={styles.capacityContainer}>
+                        <Text style={styles.capacityTextLarge}>{selectedRide.capacity}</Text>
+                      </View>
+                    </View>
+                    
+                    <Text style={styles.estimatedTime}>21:12 - 3 min away</Text>
+                    <Text style={styles.rideDescriptionLarge}>
+                      {selectedRide.description}
+                    </Text>
+                    
+                    <Text style={styles.ridePriceLarge}>{selectedRide.price}</Text>
                   </View>
                 </View>
 
-                {/* Payment Method */}
-                <View style={styles.paymentMethodContainer}>
-                  <View style={styles.paymentMethod}>
-                    <View style={styles.paymentIcon}>
-                      <Ionicons name="cash" size={20} color={Colors.WHITE} />
+                {/* Payment Method Section */}
+                <View style={styles.paymentSection}>
+                  <TouchableOpacity style={styles.paymentMethodButton}>
+                    <View style={styles.paymentMethodContent}>
+                      <View style={styles.paymentIconContainer}>
+                        <Ionicons name="cash-outline" size={24} color={Colors.PRIMARY} />
+                      </View>
+                      <View style={styles.paymentTextContainer}>
+                        <Text style={styles.paymentType}>Personal</Text>
+                        <Text style={styles.paymentMethod}>Cash</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={Colors.BLACK} />
                     </View>
-                    <Text style={styles.paymentText}>Personal Cash</Text>
-                    <Ionicons name="chevron-forward" size={16} color={Colors.PRIMARY_GREY} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Trip Details */}
+                <View style={styles.tripDetailsSection}>
+                  <Text style={styles.sectionTitle}>Trip Details</Text>
+                  
+                  <View style={styles.tripDetailRow}>
+                    <View style={styles.tripDetailIcon}>
+                      <Ionicons name="location" size={20} color={Colors.PRIMARY} />
+                    </View>
+                    <View style={styles.tripDetailContent}>
+                      <Text style={styles.tripDetailLabel}>Pickup</Text>
+                      <Text style={styles.tripDetailText}>{currentLocationText || 'Current Location'}</Text>
+                    </View>
                   </View>
+
+                  <View style={styles.tripDetailRow}>
+                    <View style={styles.tripDetailIcon}>
+                      <Ionicons name="flag" size={20} color={Colors.PRIMARY} />
+                    </View>
+                    <View style={styles.tripDetailContent}>
+                      <Text style={styles.tripDetailLabel}>Destination</Text>
+                      <Text style={styles.tripDetailText}>{destinationText || 'Destination'}</Text>
+                    </View>
+                  </View>
+
+                  {route?.params?.serviceType === 'Reserve' && route?.params?.selectedPickupTime && (
+                    <View style={styles.tripDetailRow}>
+                      <View style={styles.tripDetailIcon}>
+                        <Ionicons name="time" size={20} color={Colors.PRIMARY} />
+                      </View>
+                      <View style={styles.tripDetailContent}>
+                        <Text style={styles.tripDetailLabel}>Pickup Time</Text>
+                        <Text style={styles.tripDetailText}>
+                          {route?.params?.selectedPickupDate ? new Date(route.params.selectedPickupDate).toLocaleDateString() : 'Today'} at {route.params.selectedPickupTime}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
+                  {route?.params?.serviceType === 'Reserve' && route?.params?.selectedDropoffTime && (
+                    <View style={styles.tripDetailRow}>
+                      <View style={styles.tripDetailIcon}>
+                        <Ionicons name="time" size={20} color={Colors.PRIMARY} />
+                      </View>
+                      <View style={styles.tripDetailContent}>
+                        <Text style={styles.tripDetailLabel}>Dropoff Time</Text>
+                        <Text style={styles.tripDetailText}>
+                          {route?.params?.selectedDropoffDate ? new Date(route.params.selectedDropoffDate).toLocaleDateString() : 'Today'} at {route.params.selectedDropoffTime}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                 </View>
               </View>
-            ) : (
+            ) : showBookingSummary ? (
+              // Booking Summary View
+              <View style={styles.bookingSummaryView}>
+                {/* Success Message */}
+                <View style={styles.successContainer}>
+                  <View style={styles.successIconContainer}>
+                    <Ionicons name="checkmark-circle" size={80} color={Colors.PRIMARY} />
+                  </View>
+                  <Text style={styles.successTitle}>Booking Confirmed!</Text>
+                  <Text style={styles.successMessage}>
+                    A driver will contact you in a while
+                  </Text>
+                </View>
+
+                {/* Booking Details */}
+                <View style={styles.bookingDetailsCard}>
+                  <Text style={styles.bookingDetailsTitle}>Booking Details</Text>
+                  
+                  <View style={styles.bookingDetailRow}>
+                    <Text style={styles.bookingDetailLabel}>Booking ID</Text>
+                    <Text style={styles.bookingDetailValue}>{bookingId}</Text>
+                  </View>
+                  
+                  <View style={styles.bookingDetailRow}>
+                    <Text style={styles.bookingDetailLabel}>Ride</Text>
+                    <Text style={styles.bookingDetailValue}>{selectedRide?.name}</Text>
+                  </View>
+                  
+                  <View style={styles.bookingDetailRow}>
+                    <Text style={styles.bookingDetailLabel}>Price</Text>
+                    <Text style={styles.bookingDetailValue}>{selectedRide?.price}</Text>
+                  </View>
+                  
+                  <View style={styles.bookingDetailRow}>
+                    <Text style={styles.bookingDetailLabel}>Pickup</Text>
+                    <Text style={styles.bookingDetailValue}>{currentLocationText}</Text>
+                  </View>
+                  
+                  <View style={styles.bookingDetailRow}>
+                    <Text style={styles.bookingDetailLabel}>Destination</Text>
+                    <Text style={styles.bookingDetailValue}>{destinationText}</Text>
+                  </View>
+                </View>
+
+                {/* Action Buttons */}
+                <View style={styles.summaryButtonsContainer}>
+                  <TouchableOpacity 
+                    style={styles.viewBookingsButton}
+                    onPress={() => navigation.navigate('CustomerTabs', { screen: 'Bookings' })}
+                  >
+                    <Text style={styles.viewBookingsButtonText}>View My Bookings</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.newRideButton}
+                    onPress={() => {
+                      setShowBookingSummary(false);
+                      setSelectedRide(null);
+                      navigation.navigate('Services');
+                    }}
+                  >
+                    <Text style={styles.newRideButtonText}>Book Another Ride</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : !showBookingSummary ? (
               // Ride Options List
               <>
                 {rideOptions.map((ride) => (
@@ -449,7 +617,7 @@ export default function CarsScreen({ navigation, route }) {
                   </View>
                 </View>
               </>
-            )}
+            ) : null}
           </ScrollView>
 
           {/* Fat Divider Above Button */}
@@ -458,25 +626,36 @@ export default function CarsScreen({ navigation, route }) {
           </View>
 
           {/* <View style={[styles.buttonContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-           
+
           </View> */}
         </BottomSheetView>
       </BottomSheet>
-      <TouchableOpacity 
-              style={[
-                styles.buttonContainer,
-                !selectedRide && styles.disabledButton
-              ]} 
-              onPress={handleBookRide}
-              disabled={!selectedRide}
-            >
+      {!showBookingSummary && (
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[
+              styles.bookButton,
+              (!selectedRide || isBooking) && styles.disabledButton,
+            ]}
+            onPress={handleBookRide}
+            disabled={!selectedRide || isBooking}
+          >
+            {isBooking ? (
+              <View style={styles.buttonLoadingContainer}>
+                <ActivityIndicator size="small" color={Colors.WHITE} />
+                <Text style={styles.loadingButtonText}>Creating booking...</Text>
+              </View>
+            ) : (
               <Text style={[
                 styles.bookButtonText,
-                !selectedRide && styles.disabledButtonText
+                (!selectedRide || isBooking) && styles.disabledButtonText,
               ]}>
                 {showDetailSheet ? `Choose ${selectedRide?.name}` : 'Choose Lowest TransportX'}
               </Text>
-            </TouchableOpacity>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -622,9 +801,13 @@ const styles = StyleSheet.create({
     color: Colors.PRIMARY_GREY,
   },
   ridesList: {
-    maxHeight: 400,
+    flex: 1,
     marginBottom: 20,
     paddingHorizontal: 4,
+  },
+  ridesListContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
   },
   rideItem: {
     flexDirection: 'row',
@@ -749,9 +932,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   buttonContainer: {
-    paddingTop: 10,
-  },
-  buttonContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -774,10 +954,35 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  bookButton: {
+    backgroundColor: Colors.PRIMARY,
+    height: 50,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  disabledButton: {
+    backgroundColor: Colors.PRIMARY_GREY,
+  },
   bookButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: Colors.WHITE,
+  },
+  disabledButtonText: {
+    color: Colors.WHITE,
+    opacity: 0.7,
+  },
+  loadingButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.WHITE,
+    marginLeft: 8,
+  },
+  buttonLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   loadingContainer: {
     flex: 1,
@@ -912,5 +1117,232 @@ const styles = StyleSheet.create({
         elevation: 8,
       },
     }),
+  },
+  // Confirm Details Styles
+  confirmDetailsView: {
+    padding: 20,
+  },
+  confirmHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  confirmTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.BLACK,
+  },
+  rideDetailsCard: {
+    backgroundColor: Colors.WHITE,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  carImageContainer: {
+    marginBottom: 20,
+  },
+  carImageLarge: {
+    width: 120,
+    height: 80,
+  },
+  rideInfoContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  rideNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 8,
+  },
+  rideNameLarge: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.BLACK,
+  },
+  capacityContainer: {
+    backgroundColor: Colors.PRIMARY,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  capacityTextLarge: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.WHITE,
+  },
+  estimatedTime: {
+    fontSize: 16,
+    color: Colors.PRIMARY_GREY,
+    marginBottom: 8,
+  },
+  rideDescriptionLarge: {
+    fontSize: 14,
+    color: Colors.PRIMARY_GREY,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  ridePriceLarge: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.BLACK,
+  },
+  paymentSection: {
+    marginBottom: 20,
+  },
+  paymentMethodButton: {
+    backgroundColor: Colors.lightGray,
+    borderRadius: 12,
+    padding: 16,
+  },
+  paymentMethodContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  paymentIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.WHITE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  paymentTextContainer: {
+    flex: 1,
+  },
+  paymentType: {
+    fontSize: 14,
+    color: Colors.BLACK,
+    marginBottom: 2,
+  },
+  paymentMethod: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.BLACK,
+  },
+  tripDetailsSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.BLACK,
+    marginBottom: 16,
+  },
+  tripDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  tripDetailIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.lightGray,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  tripDetailContent: {
+    flex: 1,
+  },
+  tripDetailLabel: {
+    fontSize: 14,
+    color: Colors.PRIMARY_GREY,
+    marginBottom: 2,
+  },
+  tripDetailText: {
+    fontSize: 16,
+    color: Colors.BLACK,
+  },
+  // Booking Summary Styles
+  bookingSummaryView: {
+    padding: 20,
+  },
+  successContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  successIconContainer: {
+    marginBottom: 20,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.BLACK,
+    marginBottom: 8,
+  },
+  successMessage: {
+    fontSize: 16,
+    color: Colors.PRIMARY_GREY,
+    textAlign: 'center',
+  },
+  bookingDetailsCard: {
+    backgroundColor: Colors.WHITE,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  bookingDetailsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.BLACK,
+    marginBottom: 16,
+  },
+  bookingDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.dividerGray,
+  },
+  bookingDetailLabel: {
+    fontSize: 14,
+    color: Colors.PRIMARY_GREY,
+  },
+  bookingDetailValue: {
+    fontSize: 14,
+    color: Colors.BLACK,
+    fontWeight: '500',
+  },
+  summaryButtonsContainer: {
+    gap: 12,
+  },
+  viewBookingsButton: {
+    backgroundColor: Colors.PRIMARY,
+    height: 50,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewBookingsButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.WHITE,
+  },
+  newRideButton: {
+    backgroundColor: Colors.lightGray,
+    height: 50,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  newRideButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.BLACK,
   },
 });

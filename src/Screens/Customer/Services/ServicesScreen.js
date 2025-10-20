@@ -8,6 +8,7 @@ import {
   Platform,
   TextInput,
   Image,
+  AsyncStorage,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -19,14 +20,45 @@ import { Icons } from '../../../Themes/icons';
 export default function ServicesScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Services');
   const [selectedCard, setSelectedCard] = useState(null);
+  const [destinations, setDestinations] = useState([]);
 
-  // Reset selected card when screen comes into focus
+  // Load destinations and reset selected card when screen comes into focus
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       setSelectedCard(null);
+      loadDestinations();
     });
     return unsubscribe;
   }, [navigation]);
+
+  // Load destinations on component mount
+  useEffect(() => {
+    loadDestinations();
+  }, []);
+
+  const loadDestinations = async () => {
+    try {
+      const saved = await AsyncStorage.getItem('savedDestinations');
+      if (saved) {
+        const parsedDestinations = JSON.parse(saved);
+        // Get the most recent destination (first in the array as it's added at the beginning)
+        const lastDestination = parsedDestinations[0];
+        if (lastDestination) {
+          setDestinations([lastDestination]);
+        } else {
+          // No saved destinations, show empty array
+          setDestinations([]);
+        }
+      } else {
+        // No saved destinations, show empty array
+        setDestinations([]);
+      }
+    } catch (error) {
+      console.log('Error loading destinations:', error);
+      // On error, show empty array
+      setDestinations([]);
+    }
+  };
 
   const handleTabPress = (tabId) => {
     setActiveTab(tabId);
@@ -54,27 +86,13 @@ export default function ServicesScreen({ navigation }) {
     // Small delay to show selection before navigation
     setTimeout(() => {
       if (serviceType === 'Ride') {
-        navigation.navigate('ReserveRide');
+        navigation.navigate('ReserveRide', { serviceType: 'Ride' });
       } else if (serviceType === 'Reserve') {
-        navigation.navigate('ReserveRide');
+        navigation.navigate('ReserveRide', { serviceType: 'Reserve' });
       }
     }, 150);
   };
 
-  const staticDestinations = [
-    {
-      id: 1,
-      title: 'Select Citywalk Mall',
-      address: 'Saket District Center, District Center, Sector 6, Pushp Vihar, New Delhi, Delhi 110017',
-      icon: 'time',
-    },
-    {
-      id: 2,
-      title: '5, Kullar Farms Rd',
-      address: 'New Manglapuri, Manglapuri Village, Sultanpur, New Delhi, Delhi',
-      icon: 'home',
-    },
-  ];
 
   return (
     <View style={styles.container}>
@@ -86,47 +104,52 @@ export default function ServicesScreen({ navigation }) {
           <TouchableOpacity style={styles.backButton}>
             <Ionicons name="chevron-back" size={24} color={Colors.WHITE} />
           </TouchableOpacity>
-          <Text style={styles.logoText}>LOGO</Text>
           <View style={styles.placeholder} />
         </View>
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <View style={styles.searchBar}>
+          <TouchableOpacity 
+            style={styles.searchBar}
+            onPress={() => handleServicePress('Ride')}
+            activeOpacity={0.6}
+          >
             <Ionicons name="search" size={20} color={Colors.BLACK} />
             <TextInput
               style={styles.searchInput}
               placeholder="Where to?"
               placeholderTextColor={Colors.placeholder}
-                keyboardType="default"
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="off"
-                autoFocus={false}
-                autoCompleteType="off"
-                autoCompleteSuggestionsType="off"
+              keyboardType="default"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="off"
+              autoFocus={false}
+              autoCompleteType="off"
+              autoCompleteSuggestionsType="off"
+              editable={false}
+              pointerEvents="none"
             />
             <TouchableOpacity style={styles.laterButton} activeOpacity={0.6}>
               <Ionicons name="time" size={20} color={Colors.BLACK} />
               <Text style={styles.laterText}>Later</Text>
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Recent Destinations */}
         <View style={styles.destinationsSection}>
-          {staticDestinations.map((destination, index) => (
-            <React.Fragment key={destination.id}>
+          {destinations.map((destination, index) => (
+            <React.Fragment key={destination.id || index}>
               <DestinationItem
-                title={destination.title}
+                title={destination.name || destination.title}
                 address={destination.address}
-                icon={destination.icon}
+                icon={destination.icon || 'time'}
                 onPress={() => {
                   // Handle destination selection
-                  console.log('Selected destination:', destination.title);
+                  console.log('Selected destination:', destination.name || destination.title);
                 }}
               />
-              {index < staticDestinations.length - 1 && (
+              {index < destinations.length - 1 && (
                 <View style={styles.divider} />
               )}
             </React.Fragment>
@@ -231,6 +254,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     // paddingVertical: 15,
+    paddingTop: 16,
     backgroundColor: Colors.WHITE,
   },
   backButton: {

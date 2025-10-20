@@ -31,6 +31,7 @@ import ServicesScreen from '../Screens/Customer/Services/ServicesScreen';
 import ReserveRideScreen from '../Screens/Customer/Services/ReserveRideScreen';
 import PickupScreen from '../Screens/Customer/Services/PickupScreen';
 import DestinationScreen from '../Screens/Customer/Services/DestinationScreen';
+import TimeSelectionScreen from '../Screens/Customer/Services/TimeSelectionScreen';
 import CarsScreen from '../Screens/Customer/Services/Cars';
 
 // Provider Screens
@@ -195,6 +196,7 @@ const Navigation = () => {
                   <Stack.Screen name="ReserveRide" component={ReserveRideScreen} />
                   <Stack.Screen name="Pickup" component={PickupScreen} />
                   <Stack.Screen name="Destination" component={DestinationScreen} />
+                  <Stack.Screen name="TimeSelection" component={TimeSelectionScreen} options={{ headerShown: false }} />
                   <Stack.Screen name="Cars" component={CarsScreen} options={{ headerShown: false }} />
                   <Stack.Screen name="RideBooking" component={RideBookingScreen} options={{ headerShown: false }} />
 

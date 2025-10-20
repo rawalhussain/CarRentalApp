@@ -16,7 +16,6 @@ const BottomNavigationBar = ({
     { id: 'Home', icon: 'home', label: 'Home' },
     { id: 'Services', icon: 'grid', label: 'Services' },
     { id: 'Activity', icon: 'document-text', label: 'Activity' },
-    { id: 'Account', icon: 'person', label: 'Account' },
   ],
 }) => {
   return (
