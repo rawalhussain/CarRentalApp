@@ -33,7 +33,11 @@ const WelcomeScreen = ({ navigation }) => {
       index: 0,
       routes: [{ name: 'Login' }],
     });
+
   };
+
+  console.log('WelcomeScreen called screen showing welcome screen');
+  // console.log('hasCompletedOnboarding:', storage.getString('hasCompletedOnboarding'));
 
   return (
     <View style={styles.container}>

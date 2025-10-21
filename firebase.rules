@@ -4,7 +4,7 @@
       ".read": "auth != null",
       "$uid": {
         ".read": "auth != null",
-        ".write": "!data.exists() || auth != null",
+        ".write": "auth != null && ($uid === auth.uid || !data.exists())",
         ".validate": "newData.hasChildren(['fullName', 'email', 'phoneNumber', 'userType'])"
       }
     },
@@ -33,8 +33,8 @@
     "bookings": {
       ".read": "auth != null",
       "$bookingId": {
-        ".read": "auth != null && (data.child('userId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')",
-        ".write": "auth != null && (data.child('userId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')"
+        ".read": "auth != null && (data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')",
+        ".write": "auth != null && (data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')"
       }
     }
   }

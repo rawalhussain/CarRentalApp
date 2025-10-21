@@ -134,7 +134,7 @@ const BankDetails = ({navigation, route}) => {
     return !Object.values(newErrors).some(error => error !== '');
   };
 
-  const uploadCarImages = async (car) => {
+  const uploadCarImages = async (car, userId) => {
     try {
       if (!car.photo) {
         console.warn('No photo to upload for car');
@@ -158,16 +158,20 @@ const BankDetails = ({navigation, route}) => {
         return null;
       }
 
-      const filename = `${Date.now()}.jpg`;
-      const path = `cars/${user?.user?.uid}/${filename}`;
+      const filename = `${Date.now()}_${car.make}_${car.model}.jpg`;
+      const path = `cars/${userId}/${filename}`;
 
-      // Use the storage reference directly
-      const reference = storage().ref(path);
-      await reference.putFile(fileUri);
-      return await reference.getDownloadURL();
+      console.log('Uploading image to path:', path);
+      console.log('File URI:', fileUri);
+
+      // Use the uploadFile function from firebase config
+      const downloadURL = await uploadFile(fileUri, path);
+      console.log('Image uploaded successfully:', downloadURL);
+      return downloadURL;
     } catch (error) {
       console.error('Error uploading image:', error);
-      throw error;
+      // Don't throw error, just return null to continue without image
+      return null;
     }
   };
 
@@ -175,41 +179,74 @@ const BankDetails = ({navigation, route}) => {
     try {
       setLoading(true);
 
-      // Check if user is authenticated
-      if (!user?.user?.uid) {
-        throw new Error('User not authenticated');
+      console.log('User object:', user);
+      console.log('User UID:', user?.uid);
+      console.log('User type:', typeof user);
+
+      // Check if user is authenticated - handle different user object structures
+      let userId = null;
+      if (user?.uid) {
+        userId = user.uid;
+      } else if (user?.user?.uid) {
+        userId = user.user.uid;
+      } else if (typeof user === 'string') {
+        userId = user;
       }
 
-      // Process cars and upload images only if they have photos
+      if (!userId) {
+        console.error('User not authenticated - user object:', user);
+        throw new Error('User not authenticated. Please login again.');
+      }
+
+      console.log('Using user ID:', userId);
+
+      console.log('Starting to process cars:', cars);
+
+      // Process cars and upload images
       const processedCars = await Promise.all(
         cars.map(async (car) => {
+          console.log('Processing car:', car);
+          
           // If there's no photo, just return the car data without uploading
           if (!car.photo) {
+            console.log('No photo for car, skipping upload');
             return {
-              ...car,
-              vendorId: user.user.uid,
+              make: car.make,
+              model: car.model,
+              variant: car.variant,
+              rent: car.rent,
+              vendorId: userId,
               createdAt: new Date().toISOString(),
               verified: false,
+              photo: null,
             };
           }
 
-          // Only attempt to upload if there's a photo
-          const imageUrl = await uploadCarImages(car);
+          // Upload image if photo exists
+          console.log('Uploading image for car:', car.make);
+          const imageUrl = await uploadCarImages(car, userId);
           return {
-            ...car,
-            photo: imageUrl || car.photo, // Keep existing photo if upload fails
-            vendorId: user.user.uid,
+            make: car.make,
+            model: car.model,
+            variant: car.variant,
+            rent: car.rent,
+            vendorId: user.uid,
             createdAt: new Date().toISOString(),
             verified: false,
+            photo: imageUrl || null,
           };
         })
       );
 
-      // Save cars with images
-      await saveCarsWithImages(user.user.uid, processedCars, type);
+      console.log('Processed cars:', processedCars);
+
+      // Save cars to Firebase (without images for now)
+      console.log('Saving cars to Firebase...');
+      await saveCarsWithImages(userId, processedCars, type);
 
       // Update user profile with bank details and preferences
-      const userUpdate = await saveBankDetailsAndPreferences(user.user.uid, {
+      console.log('Saving bank details...');
+      const userUpdate = await saveBankDetailsAndPreferences(userId, {
         bankDetails,
         canDeliver,
       });
@@ -220,6 +257,7 @@ const BankDetails = ({navigation, route}) => {
         ...userUpdate,
       });
 
+      console.log('Data saved successfully');
       setLoading(false);
       navigation.reset({
         index: 0,
@@ -227,12 +265,12 @@ const BankDetails = ({navigation, route}) => {
       });
     } catch (error) {
       setLoading(false);
+      console.error('Error saving data:', error);
       showMessageAlert(
         'Error',
-        error.message || 'Failed to save data. Please try again.',
+        `Failed to save data: ${error.message || 'Unknown error'}`,
         'danger',
       );
-      console.error('Error saving data:', error);
     }
   };
 

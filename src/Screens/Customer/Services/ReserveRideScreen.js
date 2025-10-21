@@ -349,8 +349,9 @@ export default function ReserveRideScreen({ navigation, route }) {
       return;
     }
     
-    // For Reserve service, navigate directly to TimeSelection screen
-    if (serviceType === 'Reserve') {
+    // Check selected pickup time to determine navigation
+    if (selectedPickupTime === 'later') {
+      // Navigate to TimeSelection screen for later pickup
       navigation.navigate('TimeSelection', {
         currentLocation,
         destination,
@@ -359,13 +360,14 @@ export default function ReserveRideScreen({ navigation, route }) {
         serviceType,
       });
     } else {
-      // For Ride service, go directly to Cars screen
+      // Navigate to Cars screen for immediate pickup
       navigation.navigate('Cars', {
         currentLocation,
         destination,
         currentLocationText,
         destinationText,
         serviceType,
+        selectedPickupTime: selectedPickupTime,
       });
     }
   };
@@ -398,25 +400,7 @@ export default function ReserveRideScreen({ navigation, route }) {
     // Close the time selection modal
     pickupTimeBottomSheetRef.current?.close();
     
-    // If this was triggered from Reserve service and "later" is selected, navigate to time selection screen
-    if (timeOption !== 'now') {
-      navigation.navigate('TimeSelection', {
-        currentLocation,
-        destination,
-        currentLocationText,
-        destinationText,
-        serviceType,
-      });
-    } else if (timeOption === 'now') {
-      navigation.navigate('Cars', {
-        currentLocation,
-        destination,
-        currentLocationText,
-        destinationText,
-        serviceType,
-        selectedPickupTime: timeOption,
-      });
-    }
+    // No immediate navigation - user must click "Next" to proceed
   };
 
   const handlePassengerPress = () => {

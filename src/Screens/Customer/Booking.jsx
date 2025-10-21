@@ -4,6 +4,7 @@ import { Colors } from '../../Themes/MyColors';
 import { getBookings } from '../../Config/firebase';
 import useAuthStore from '../../store/useAuthStore';
 import Loader from '../../Components/Loader';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CustomerBookings = ({ navigation }) => {
   const { user } = useAuthStore();
@@ -51,7 +52,7 @@ const CustomerBookings = ({ navigation }) => {
     return (
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate('BookingSummary', { ...item, bookingId: item.id })}
+        onPress={() => navigation.navigate('BookingDetails', { ...item, bookingId: item.id })}
       >
         <Text style={styles.model}>{vehicle.make || 'Vehicle'} {vehicle.model || ''} {vehicle.variant ? `(${vehicle.variant})` : ''}</Text>
         <Text style={styles.date}>{item.searchPreferences?.pickupDate || '-'} - {item.searchPreferences?.dropoffDate || '-'}</Text>
@@ -62,7 +63,7 @@ const CustomerBookings = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.header}>My Bookings</Text>
       {loading && <View style={styles.loaderOverlay}><Loader /></View>}
       <FlatList
@@ -71,8 +72,9 @@ const CustomerBookings = ({ navigation }) => {
         renderItem={renderItem}
         ListEmptyComponent={!loading && <Text style={styles.text}>No bookings found.</Text>}
         contentContainerStyle={{ paddingTop: 8 }}
+        showsVerticalScrollIndicator={false}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -80,10 +82,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.WHITE,
-    padding: 16,
+    paddingHorizontal: 16,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.WHITE,
     borderRadius: 12,
     padding: 16,
     marginBottom: 14,
@@ -92,6 +94,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.07,
     shadowRadius: 4,
     elevation: 2,
+    marginHorizontal: 2,
   },
   model: {
     fontSize: 18,
@@ -132,7 +135,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.BLACK,
     marginBottom: 18,
-    marginTop: 30,
+    // marginTop: 30,
     textAlign: 'left',
   },
 });

@@ -10,9 +10,12 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
 import InputField from '../../../Components/InputField';
 import Button from '../../../Components/Button';
-import { signUp } from '../../../Config/firebase';
+import { signUp, signOut } from '../../../Config/firebase';
 import { showMessageAlert } from '../../../Lib/utils/CommonHelper';
 import Loader from '../../../Components/Loader';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import MainHeader from '../../../Components/MainHeader';
+import { Colors } from '../../../Themes/MyColors';
 
 const SignUp = () => {
   const navigation = useNavigation();
@@ -72,23 +75,7 @@ const SignUp = () => {
     }));
   };
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      header: () => (
-          <View style={styles.headerContainer}>
-            <TouchableOpacity
-                onPress={() => navigation.goBack()}
-                style={styles.headerBack}
-            >
-              <Ionicons name="chevron-back" size={24} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Sign Up</Text>
-            <TouchableOpacity style={styles.headerRight} />
-          </View>
-      ),
-    });
-  }, [navigation]);
-
+  
   const validateForm = () => {
     // Check for empty fields
     if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword || !formData.phoneNumber) {
@@ -108,8 +95,10 @@ const SignUp = () => {
       return false;
     }
 
-    // Email validation
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    // Email validation - improved regex
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(formData.email)) {
+      console.log('Email validation failed for:', formData.email);
       showMessageAlert('Error', 'Please enter a valid email address', 'warning');
       return false;
     }
@@ -165,6 +154,9 @@ const SignUp = () => {
           }
       );
 
+      // Sign out the user immediately after signup to prevent auto-login
+      await signOut();
+
       // Show success message with verification instructions
       showMessageAlert(
           'Verification Required',
@@ -172,11 +164,14 @@ const SignUp = () => {
           'success'
       );
 
-      // Navigate back to login screen
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
+      // Navigate back to login screen with a small delay to ensure message is shown
+      // navigation.navigate('Login');
+
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+     
     } catch (error) {
       let errorMessage = 'An error occurred during sign up';
 
@@ -205,7 +200,12 @@ const SignUp = () => {
   };
 
   return (
-      <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+        <MainHeader 
+          title="Sign Up" 
+          onBackPress={() => navigation.goBack()}
+          showOptionsButton={false}
+        />
         {loading && <Loader />}
         <ScrollView
             contentContainerStyle={styles.scrollContent}
@@ -257,7 +257,7 @@ const SignUp = () => {
 
           {/* User Type Selection */}
           <View style={styles.userTypeContainer}>
-            <Text style={styles.userTypeLabel}>I want to</Text>
+            <Text style={styles.userTypeLabel}>I want to become a</Text>
             <View style={styles.userTypeButtons}>
               <TouchableOpacity
                   style={[
@@ -275,7 +275,7 @@ const SignUp = () => {
                   styles.userTypeButtonText,
                   formData.userType === 'customer' && styles.userTypeButtonTextActive,
                 ]}>
-                  Rent a Car
+                  Customer
                 </Text>
               </TouchableOpacity>
 
@@ -295,7 +295,7 @@ const SignUp = () => {
                   styles.userTypeButtonText,
                   formData.userType === 'provider' && styles.userTypeButtonTextActive,
                 ]}>
-                  Provide Cars
+                  Provider vehicle
                 </Text>
               </TouchableOpacity>
             </View>
@@ -333,7 +333,7 @@ const SignUp = () => {
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </View>
+      </SafeAreaView>
   );
 };
 

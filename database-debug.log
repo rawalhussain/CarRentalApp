@@ -1,0 +1,14 @@
+14:48:11.201 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+14:48:11.620 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9001
+14:48:11.964 [FirebaseWorkerPool-1-3] WARN com.firebase.core.persistence.backend.dummy.EmulatorMetadataPersistence - Multiple projectIds are not recommended in single project mode. Requested 
+namespace rentcarapp-349f0-default-rtdb, but the emulator is configured for undefined-default-rtdb. To 
+opt-out of single project mode add/set the singleProjectMode: false property in 
+the firebase.json emulators config. 
+14:48:12.204 [NamespaceSystem-akka.actor.default-dispatcher-7] INFO com.firebase.core.namespace.NamespaceActor - rentcarapp-349f0-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 220ms, init: 0ms
+14:48:12.204 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO com.firebase.core.namespace.NamespaceActor - undefined-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 231ms, init: 0ms
+14:48:12.408 [NamespaceSystem-blocking-namespace-operation-dispatcher-9] INFO com.firebase.core.namespace.StateManager - Namespace undefined-default-rtdb status Active to Active
+14:50:55.405 [Thread-0] INFO com.firebase.server.forge.App$ - Attempting graceful shutdown.
+14:50:55.415 [NamespaceSystem-akka.actor.default-dispatcher-14] INFO com.firebase.core.namespace.Terminator$Terminator - 2 actors left to terminate: undefined-default-rtdb, rentcarapp-349f0-default-rtdb
+14:50:55.422 [NamespaceSystem-akka.actor.default-dispatcher-18] INFO com.firebase.core.namespace.NamespaceActor - stopped namespace actor for undefined-default-rtdb
+14:50:55.422 [NamespaceSystem-akka.actor.default-dispatcher-14] INFO com.firebase.core.namespace.NamespaceActor - stopped namespace actor for rentcarapp-349f0-default-rtdb
+14:50:55.429 [Thread-0] INFO com.firebase.server.forge.App$ - Graceful shutdown complete.

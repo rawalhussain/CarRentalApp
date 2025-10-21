@@ -14,7 +14,10 @@ export const Colors = {
   white: '#ffffff',
   black: '#000000',
   gray: '#7F7F7F',
+  gray2: '#6B7280',
+  gray3: '#9CA3AF',
   gray5: '#D9D9D9',
+  gray6: '#F3F4F6',
   dark1: '#000000',
   dark3: '#7F7F7F',
   error: '#BE1E2D',
@@ -22,6 +25,11 @@ export const Colors = {
   placeholder: '#545454',
   lightGray: '#EEEEEE',
   dividerGray: '#E2E2E2',
+  // Additional colors for bottom sheets
+  green: '#22C55E',
+  orange: '#F59E0B',
+  red: '#EF4444',
+  blue1: '#EFF6FF',
   // Banner design colors
   BANNER_BLUE: '#0A91C9',
   CIRCLE_RED: '#FF4B55',

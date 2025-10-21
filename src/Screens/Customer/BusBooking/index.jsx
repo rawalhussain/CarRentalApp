@@ -11,9 +11,11 @@ import useUserStore from '../../../store/useUserStore';
 import Loader from '../../../Components/Loader';
 import useAuthStore from '../../../store/useAuthStore';
 import { signOut } from '../../../Config/firebase';
+import { useNavigation } from '@react-navigation/native';
 
 
-const ServiceScreen = ({ navigation }) => {
+const ServiceScreen = () => {
+    const navigation = useNavigation();
     const {userData, clearUserData} = useUserStore();
     const {clearAuth} = useAuthStore();
     const [loading, setLoading] = useState(false);
@@ -32,10 +34,16 @@ const ServiceScreen = ({ navigation }) => {
 
                 <TouchableOpacity onPress={async () => {
                     try {
+                        console.log('Logging out');
                         setLoading(true);
                         clearUserData();
                         clearAuth();
                         await signOut();
+                        // Reset navigation stack and go directly to Login screen
+                        navigation.reset({
+                            index: 0,
+                            routes: [{ name: 'Login' }],
+                        });
                     } catch (e) {
                         console.log(e);
                     } finally {

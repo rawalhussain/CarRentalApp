@@ -46,7 +46,7 @@ const ProviderCars = ({navigation, route}) => {
             >
               <Ionicons name="chevron-back" size={24} color={Colors.WHITE} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{isEditMode ? 'Edit Car' : 'Adddd Car'}</Text>
+            <Text style={styles.headerTitle}>{isEditMode ? 'Edit Car' : 'Add Car'}</Text>
             <TouchableOpacity style={styles.headerRight} />
           </View>
       ),

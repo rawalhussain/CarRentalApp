@@ -13,12 +13,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Colors } from '../../../Themes/MyColors';
-import BottomNavigationBar from '../../../Components/BottomNavigationBar';
 import DestinationItem from '../../../Components/DestinationItem';
 import { Icons } from '../../../Themes/icons';
 
 export default function ServicesScreen({ navigation }) {
-  const [activeTab, setActiveTab] = useState('Services');
   const [selectedCard, setSelectedCard] = useState(null);
   const [destinations, setDestinations] = useState([]);
 
@@ -60,26 +58,6 @@ export default function ServicesScreen({ navigation }) {
     }
   };
 
-  const handleTabPress = (tabId) => {
-    setActiveTab(tabId);
-    // Handle navigation based on tab
-    switch (tabId) {
-      case 'Home':
-        navigation.navigate('CustomerTabs');
-        break;
-      case 'Services':
-        // Already on Services screen
-        break;
-      case 'Activity':
-        navigation.navigate('CustomerTabs', { screen: 'Bookings' });
-        break;
-      case 'Account':
-        navigation.navigate('Profile');
-        break;
-      default:
-        break;
-    }
-  };
 
   const handleServicePress = (serviceType) => {
     setSelectedCard(serviceType);
@@ -101,7 +79,11 @@ export default function ServicesScreen({ navigation }) {
 
         {/* Header with Back Button and Logo */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+          >
             <Ionicons name="chevron-back" size={24} color={Colors.WHITE} />
           </TouchableOpacity>
           <View style={styles.placeholder} />
@@ -226,13 +208,6 @@ export default function ServicesScreen({ navigation }) {
           </View>
       </SafeAreaView>
 
-      {/* Bottom Navigation */}
-      <SafeAreaView style={styles.safeAreaBottom} edges={['bottom']}>
-        <BottomNavigationBar
-          activeTab={activeTab}
-          onTabPress={handleTabPress}
-        />
-      </SafeAreaView>
     </View>
   );
 }
@@ -244,9 +219,6 @@ const styles = StyleSheet.create({
   },
   safeAreaTop: {
     flex: 1,
-  },
-  safeAreaBottom: {
-    backgroundColor: Colors.WHITE,
   },
   header: {
     flexDirection: 'row',

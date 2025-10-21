@@ -8,7 +8,7 @@
 
 import React, {useEffect, useCallback, lazy, Suspense} from 'react';
 import {LogBox, StatusBar, Text, TextInput} from 'react-native';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import Routes from './src/Navigation/AppNavigation';
 import NetInfo from '@react-native-community/netinfo';
 import {SelectProvider} from '@mobile-reality/react-native-select-pro';
@@ -18,10 +18,10 @@ import {MMKV} from 'react-native-mmkv';
 import {AppProvider} from './src/api/app';
 import {PaperProvider} from 'react-native-paper';
 import analytics from '@react-native-firebase/analytics';
-import {Colors} from "react-native/Libraries/NewAppScreen";
 import useAuthStore from './src/store/useAuthStore';
 import useUserStore from './src/store/useUserStore';
 import {AuthProvider} from './src/Config/AuthContext';
+import { Colors } from './src/Themes/MyColors';
 
 LogBox.ignoreAllLogs();
 LogBox.ignoreLogs([
@@ -79,7 +79,12 @@ const App = () => {
 
     return (
         <SafeAreaProvider>
-            <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+            <StatusBar 
+                barStyle="dark-content" 
+                backgroundColor={Colors.WHITE}
+                // translucent={false}
+            />
+            {/* <SafeAreaView edges={["top"]} style={{backgroundColor: Colors.WHITE}} /> */}
             <GestureHandlerRootView style={{flex: 1}}>
                 <BottomSheetModalProvider>
                     <PaperProvider>

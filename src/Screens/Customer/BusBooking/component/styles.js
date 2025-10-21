@@ -5,7 +5,12 @@ export default StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    padding: 20,
+    // padding: 20,
+  },
+  subConstainer:{
+paddingHorizontal:16,
+paddingTop:25,
+
   },
   headerContainer: {
     backgroundColor: Colors.BACKGROUND_GREY,
@@ -82,11 +87,13 @@ export default StyleSheet.create({
   // Inputs
   inputContainer: {
     marginBottom: 25,
+    // marginTop:25,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 6,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
+    // paddingVertical: 2,
+    paddingTop:6,
+    // paddingHorizontal: 10,
     position: 'relative',
   },
   label: {
@@ -171,8 +178,8 @@ export default StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: Colors.BACKGROUND_GREY,
+    // padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '85%',
@@ -182,15 +189,17 @@ export default StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginVertical: 10,
+    color: Colors.gray,
   },
-
-  // Month Navigation
   monthHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    backgroundColor: Colors.white,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
   },
 
   weekdayRow: {
@@ -198,20 +207,34 @@ export default StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
     paddingHorizontal: 5,
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
   weekdayText: {
     flex: 1,
     textAlign: 'center',
-    fontWeight: '600',
+    fontWeight: '500',
     fontSize: 12,
     color: '#777',
   },
-
-  // Calendar Grid
   calendarGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    alignItems:'center',
+    paddingHorizontal:18,
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    gap: 16,
+    borderBottomColor: "#eee",
+    paddingBottom: 9
+  },
+  dayBoxEmpty: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   dayBox: {
     width: 40,
@@ -219,7 +242,8 @@ export default StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 5,
+    // margin: 5,
+    // marginHorizontal: 5,
     borderWidth: 1,
     borderColor: '#ccc',
   },
@@ -240,7 +264,8 @@ export default StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    paddingBottom: 20,
+    paddingBottom: 12,
+    paddingTop: 12,
   },
   timeBox: {
     width: 80,
@@ -266,17 +291,21 @@ export default StyleSheet.create({
 
   // Bottom Display + Next
   selectedDateText: {
-    textAlign: 'center',
+    textAlign: 'left',
     color: 'red',
     fontWeight: 'bold',
-    fontSize: 14,
-    marginVertical: 10,
+    fontSize: 16,
+    // marginVertical: 10,
   },
   nextButton: {
-    backgroundColor: 'red',
+    backgroundColor: Colors.PRIMARY,
     paddingVertical: 14,
     borderRadius: 30,
     alignItems: 'center',
+    // paddingHorizontal: 18,
+    marginHorizontal: 18,
+    
+    opacity: 1,
   },
   nextButtonText: {
     color: '#fff',
@@ -383,5 +412,17 @@ export default StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginTop: 2,
+  },
+  selectedDateContainer: {
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    marginTop:8,
+    paddingBottom: 18,
+    backgroundColor: "white",
+alignItems: 'flex-start',
+// justifyContent: 'center',
+    // marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
   },
 });

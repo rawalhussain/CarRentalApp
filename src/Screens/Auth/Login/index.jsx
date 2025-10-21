@@ -61,8 +61,8 @@ const Login = () => {
         return;
       }
       if (userCredential.user.uid) {
-        // Get user data from database
-        const userData = await getUserData(userCredential.user.uid);
+        // Get user data from the signIn response
+        const userData = userCredential.userData;
 
         // Update emailVerified status in database if it's not already true
         if (userData && !userData.emailVerified) {
@@ -71,6 +71,7 @@ const Login = () => {
           });
           userData.emailVerified = true;
         }
+        console.log('Login successful, userData:', userData);
         setUserData(userData);
         // Set user data in stores
         setUser(userCredential);
@@ -83,6 +84,19 @@ const Login = () => {
           });
         } else {
           setCredentials(null);
+        }
+
+        // Navigate based on user type
+        console.log('Navigating based on userType:', userData?.userType);
+        if (userData?.userType === 'customer') {
+          navigation.navigate('CustomerTabs');
+        } else if (userData?.userType === 'provider') {
+          navigation.navigate('ProviderTabs');
+        } else if (userData?.userType === 'admin') {
+          navigation.navigate('AdminTabs');
+        } else {
+          console.log('Unknown user type, staying on login');
+          navigation.navigate('Login');
         }
       }
     } catch (error) {

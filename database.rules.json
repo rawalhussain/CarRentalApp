@@ -1,21 +1,40 @@
 {
   "rules": {
     "users": {
-      ".read": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'",
+      ".read": "auth != null",
       "$uid": {
         ".read": "auth != null && ($uid === auth.uid)",
-        ".write": "auth != null && ($uid === auth.uid || !data.exists())",
+        ".write": "auth != null && $uid === auth.uid",
         ".validate": "newData.hasChildren(['fullName', 'email', 'phoneNumber', 'userType'])"
       }
     },
     "cars": {
       ".read": "auth != null",
-      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'provider'"
+      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'provider'",
+      "$carId": {
+        ".read": "auth != null",
+        ".write": "auth != null && (data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')",
+        "verified": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'"
+        }
+      }
+    },
+    "buses": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'provider'",
+      "$busId": {
+        ".read": "auth != null",
+        ".write": "auth != null && (data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')",
+        "verified": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'"
+        }
+      }
     },
     "bookings": {
-      "$uid": {
-        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'provider')",
-        ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'provider')"
+      ".read": "auth != null",
+      "$bookingId": {
+        ".read": "auth != null && (data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')",
+        ".write": "auth != null && (data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')"
       }
     }
   }

@@ -5,10 +5,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.BACKGROUND_GREY,
-    paddingHorizontal: 20,
+    // paddingHorizontal: 20,
   },
   scrollContent: {
     paddingVertical: 30,
+    paddingHorizontal: 20,
   },
   headerContainer: {
     backgroundColor: Colors.BACKGROUND_GREY,

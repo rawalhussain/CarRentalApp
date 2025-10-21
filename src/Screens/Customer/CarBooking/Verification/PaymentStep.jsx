@@ -7,98 +7,254 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
+  Image,
 } from 'react-native';
 import styles from './styles';
 import Steps from './Steps';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import MainHeader from '../../../../Components/MainHeader';
+import { useNavigation } from '@react-navigation/native';
+import { Icons } from '../../../../Themes/icons';
+import { Checkbox } from 'react-native-paper';
+import { Colors } from '../../../../Themes/MyColors';
 
-const PaymentStep = ({ onNext }) => {
-  const [method, setMethod] = useState('Card Payment');
+const PaymentStep = ({ onNext }) => { 
+  const navigation = useNavigation();
+  const [method, setMethod] = useState('Cash payment');
   const [country, setCountry] = useState('United States');
-
-  const paymentMethods = ['Card Payment', 'Cash', 'UPI', 'Wallet'];
-  const countries = ['United States', 'India', 'Germany', 'Canada'];
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    cardNumber: '',
+    expiry: '',
+    cvc: '',
+    zip: ''
+  });
+  
+  // Check if all fields are filled
+  const isFormValid = () => {
+    return (
+      formData.fullName.trim() !== '' &&
+      formData.email.trim() !== '' &&
+      formData.cardNumber.trim() !== '' &&
+      formData.expiry.trim() !== '' &&
+      formData.cvc.trim() !== '' &&
+      formData.zip.trim() !== '' &&
+      termsAccepted
+    );
+  };
+  
+  // Handle form input changes
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
+  // Handle continue with validation
+  const handleContinue = () => {
+    if (isFormValid()) {
+      // Navigate to BookingSummary with payment details
+      navigation.navigate('BookingSummary', {
+        bookingId: `#T${Date.now()}B0J1`,
+        contactDetails: {
+          firstName: formData.fullName.split(' ')[0] || '',
+          lastName: formData.fullName.split(' ').slice(1).join(' ') || '',
+          email: formData.email,
+          phone: '', // Add phone if available
+        },
+        paymentDetails: {
+          method: method,
+          cardNumber: formData.cardNumber,
+          expiry: formData.expiry,
+          cvc: formData.cvc,
+          zip: formData.zip,
+          country: country,
+        },
+        transactionDetails: {
+          id: `#T${Date.now()}B0J1`,
+          date: new Date().toLocaleDateString('en-GB') + ' - ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          amount: 1400,
+          serviceFee: 15,
+          tax: 0,
+          total: 1415,
+        }
+      });
+    }
+  };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      {/* Header */}
-      <View style={styles.headerRow}>
-        <Text style={styles.backIcon}>←</Text>
-        <Text style={styles.headerTitle}>Payment Method</Text>
-        <Text style={styles.headerDots}>•••</Text>
-      </View>
-
-      {/* Stepper */}
+    <SafeAreaView style={styles.container}>
+      <MainHeader 
+        title="Payment Method"
+        showBackButton={true}
+        // showOptionsButton={true}
+        onBackPress={() => navigation.goBack()}
+        showOptionsButton={false}
+      />
       <Steps currentStep={2} verifiedStep={true} verifiedStep2={true} />
-
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* Card Preview Placeholder */}
-        <View style={styles.cardPreview}>
-          <View style={styles.cardLogos}>
-            <Text style={{ fontSize: 18 }}>💳</Text>
-            <Text style={{ fontSize: 14 }}>VISA</Text>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+          {/* Card Preview */}
+          <View style={styles.cardPreview}>
+            <View style={styles.cardLogos}>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ width: 40, height: 25, backgroundColor: '#eb001b', borderRadius: 20, opacity: 0.9 }} />
+                <View style={{ width: 40, height: 25, backgroundColor: '#f79e1b', borderRadius: 20, opacity: 0.9, marginLeft: -20 }} />
+              </View>
+              <Text style={{ fontSize: 24, color: '#fff', fontWeight: 'bold' }}>VISA</Text>
+            </View>
+            
+            <View style={styles.cardChip} />
+            
+            <View>
+              <Text style={styles.cardName}>BENJAMIN JACK</Text>
+              <Text style={styles.cardExpire}>Expire: 10-5-2030</Text>
+            </View>
+            <Text style={styles.cardNumber}>9655   9655   9655   9655</Text>
           </View>
-          <View>
-            <Text style={styles.cardName}>BENJAMIN JACK</Text>
-            <Text style={styles.cardExpire}>Expire: 10-5-2030</Text>
+
+          {/* Payment Method Selection */}
+          <Text style={styles.sectionLabel}>select payment method</Text>
+          <View style={styles.dropdown}>
+            <View style={styles.paymentMethodContainer}>
+              <Image source={Icons.card} style={styles.paymentIcon} />
+              <Text style={styles.dropdownLabel}>{method}</Text>
+            </View>
+            <View style={styles.defaultBadge}>
+              <Text style={styles.defaultBadgeText}>DAFULT</Text>
+            </View>
           </View>
-          <Text style={styles.cardNumber}>9655   9655   9655   9655</Text>
-        </View>
 
-        {/* Payment Method Dropdown */}
-        <Text style={styles.sectionLabel}>Select payment method</Text>
-        <View style={styles.dropdown}>
-          <Text style={styles.dropdownLabel}>{method.toString()}</Text>
-        </View>
+          {/* Card Information */}
+          <Text style={styles.sectionLabel}>Card information</Text>
+          <TextInput 
+            placeholder="Full Name" 
+            style={styles.phoneInput} 
+            placeholderTextColor={Colors.PRIMARY_GREY}
+            value={formData.fullName}
+            onChangeText={(value) => handleInputChange('fullName', value)}
+            color={Colors.BLACK}
+          />
+          <TextInput 
+            placeholder="Email Address" 
+            style={styles.phoneInput} 
+            placeholderTextColor={Colors.PRIMARY_GREY}
+            keyboardType="email-address"
+            value={formData.email}
+            onChangeText={(value) => handleInputChange('email', value)}
+            color={Colors.BLACK}
+          />
+          
+          {/* Card Number with Icons */}
+          <View style={styles.inputWithIcons}>
+            <TextInput 
+              placeholder="Number" 
+              style={styles.cardNumberInput} 
+              placeholderTextColor={Colors.PRIMARY_GREY}
+              keyboardType="number-pad"
+              value={formData.cardNumber}
+              onChangeText={(value) => handleInputChange('cardNumber', value)}
+              color={Colors.BLACK}
+            />
+            <View style={styles.cardIconsRow}>
+              <View style={{ width: 32, height: 20, backgroundColor: '#1434CB', borderRadius: 3, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: '#fff', fontSize: 8, fontWeight: 'bold' }}>VISA</Text>
+              </View>
+              <View style={{ width: 32, height: 20, borderRadius: 3, overflow: 'hidden', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+                <View style={{ flexDirection: 'row' }}>
+                  <View style={{ width: 10, height: 10, backgroundColor: '#eb001b', borderRadius: 5 }} />
+                  <View style={{ width: 10, height: 10, backgroundColor: '#f79e1b', borderRadius: 5, marginLeft: -4 }} />
+                </View>
+              </View>
+              <View style={{ width: 32, height: 20, backgroundColor: '#016FD0', borderRadius: 3, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: '#fff', fontSize: 7, fontWeight: 'bold' }}>AMEX</Text>
+              </View>
+              <View style={{ width: 32, height: 20, backgroundColor: '#0079BE', borderRadius: 3, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: '#fff', fontSize: 7, fontWeight: 'bold' }}>DISC</Text>
+              </View>
+            </View>
+          </View>
 
-        {/* Card Info */}
-        <Text style={styles.sectionLabel}>Card Information</Text>
-        <TextInput placeholder="Full Name" style={styles.phoneInput} placeholderTextColor="#999" />
-        <TextInput placeholder="Email Address" style={styles.phoneInput} placeholderTextColor="#999" />
-        <TextInput placeholder="Card Number 💳💰💲" style={styles.phoneInput} placeholderTextColor="#999" />
+          <View style={styles.row}>
+            <TextInput 
+              placeholder="MM / YY" 
+              style={[styles.phoneInput, { flex: 1 }]} 
+              placeholderTextColor={Colors.PRIMARY_GREY}
+              keyboardType="number-pad"
+              value={formData.expiry}
+              onChangeText={(value) => handleInputChange('expiry', value)}
+              color={Colors.BLACK}
+            />
+            <View style={styles.halfInputWithIcon}>
+              <TextInput 
+                placeholder="CVC" 
+                style={[styles.phoneInput, { flex: 1 }]} 
+                placeholderTextColor={Colors.PRIMARY_GREY}
+                keyboardType="number-pad"
+                secureTextEntry
+                value={formData.cvc}
+                onChangeText={(value) => handleInputChange('cvc', value)}
+                color={Colors.BLACK}
+              />
+              <Image 
+                source={Icons.craditCard} 
+                style={styles.cvcIcon} 
+              />
+            </View>
+          </View>
 
-        <View style={styles.row}>
-          <TextInput placeholder="MM / YY" style={[styles.phoneInput, { flex: 1, marginRight: 8 }]} placeholderTextColor="#999" />
-          <TextInput placeholder="CVC" style={[styles.phoneInput, { flex: 1 }]} placeholderTextColor="#999" />
-        </View>
+          {/* Country and ZIP */}
+          <Text style={styles.sectionLabel}>Country or region</Text>
+          <TouchableOpacity style={styles.dropdown}>
+            <Text style={styles.dropdownLabel}>{country}</Text>
+            <Text style={{ color: Colors.PRIMARY_GREY }}>▼</Text>
+          </TouchableOpacity>
+          
+          <TextInput 
+            placeholder="ZIP" 
+            style={styles.phoneInput} 
+              placeholderTextColor={Colors.PRIMARY_GREY}
+            keyboardType="number-pad"
+            value={formData.zip}
+            onChangeText={(value) => handleInputChange('zip', value)}
+            color={Colors.BLACK}
+            />
 
-        {/* Country and Zip */}
-        <Text style={styles.sectionLabel}>Country or Region</Text>
-        <View style={styles.dropdown}>
-          <Text style={styles.dropdownLabel}>{country.toString()}</Text>
-        </View>
-        <TextInput placeholder="ZIP" style={styles.phoneInput} placeholderTextColor="#999" />
+          {/* Terms Checkbox */}
+          <View style={styles.termsRow}>
+            <Checkbox
+              status={termsAccepted ? 'checked' : 'unchecked'}
+              uncheckedColor={Colors.LINE_GRAY}
+              color={Colors.PRIMARY}
+              onPress={() => setTermsAccepted(!termsAccepted)}
+            />
+            <Text style={styles.termsText}>Trams & continue ⌄</Text>
+          </View>
 
-        {/* Terms */}
-        <View style={styles.termsRow}>
-          <Text style={styles.checkbox}>☑</Text>
-          <Text style={styles.termsText}>I agree to Terms & Conditions</Text>
-        </View>
-
-        {/* Pay with Other */}
-        <View style={styles.separatorContainer}>
-          <View style={styles.separator} />
-          <Text style={styles.separatorText}>Pay with card or</Text>
-          <View style={styles.separator} />
-        </View>
-
-        <TouchableOpacity style={styles.payButton}>
-          <Text style={styles.payText}> Apple Pay</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.payButton}>
-          <Text style={styles.payText}>🟢 Google</Text>
-        </TouchableOpacity>
-
-        {/* Continue */}
-        <TouchableOpacity style={styles.continueButton} onPress={onNext}>
-          <Text style={styles.continueText}>Continue</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {/* Continue Button */}
+          <TouchableOpacity 
+            style={[
+              styles.continueButton, 
+              !isFormValid() && styles.continueButtonDisabled
+            ]} 
+            onPress={handleContinue}
+            disabled={!isFormValid()}
+          >
+            <Text style={[
+              styles.continueText,
+              !isFormValid() && styles.continueTextDisabled
+            ]}>
+              Continue
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 

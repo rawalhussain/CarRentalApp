@@ -21,10 +21,13 @@ import BusSearch from '../Screens/Customer/BusBooking/component/BusBookingDetail
 import BusSearchResults from '../Screens/Customer/BusBooking/component/BusSearchResults';
 import CarSearch from '../Screens/Customer/CarBooking/CarBookingDetails';
 import CustomerCarDetails from '../Screens/Customer/CarBooking/CarDetails';
+import CarList from '../Screens/Customer/CarBooking/CarList';
 import CustomerBookings from '../Screens/Customer/Booking';
+import BookingDetails from '../Screens/Customer/BookingDetails';
 import CustomerProfile from '../Screens/Customer/Profile';
 import ContactDetails from '../Screens/Customer/BusBooking/component/ContactDetails';
 import BookingSummary from '../Screens/Customer/BusBooking/component/BookingSummary';
+import Verification from '../Screens/Customer/CarBooking/Verification';
 
 // 🚀 New Services Flow Screens
 import ServicesScreen from '../Screens/Customer/Services/ServicesScreen';
@@ -137,6 +140,9 @@ const Navigation = () => {
   const {userData} = useUserStore();
   const [hasCompletedOnboarding] = useMMKVBoolean('hasCompletedOnboarding');
 
+  // Debug logging
+  console.log('Navigation - user:', !!user, 'userData:', !!userData, 'userType:', userData?.userType);
+
   const handleNavigationStateChange = async (state) => {
     try {
       const currentRoute = state.routes[state.index];
@@ -149,14 +155,24 @@ const Navigation = () => {
     }
   };
 
+  console.log('hasCompletedOnboarding:', hasCompletedOnboarding);
   // Initial Route Setup
   const getInitialRoute = () => {
-    if (!user) {return 'Login';}
-    if (!userData) {return 'Login';}
+    if (!user) {
+      return 'Login';
+    }
+    if (!userData) {
+      return 'Login';
+    }
+    if (!hasCompletedOnboarding) {
+      return 'WelcomeScreen';
+    }
+    
+   
 
     switch (userData.userType) {
       case 'customer':
-        return 'Services'; // 🚀 Start customers at Services
+        return 'CustomerTabs';
       case 'provider':
         return 'ProviderTabs';
       case 'admin':
@@ -177,14 +193,13 @@ const Navigation = () => {
           screenOptions={{headerShown: false}}
           initialRouteName={getInitialRoute()}>
 
-          {!hasCompletedOnboarding && (
-            <Stack.Screen name="WelcomeScreen" component={Welcome} />
-          )}
+          {/* Welcome Screen - Always available */}
+          <Stack.Screen name="WelcomeScreen" component={Welcome} />
 
           {!user || !userData ? (
             <>
               <Stack.Screen name="Login" component={Login} />
-              <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: true }} />
+              <Stack.Screen name="SignUp" component={SignUp} />
               <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: true }} />
             </>
           ) : (
@@ -206,9 +221,12 @@ const Navigation = () => {
                   <Stack.Screen name="BusSearch" component={BusSearch} options={{ headerShown: true }} />
                   <Stack.Screen name="BusSearchResults" component={BusSearchResults} options={{ headerShown: true }} />
                   <Stack.Screen name="ContactDetails" component={ContactDetails} options={{ headerShown: true }} />
-                  <Stack.Screen name="BookingSummary" component={BookingSummary} options={{ headerShown: true }} />
-                  <Stack.Screen name="CarSearch" component={CarSearch} options={{ headerShown: true }} />
-                  <Stack.Screen name="CarDetails" component={CustomerCarDetails} options={{ headerShown: true }} />
+                  <Stack.Screen name="BookingSummary" component={BookingSummary}  />
+                  <Stack.Screen name="BookingDetails" component={BookingDetails} options={{ headerShown: false }} />
+                  <Stack.Screen name="CarSearch" component={CarSearch} />
+                  <Stack.Screen name="CarList" component={CarList} options={{ headerShown: false }} />
+                  <Stack.Screen name="CarDetails" component={CustomerCarDetails}  />
+                  <Stack.Screen name="Verification" component={Verification} options={{ headerShown: false }} />
                 </>
               )}
 

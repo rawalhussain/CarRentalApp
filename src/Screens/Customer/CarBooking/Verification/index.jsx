@@ -1,20 +1,27 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import styles from './styles';
 import PhoneStep from './PhoneStep';
 import OtpStep from './OtpStep';
 import LicenseStep from './LicenseStep';
 import PaymentStep from './PaymentStep';
+import MainHeader from '../../../../Components/MainHeader';
+import Button from '../../../../Components/Button';
+import { Icons } from '../../../../Themes/icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
 
 const steps = [
-  { emoji: '📞', label: 'Mobile number Verification' },
-  { emoji: '🪪', label: 'Verify your license' },
-  { emoji: '💳', label: 'Payment method' },
+  { icon: Icons.phone, label: 'Mobile number Verification' },
+  { icon: Icons.license, label: 'Verify your license' },
+  { icon: Icons.card, label: 'Payment method' },
 ];
 
 const VerificationScreen = () => {
+  const navigation = useNavigation();
   const [currentScreen, setCurrentScreen] = useState('intro');
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   // Move from emoji intro to phone number step
   const handleIntroContinue = () => {
@@ -26,7 +33,8 @@ const VerificationScreen = () => {
   };
 
   // Move from phone step to OTP input
-  const handlePhoneContinue = () => {
+  const handlePhoneContinue = (phone) => {
+    setPhoneNumber(phone);
     setCurrentScreen('otp');
   };
 
@@ -41,59 +49,75 @@ const VerificationScreen = () => {
 
   // ===== Render Logic =====
   if (currentScreen === 'phone') {
-    return <PhoneStep onNext={handlePhoneContinue} />;
+    return <PhoneStep onNext={handlePhoneContinue} style={styles.phoneStep} />;
   }
 
   if (currentScreen === 'otp') {
-    return <OtpStep onNext={handleOtpContinue} />;
+    return <OtpStep onNext={handleOtpContinue} phoneNumber={phoneNumber} style={styles.otpStep} />;
   }
   if (currentScreen === 'license') {
-    return <LicenseStep onNext={handleLicenseContinue} />;
+    return <LicenseStep onNext={handleLicenseContinue} style={styles.licenseStep} />;
   }
 
   if (currentScreen === 'payment') {
-    return <PaymentStep onNext={handlePaymentContinue} />;
+    return <PaymentStep onNext={handlePaymentContinue} style={styles.paymentStep} />;
   }
 
 
   // ===== Intro screen (emoji steps layout) =====
   return (
-    <View style={styles.container}>
-      {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => {}}>
-        <Text style={styles.backIcon}>←</Text>
-      </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      {/* MainHeader */}
+      <MainHeader 
+        title="Complete Your Profile"
+        onBackPress={() => {navigation.goBack()}}
+        showOptionsButton={false}
+        // showBorder={false}
+        showheader={false}
+      />
 
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Content */}
+      <View style={styles.content}>
         <Text style={styles.title}>Get Approved To Drive</Text>
         <Text style={styles.subtitle}>
-          Since this is your first trip you’ll need to provide us with some information before you can check out.
+          Since this is your first trip you'll need to provide us with some information before you can check out.
         </Text>
-      </View>
 
-      {/* Step List */}
-      <View style={styles.stepsWrapper}>
-        {steps.map((step, index) => (
-          <View key={index} style={styles.stepRow}>
-            <View style={styles.iconColumn}>
-              <View style={styles.emojiWrapper}>
-                <Text style={styles.emoji}>{step.emoji}</Text>
+        {/* Step List */}
+        <View style={styles.stepsWrapper}>
+          {steps.map((step, index) => {
+            // Different icon styles for each step
+            let iconStyle;
+            if (index === 0) iconStyle = styles.phoneStep; // Phone step
+            else if (index === 1) iconStyle = styles.licenseStep; // License step  
+            else if (index === 2) iconStyle = styles.paymentStep; // Payment step
+            
+            return (
+              <View key={index} style={styles.stepRow}>
+                <View style={styles.iconColumn}>
+                  <View style={styles.iconWrapper}>
+                    <Image source={step.icon} style={iconStyle} />
+                  </View>
+                  {index < steps.length - 1 && <View style={styles.verticalLine} />}
+                </View>
+                <View style={styles.textColumn}>
+                  <Text style={styles.stepLabelText}>{step.label}</Text>
+                </View>
               </View>
-              {index < steps.length - 1 && <View style={styles.verticalLine} />}
-            </View>
-            <View style={styles.textColumn}>
-              <Text style={styles.stepLabelText}>{step.label}</Text>
-            </View>
-          </View>
-        ))}
+            );
+          })}
+        </View>
       </View>
 
-      {/* Continue Button */}
-      <TouchableOpacity style={styles.continueButton} onPress={handleIntroContinue}>
-        <Text style={styles.continueText}>Continue</Text>
-      </TouchableOpacity>
-    </View>
+      {/* Continue Button at bottom */}
+      <View style={styles.bottomButtonContainer}>
+        <Button 
+          title="Continue" 
+          onPress={handleIntroContinue}
+          buttonStyle={styles.continueButton}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 

@@ -1,29 +1,31 @@
-import { initializeApp, getApp, getApps } from '@react-native-firebase/app';
-import { getAuth } from '@react-native-firebase/auth';
-import { getDatabase, serverTimestamp } from '@react-native-firebase/database';
-import { getStorage } from '@react-native-firebase/storage';
-import { getAnalytics } from '@react-native-firebase/analytics';
+import auth from '@react-native-firebase/auth';
+import database, { firebase } from '@react-native-firebase/database';
+import storage from '@react-native-firebase/storage';
+import analytics from '@react-native-firebase/analytics';
 
-// Initialize Firebase
-const app = getApps().length === 0 ? initializeApp() : getApp();
-const authRef = getAuth(app);
-const databaseRef = getDatabase(app);
-const storageRef = getStorage(app);
-const analyticsRef = getAnalytics(app);
+// Configure database to use emulator in development
+// if (__DEV__) {
+//   database().useEmulator('localhost', 9000);
+// }
 
 // Sign up
 export const signUp = async (email, password, userData) => {
   try {
-    const userCredential = await authRef.createUserWithEmailAndPassword(email, password);
+    console.log('Creating user with email:', email);
+    const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+    console.log('User created with UID:', userCredential.user.uid);
+    
     const userProfile = {
       ...userData,
       userType: userData.userType,
       emailVerified: false,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: database.ServerValue.TIMESTAMP,
+      updatedAt: database.ServerValue.TIMESTAMP,
     };
 
-    await databaseRef.ref(`users/${userCredential.user.uid}`).set(userProfile);
+    console.log('Storing user profile:', userProfile);
+    await database().ref(`users/${userCredential.user.uid}`).set(userProfile);
+    console.log('User profile stored successfully');
 
     return {
       user: userCredential.user,
@@ -38,11 +40,17 @@ export const signUp = async (email, password, userData) => {
 // Sign in
 export const signIn = async (email, password) => {
   try {
-    const userCredential = await authRef.signInWithEmailAndPassword(email, password);
-    const snapshot = await databaseRef.ref(`users/${userCredential.user.uid}`).once('value');
+    console.log('Signing in with email:', email);
+    const userCredential = await auth().signInWithEmailAndPassword(email, password);
+    console.log('Auth successful, user UID:', userCredential.user.uid);
+    
+    const snapshot = await database().ref(`users/${userCredential.user.uid}`).once('value');
+    const userData = snapshot.val();
+    console.log('User data from database:', userData);
+    
     return {
       user: userCredential.user,
-      userData: snapshot.val(),
+      userData: userData,
     };
   } catch (error) {
     console.error('Error in signIn:', error);
@@ -52,13 +60,13 @@ export const signIn = async (email, password) => {
 
 // Reset password
 export const sendPasswordResetEmail = (email) => {
-  return authRef.sendPasswordResetEmail(email);
+  return auth().sendPasswordResetEmail(email);
 };
 
 // Sign out
 export const signOut = async () => {
   try {
-    await authRef.signOut();
+    await auth().signOut();
   } catch (error) {
     console.error('Error in signOut:', error);
     throw error;
@@ -67,22 +75,30 @@ export const signOut = async () => {
 
 // Get user data
 export const getUserData = async (userId) => {
-  const snapshot = await databaseRef.ref(`users/${userId}`).once('value');
-  return snapshot.val();
+  try {
+    console.log('Getting user data for userId:', userId);
+    const snapshot = await database().ref(`users/${userId}`).once('value');
+    const userData = snapshot.val();
+    console.log('Retrieved userData from database:', userData);
+    return userData;
+  } catch (error) {
+    console.error('Error getting user data:', error);
+    return null;
+  }
 };
 
 // Update user data
 export const updateUserData = async (userId, data) => {
-  await databaseRef.ref(`users/${userId}`).update(data);
+  await database().ref(`users/${userId}`).update(data);
 };
 
 // Add car
 export const addCar = async (vendorId, carData) => {
-  const carRef = databaseRef.ref('cars').push();
+  const carRef = database().ref('cars').push();
   await carRef.set({
     ...carData,
     vendorId,
-    createdAt: serverTimestamp(),
+    createdAt: firebase.database.ServerValue.TIMESTAMP,
   });
   return carRef.key;
 };
@@ -92,7 +108,7 @@ export const getCars = async (filters = {}) => {
   try {
     const type = filters.type?.toLowerCase() || 'cars';
     const tableName = type.endsWith('s') ? type : `${type}s`;
-    let query = databaseRef.ref(tableName);
+    let query = database().ref(tableName);
 
     // Only filter by vendorId if it's explicitly provided
     if (filters.vendorId) {
@@ -110,19 +126,19 @@ export const getCars = async (filters = {}) => {
 // Delete vehicle (car or bus)
 export const deleteVehicle = async (vehicleId, type = 'cars') => {
   const tableName = type.endsWith('s') ? type : `${type}s`;
-  const vehicleSnap = await databaseRef.ref(tableName).child(vehicleId).once('value');
+  const vehicleSnap = await database().ref(tableName).child(vehicleId).once('value');
   const vehicleData = vehicleSnap.val();
 
   if (vehicleData?.photo) {
     try {
-      const imageRef = storageRef.ref(vehicleData.photo);
-      await storageRef.ref(imageRef).delete();
+      const imageRef = storage().ref(vehicleData.photo);
+      await storage().ref(imageRef).delete();
     } catch (error) {
       console.warn('Image delete failed:', error);
     }
   }
 
-  await databaseRef.ref(tableName).child(vehicleId).remove();
+  await database().ref(tableName).child(vehicleId).remove();
 };
 
 // Create booking
@@ -130,26 +146,26 @@ export const createBooking = async (bookingData) => {
   // Use a generic 'vehicle' field and always include customerId and vendorId
   const { vehicle, customerId, ...rest } = bookingData;
   const vendorId = vehicle?.vendorId || '';
-  const bookingRef = databaseRef.ref('bookings').push();
+  const bookingRef = database().ref('bookings').push();
   await bookingRef.set({
     ...rest,
     vehicle,
     customerId,
     vendorId,
     status: 'pending',
-    createdAt: serverTimestamp(),
+    createdAt: firebase.database.ServerValue.TIMESTAMP,
   });
   return bookingRef.key;
 };
 
 // Get bookings
 export const getBookings = async (userId, userType) => {
-  let bookingsRef = databaseRef.ref('bookings');
+  let bookingsRef = database().ref('bookings');
 
   if (userType === 'customer') {
-    bookingsRef = databaseRef.ref('bookings').orderByChild('customerId').equalTo(userId);
+    bookingsRef = database().ref('bookings').orderByChild('customerId').equalTo(userId);
   } else if (userType === 'vendor') {
-    bookingsRef = databaseRef.ref('bookings').orderByChild('vendorId').equalTo(userId);
+    bookingsRef = database().ref('bookings').orderByChild('vendorId').equalTo(userId);
   }
 
   const snapshot = await bookingsRef.once('value');
@@ -158,16 +174,16 @@ export const getBookings = async (userId, userType) => {
 
 // Update booking status
 export const updateBookingStatus = async (bookingId, status) => {
-  await databaseRef.ref(`bookings/${bookingId}/status`).set(status);
-  await databaseRef.ref(`bookings/${bookingId}/updatedAt`).set(serverTimestamp());
+  await database().ref(`bookings/${bookingId}/status`).set(status);
+  await database().ref(`bookings/${bookingId}/updatedAt`).set(firebase.database.ServerValue.TIMESTAMP);
 };
 
 // Get admin dashboard stats
 export const getAdminStats = async () => {
   try {
     const [usersSnapshot, bookingsSnapshot] = await Promise.all([
-      databaseRef.ref('users').once('value'),
-      databaseRef.ref('bookings').once('value'),
+      database().ref('users').once('value'),
+      database().ref('bookings').once('value'),
     ]);
 
     const users = usersSnapshot.val() || {};
@@ -190,24 +206,24 @@ export const getAdminStats = async () => {
 // Verify car
 export const verifyCar = async (carId, type = 'car') => {
   const table = type === 'car' ? 'cars' : 'buses';
-  await databaseRef.ref(`${table}/${carId}/verified`).set(true);
-  await databaseRef.ref(`${table}/${carId}/updatedAt`).set(serverTimestamp());
+  await database().ref(`${table}/${carId}/verified`).set(true);
+  await database().ref(`${table}/${carId}/updatedAt`).set(firebase.database.ServerValue.TIMESTAMP);
 };
 
 // Get current user
 export const getCurrentUser = () => {
-  return authRef.currentUser;
+  return auth().currentUser;
 };
 
 // On auth state changed
 export const onAuthStateChanged = (callback) => {
-  return authRef.onAuthStateChanged(callback);
+  return auth().onAuthStateChanged(callback);
 };
 
 // Analytics
 export const logEvent = async (eventName, params = {}) => {
   try {
-    await analyticsRef.logEvent(eventName, params);
+    await analytics().logEvent(eventName, params);
   } catch (error) {
     console.error('Error logging analytics event:', error);
   }
@@ -215,18 +231,18 @@ export const logEvent = async (eventName, params = {}) => {
 
 // Get image reference from URL
 export const getImageRefFromURL = (imageUrl) => {
-  return storageRef.ref(imageUrl);
+  return storage().ref(imageUrl);
 };
 
 // Get image reference
 export const getImageRef = (path) => {
-  return storageRef.ref(path);
+  return storage().ref(path);
 };
 
 // Upload file to storage
 export const uploadFile = async (fileUri, path) => {
   try {
-    const reference = storageRef.ref(path);
+    const reference = storage().ref(path);
     await reference.putFile(fileUri);
     return await reference.getDownloadURL();
   } catch (error) {
@@ -238,7 +254,7 @@ export const uploadFile = async (fileUri, path) => {
 // Delete file from storage
 export const deleteFile = async (path) => {
   try {
-    const reference = storageRef.ref(path);
+    const reference = storage().ref(path);
     await reference.delete();
   } catch (error) {
     console.error('Error deleting file:', error);
@@ -248,28 +264,28 @@ export const deleteFile = async (path) => {
 
 // Get database reference
 export const getDatabaseRef = (path) => {
-  return databaseRef.ref(path);
+  return database().ref(path);
 };
 
 // Get database value
 export const getDatabaseValue = async (path) => {
-  const snapshot = await databaseRef.ref(path).once('value');
+  const snapshot = await database().ref(path).once('value');
   return snapshot.val();
 };
 
 // Set database value
 export const setDatabaseValue = async (path, value) => {
-  await databaseRef.ref(path).set(value);
+  await database().ref(path).set(value);
 };
 
 // Update database value
 export const updateDatabaseValue = async (path, value) => {
-  await databaseRef.ref(path).update(value);
+  await database().ref(path).update(value);
 };
 
 // Remove database value
 export const removeDatabaseValue = async (path) => {
-  await databaseRef.ref(path).remove();
+  await database().ref(path).remove();
 };
 
 // Save bank details and car preferences
@@ -282,10 +298,10 @@ export const saveBankDetailsAndPreferences = async (userId, data) => {
     const update = {
       bankDetails: data.bankDetails,
       carDeliveryPreference: data.canDeliver,
-      updatedAt: serverTimestamp(),
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
     };
 
-    const userRef = databaseRef.ref(`users/${userId}`);
+    const userRef = database().ref(`users/${userId}`);
     await userRef.update(update);
     return update;
   } catch (error) {
@@ -301,39 +317,25 @@ export const saveCarsWithImages = async (vendorId, cars, type) => {
       throw new Error('Vendor ID is required');
     }
 
-    // 1. Upload car images and prepare car data
-    const carsWithImages = await Promise.all(
-      cars.map(async car => {
-        // If there's no photo, just return the car data without uploading
-        if (!car.photo) {
-          return {
-            ...car,
-            vendorId,
-            createdAt: serverTimestamp(),
-            verified: false,
-          };
-        }
+    console.log('Saving cars with images:', cars);
 
-        // Only attempt to upload if there's a photo
-        const imageUrl = await uploadFile(car.photo, `cars/${vendorId}/${Date.now()}`);
-        return {
-          ...car,
-          photo: imageUrl,
-          vendorId,
-          createdAt: serverTimestamp(),
-          verified: false,
-        };
-      }),
-    );
+    // Prepare car data (images already uploaded in BankDetails component)
+    const carsData = cars.map(car => ({
+      ...car,
+      vendorId,
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      verified: false,
+    }));
 
-    // 2. Save cars to appropriate table
+    // Save cars to appropriate table
     const carTable = type === 'car' ? 'cars' : 'buses';
-    const carPromises = carsWithImages.map(car =>
-      databaseRef.ref(carTable).push().set(car)
+    const carPromises = carsData.map(car =>
+      database().ref(carTable).push().set(car)
     );
     await Promise.all(carPromises);
 
-    return carsWithImages;
+    console.log('Cars saved successfully to', carTable);
+    return carsData;
   } catch (error) {
     console.error('Error saving cars:', error);
     throw error;
@@ -342,7 +344,7 @@ export const saveCarsWithImages = async (vendorId, cars, type) => {
 
 // Get server timestamp
 export const getServerTimestamp = () => {
-  return serverTimestamp();
+  return firebase.database.ServerValue.TIMESTAMP;
 };
 
 // Update vehicle
@@ -352,10 +354,10 @@ export const updateVehicle = async (vehicleId, updates, type = 'cars') => {
       throw new Error('Vehicle ID is required');
     }
 
-    const vehicleRef = databaseRef.ref(`${type}/${vehicleId}`);
+    const vehicleRef = database().ref(`${type}/${vehicleId}`);
     const updateData = {
       ...updates,
-      updatedAt: serverTimestamp(),
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
     };
 
     await vehicleRef.update(updateData);
@@ -373,7 +375,7 @@ export const getVendorDetails = async (vendorId) => {
       throw new Error('Vendor ID is required');
     }
 
-    const vendorRef = databaseRef.ref(`users/${vendorId}`);
+    const vendorRef = database().ref(`users/${vendorId}`);
     const snapshot = await vendorRef.once('value');
     const vendorData = snapshot.val();
 
