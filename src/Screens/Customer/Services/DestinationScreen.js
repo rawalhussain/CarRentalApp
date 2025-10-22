@@ -386,7 +386,7 @@ export default function DestinationScreen({ navigation, route }) {
             query={{
               key: GOOGLE_MAPS_API_KEY,
               language: 'en',
-              components: 'country:pk',
+              // components: 'country:pk',
             }}
             keyboardShouldPersistTaps="handled"
             listViewDisplayed="auto"

@@ -45,32 +45,11 @@ const Login = () => {
       setLoading(true);
       const userCredential = await signIn(formData.email, formData.password);
 
-      // Check if user exists and email is verified
-      if (userCredential?.user && !userCredential.user.emailVerified) {
-        // Send verification email again
-        await userCredential.user.sendEmailVerification();
-
-        // Sign out the user
-        await signOut();
-
-        showMessageAlert(
-          'Email Not Verified',
-          'Please verify your email before logging in. A new verification email has been sent.',
-          'warning'
-        );
-        return;
-      }
+      // Login successful - signIn already verified email
       if (userCredential.user.uid) {
         // Get user data from the signIn response
         const userData = userCredential.userData;
 
-        // Update emailVerified status in database if it's not already true
-        if (userData && !userData.emailVerified) {
-          await updateUserData(userCredential.user.uid, {
-            emailVerified: true,
-          });
-          userData.emailVerified = true;
-        }
         console.log('Login successful, userData:', userData);
         setUserData(userData);
         // Set user data in stores
@@ -102,6 +81,9 @@ const Login = () => {
     } catch (error) {
       let errorMessage = 'An error occurred during login';
       switch (error.code) {
+        case 'auth/email-not-verified':
+          errorMessage = error.message; // Use the custom message from signIn
+          break;
         case 'auth/invalid-credential':
           errorMessage = 'Invalid credentials. please try again.';
           break;
@@ -123,9 +105,7 @@ const Login = () => {
 
       showMessageAlert('Error', errorMessage, 'danger');
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 3000);
+      setLoading(false);
     }
   };
 
@@ -204,11 +184,11 @@ const Login = () => {
             <View style={styles.line} />
           </View>
 
-          <Button
+          {/* <Button
               title=" Continue with Google"
               type="social"
               icon={'google-plus'}
-          />
+          /> */}
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>

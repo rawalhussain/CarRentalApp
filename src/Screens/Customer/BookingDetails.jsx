@@ -97,61 +97,79 @@ const BookingDetails = ({ navigation, route }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Vehicle Specifications</Text>
           <View style={styles.infoCard}>
-            {vehicle.year && (
-              <View style={styles.infoRow}>
-                <Icon name="calendar" size={20} color={Colors.PRIMARY} />
-                <Text style={styles.infoLabel}>Model Year:</Text>
-                <Text style={styles.infoValue}>{vehicle.year}</Text>
-              </View>
-            )}
-            
-            {vehicle.color && (
-              <View style={styles.infoRow}>
-                <Icon name="color-palette" size={20} color={Colors.PRIMARY} />
-                <Text style={styles.infoLabel}>Color:</Text>
-                <Text style={styles.infoValue}>{vehicle.color}</Text>
-              </View>
-            )}
-            
-            {vehicle.seats && (
-              <View style={styles.infoRow}>
-                <Icon name="people" size={20} color={Colors.PRIMARY} />
-                <Text style={styles.infoLabel}>Seating Capacity:</Text>
-                <Text style={styles.infoValue}>{vehicle.seats} passengers</Text>
-              </View>
-            )}
+            <View style={styles.specsGrid}>
+              {vehicle.year && (
+                <View style={styles.specItem}>
+                  <Icon name="calendar" size={20} color={Colors.PRIMARY} />
+                  <Text style={styles.specLabel}>Model Year</Text>
+                  <Text style={styles.specValue}>{vehicle.year}</Text>
+                </View>
+              )}
+              
+              {vehicle.color && (
+                <View style={styles.specItem}>
+                  <Icon name="color-palette" size={20} color={Colors.PRIMARY} />
+                  <Text style={styles.specLabel}>Color</Text>
+                  <Text style={styles.specValue}>{vehicle.color}</Text>
+                </View>
+              )}
+              
+              {vehicle.seats && (
+                <View style={styles.specItem}>
+                  <Icon name="people" size={20} color={Colors.PRIMARY} />
+                  <Text style={styles.specLabel}>Seating</Text>
+                  <Text style={styles.specValue}>{vehicle.seats} passengers</Text>
+                </View>
+              )}
 
-            {vehicle.fuelType && (
-              <View style={styles.infoRow}>
-                <Icon name="car-sport" size={20} color={Colors.PRIMARY} />
-                <Text style={styles.infoLabel}>Fuel Type:</Text>
-                <Text style={styles.infoValue}>{vehicle.fuelType}</Text>
-              </View>
-            )}
+              {vehicle.fuelType && (
+                <View style={styles.specItem}>
+                  <Icon name="car-sport" size={20} color={Colors.PRIMARY} />
+                  <Text style={styles.specLabel}>Fuel Type</Text>
+                  <Text style={styles.specValue}>{vehicle.fuelType}</Text>
+                </View>
+              )}
 
-            {vehicle.transmission && (
-              <View style={styles.infoRow}>
-                <Icon name="settings" size={20} color={Colors.PRIMARY} />
-                <Text style={styles.infoLabel}>Transmission:</Text>
-                <Text style={styles.infoValue}>{vehicle.transmission}</Text>
-              </View>
-            )}
+              {vehicle.transmission && (
+                <View style={styles.specItem}>
+                  <Icon name="settings" size={20} color={Colors.PRIMARY} />
+                  <Text style={styles.specLabel}>Transmission</Text>
+                  <Text style={styles.specValue}>{vehicle.transmission}</Text>
+                </View>
+              )}
 
-            {vehicle.mileage && (
-              <View style={styles.infoRow}>
-                <Icon name="speedometer" size={20} color={Colors.PRIMARY} />
-                <Text style={styles.infoLabel}>Mileage:</Text>
-                <Text style={styles.infoValue}>{vehicle.mileage} km/l</Text>
-              </View>
-            )}
+              {vehicle.mileage && (
+                <View style={styles.specItem}>
+                  <Icon name="speedometer" size={20} color={Colors.PRIMARY} />
+                  <Text style={styles.specLabel}>Mileage</Text>
+                  <Text style={styles.specValue}>{vehicle.mileage} km/l</Text>
+                </View>
+              )}
 
-            {vehicle.engine && (
-              <View style={styles.infoRow}>
-                <Icon name="construct" size={20} color={Colors.PRIMARY} />
-                <Text style={styles.infoLabel}>Engine:</Text>
-                <Text style={styles.infoValue}>{vehicle.engine}</Text>
-              </View>
-            )}
+              {vehicle.engine && (
+                <View style={styles.specItem}>
+                  <Icon name="construct" size={20} color={Colors.PRIMARY} />
+                  <Text style={styles.specLabel}>Engine</Text>
+                  <Text style={styles.specValue}>{vehicle.engine}</Text>
+                </View>
+              )}
+
+              {vehicle.licensePlate && (
+                <View style={styles.specItem}>
+                  <Icon name="card" size={20} color={Colors.PRIMARY} />
+                  <Text style={styles.specLabel}>License Plate</Text>
+                  <Text style={styles.specValue}>{vehicle.licensePlate}</Text>
+                </View>
+              )}
+
+              {vehicle.vin && (
+                <View style={styles.specItem}>
+                  <Icon name="shield-checkmark" size={20} color={Colors.PRIMARY} />
+                  <Text style={styles.specLabel}>VIN</Text>
+                  <Text style={styles.specValue}>{vehicle.vin}</Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
@@ -176,23 +194,38 @@ const BookingDetails = ({ navigation, route }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Booking Period</Text>
           <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <Icon name="calendar-outline" size={20} color={Colors.PRIMARY} />
-              <Text style={styles.infoLabel}>Pickup Date:</Text>
-              <Text style={styles.infoValue}>{searchPreferences.pickupDate || 'N/A'}</Text>
+            <View style={styles.dateContainer}>
+              <View style={styles.dateItem}>
+                <Icon name="calendar-outline" size={24} color={Colors.PRIMARY} />
+                <View style={styles.dateInfo}>
+                  <Text style={styles.dateLabel}>Pickup Date</Text>
+                  <Text style={styles.dateValue}>{searchPreferences.pickupDate || 'Not specified'}</Text>
+                  {searchPreferences.pickupTime && (
+                    <Text style={styles.timeValue}>{searchPreferences.pickupTime}</Text>
+                  )}
+                </View>
+              </View>
+              
+              <View style={styles.dateItem}>
+                <Icon name="calendar-outline" size={24} color={Colors.PRIMARY} />
+                <View style={styles.dateInfo}>
+                  <Text style={styles.dateLabel}>Return Date</Text>
+                  <Text style={styles.dateValue}>{searchPreferences.dropoffDate || 'Not specified'}</Text>
+                  {searchPreferences.dropoffTime && (
+                    <Text style={styles.timeValue}>{searchPreferences.dropoffTime}</Text>
+                  )}
+                </View>
+              </View>
             </View>
             
-            <View style={styles.infoRow}>
-              <Icon name="calendar-outline" size={20} color={Colors.PRIMARY} />
-              <Text style={styles.infoLabel}>Drop-off Date:</Text>
-              <Text style={styles.infoValue}>{searchPreferences.dropoffDate || 'N/A'}</Text>
-            </View>
-            
-            {searchPreferences.pickupTime && (
-              <View style={styles.infoRow}>
-                <Icon name="time-outline" size={20} color={Colors.PRIMARY} />
-                <Text style={styles.infoLabel}>Pickup Time:</Text>
-                <Text style={styles.infoValue}>{searchPreferences.pickupTime}</Text>
+            {/* Duration Calculation */}
+            {searchPreferences.pickupDate && searchPreferences.dropoffDate && (
+              <View style={styles.durationContainer}>
+                <Icon name="time" size={20} color={Colors.PRIMARY} />
+                <Text style={styles.durationLabel}>Total Duration:</Text>
+                <Text style={styles.durationValue}>
+                  {Math.ceil((new Date(searchPreferences.dropoffDate) - new Date(searchPreferences.pickupDate)) / (1000 * 60 * 60 * 24))} days
+                </Text>
               </View>
             )}
           </View>
@@ -258,53 +291,64 @@ const BookingDetails = ({ navigation, route }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Pricing Details</Text>
           <View style={styles.infoCard}>
-            {bookingData.basePrice && (
-              <View style={styles.pricingRow}>
-                <Text style={styles.pricingLabel}>Base Price:</Text>
-                <Text style={styles.pricingValue}>${bookingData.basePrice}</Text>
+            <View style={styles.pricingContainer}>
+              {bookingData.basePrice && (
+                <View style={styles.pricingRow}>
+                  <Text style={styles.pricingLabel}>Base Price</Text>
+                  <Text style={styles.pricingValue}>${bookingData.basePrice}</Text>
+                </View>
+              )}
+              
+              {bookingData.dailyRate && (
+                <View style={styles.pricingRow}>
+                  <Text style={styles.pricingLabel}>Daily Rate</Text>
+                  <Text style={styles.pricingValue}>${bookingData.dailyRate}/day</Text>
+                </View>
+              )}
+              
+              {bookingData.duration && (
+                <View style={styles.pricingRow}>
+                  <Text style={styles.pricingLabel}>Duration</Text>
+                  <Text style={styles.pricingValue}>{bookingData.duration} days</Text>
+                </View>
+              )}
+              
+              {bookingData.tax && (
+                <View style={styles.pricingRow}>
+                  <Text style={styles.pricingLabel}>Tax (10%)</Text>
+                  <Text style={styles.pricingValue}>${bookingData.tax}</Text>
+                </View>
+              )}
+              
+              {bookingData.insurance && (
+                <View style={styles.pricingRow}>
+                  <Text style={styles.pricingLabel}>Insurance</Text>
+                  <Text style={styles.pricingValue}>${bookingData.insurance}</Text>
+                </View>
+              )}
+              
+              {bookingData.additionalFees && (
+                <View style={styles.pricingRow}>
+                  <Text style={styles.pricingLabel}>Additional Fees</Text>
+                  <Text style={styles.pricingValue}>${bookingData.additionalFees}</Text>
+                </View>
+              )}
+              
+              {bookingData.deposit && (
+                <View style={styles.pricingRow}>
+                  <Text style={styles.pricingLabel}>Security Deposit</Text>
+                  <Text style={styles.pricingValue}>${bookingData.deposit}</Text>
+                </View>
+              )}
+              
+              <View style={styles.pricingDivider} />
+              
+              <View style={[styles.pricingRow, styles.totalRow]}>
+                <Text style={styles.totalLabel}>Total Amount</Text>
+                <Text style={styles.totalValue}>
+                  ${bookingData.amount || bookingData.totalPrice || bookingData.basePrice || '0'}
+                </Text>
               </View>
-            )}
-            
-            {bookingData.dailyRate && (
-              <View style={styles.pricingRow}>
-                <Text style={styles.pricingLabel}>Daily Rate:</Text>
-                <Text style={styles.pricingValue}>${bookingData.dailyRate}/day</Text>
-              </View>
-            )}
-            
-            {bookingData.duration && (
-              <View style={styles.pricingRow}>
-                <Text style={styles.pricingLabel}>Duration:</Text>
-                <Text style={styles.pricingValue}>{bookingData.duration} days</Text>
-              </View>
-            )}
-            
-            {bookingData.tax && (
-              <View style={styles.pricingRow}>
-                <Text style={styles.pricingLabel}>Tax:</Text>
-                <Text style={styles.pricingValue}>${bookingData.tax}</Text>
-              </View>
-            )}
-            
-            {bookingData.insurance && (
-              <View style={styles.pricingRow}>
-                <Text style={styles.pricingLabel}>Insurance:</Text>
-                <Text style={styles.pricingValue}>${bookingData.insurance}</Text>
-              </View>
-            )}
-            
-            {bookingData.additionalFees && (
-              <View style={styles.pricingRow}>
-                <Text style={styles.pricingLabel}>Additional Fees:</Text>
-                <Text style={styles.pricingValue}>${bookingData.additionalFees}</Text>
-              </View>
-            )}
-            
-            <View style={[styles.pricingRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Total Amount:</Text>
-              <Text style={styles.totalValue}>
-                ${bookingData.totalPrice || bookingData.basePrice || 'N/A'}
-              </Text>
             </View>
           </View>
         </View>
@@ -384,10 +428,15 @@ const BookingDetails = ({ navigation, route }) => {
         )}
 
         {/* Action Buttons */}
-        {/* <View style={styles.actionButtons}>
+        <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.contactButton}>
             <Icon name="call" size={20} color={Colors.WHITE} />
             <Text style={styles.buttonText}>Contact Provider</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.messageButton}>
+            <Icon name="chatbubble" size={20} color={Colors.PRIMARY} />
+            <Text style={styles.messageButtonText}>Send Message</Text>
           </TouchableOpacity>
           
           {bookingData.status === 'pending' && (
@@ -396,7 +445,7 @@ const BookingDetails = ({ navigation, route }) => {
               <Text style={styles.buttonText}>Cancel Booking</Text>
             </TouchableOpacity>
           )}
-        </View> */}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -409,7 +458,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: Metrics.baseMargin,
+    paddingHorizontal: 20,
   },
   statusCard: {
     backgroundColor: Colors.WHITE,
@@ -493,6 +542,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  messageButton: {
+    backgroundColor: Colors.WHITE,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
+  },
   cancelButton: {
     backgroundColor: Colors.RED,
     borderRadius: 12,
@@ -505,6 +564,12 @@ const styles = StyleSheet.create({
     ...Fonts.style.semiBold,
     fontSize: 16,
     color: Colors.WHITE,
+    marginLeft: 8,
+  },
+  messageButtonText: {
+    ...Fonts.style.semiBold,
+    fontSize: 16,
+    color: Colors.PRIMARY,
     marginLeft: 8,
   },
   // Vehicle Image and Info Styles
@@ -559,14 +624,100 @@ const styles = StyleSheet.create({
     color: Colors.GREEN,
     marginLeft: 4,
   },
+  // Vehicle Specifications Grid
+  specsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  specItem: {
+    width: '48%',
+    backgroundColor: Colors.BACKGROUND_GREY,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    alignItems: 'center',
+  },
+  specLabel: {
+    ...Fonts.style.medium,
+    fontSize: 12,
+    color: Colors.PRIMARY_GREY,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  specValue: {
+    ...Fonts.style.semiBold,
+    fontSize: 14,
+    color: Colors.BLACK,
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  // Date Container Styles
+  dateContainer: {
+    marginBottom: 16,
+  },
+  dateItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: Colors.BACKGROUND_GREY,
+    borderRadius: 8,
+  },
+  dateInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  dateLabel: {
+    ...Fonts.style.medium,
+    fontSize: 12,
+    color: Colors.PRIMARY_GREY,
+    marginBottom: 2,
+  },
+  dateValue: {
+    ...Fonts.style.semiBold,
+    fontSize: 16,
+    color: Colors.BLACK,
+  },
+  timeValue: {
+    ...Fonts.style.regular,
+    fontSize: 14,
+    color: Colors.PRIMARY_GREY,
+    marginTop: 2,
+  },
+  durationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    backgroundColor: Colors.PRIMARY + '10',
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  durationLabel: {
+    ...Fonts.style.medium,
+    fontSize: 14,
+    color: Colors.PRIMARY,
+    marginLeft: 8,
+  },
+  durationValue: {
+    ...Fonts.style.semiBold,
+    fontSize: 16,
+    color: Colors.PRIMARY,
+    marginLeft: 4,
+  },
   // Pricing Styles
+  pricingContainer: {
+    paddingVertical: 8,
+  },
   pricingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.LIGHT_GREY,
+    borderBottomColor: Colors.LINE_GRAY,
   },
   pricingLabel: {
     ...Fonts.style.medium,
@@ -578,12 +729,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.BLACK,
   },
+  pricingDivider: {
+    height: 1,
+    backgroundColor: Colors.PRIMARY,
+    marginVertical: 8,
+  },
   totalRow: {
-    borderTopWidth: 2,
-    borderTopColor: Colors.PRIMARY,
     borderBottomWidth: 0,
     marginTop: 8,
     paddingTop: 12,
+    backgroundColor: Colors.PRIMARY + '05',
+    borderRadius: 8,
+    paddingHorizontal: 12,
   },
   totalLabel: {
     ...Fonts.style.semiBold,
@@ -592,7 +749,7 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     ...Fonts.style.semiBold,
-    fontSize: 18,
+    fontSize: 20,
     color: Colors.PRIMARY,
   },
   // Timeline Styles

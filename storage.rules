@@ -22,5 +22,11 @@ service firebase.storage {
     match /profile/{allPaths=**} {
       allow read: if request.auth != null;
     }
+    
+    // Allow admins to upload and manage package images
+    match /packages/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
   }
 }

@@ -157,6 +157,9 @@ const SignUp = () => {
       // Sign out the user immediately after signup to prevent auto-login
       await signOut();
 
+      // Stop loading before showing alert
+      setLoading(false);
+
       // Show success message with verification instructions
       showMessageAlert(
           'Verification Required',
@@ -165,14 +168,16 @@ const SignUp = () => {
       );
 
       // Navigate back to login screen with a small delay to ensure message is shown
-      // navigation.navigate('Login');
-
+      setTimeout(() => {
         navigation.reset({
           index: 0,
           routes: [{ name: 'Login' }],
         });
+      }, 1500); // 1.5 second delay to allow alert to be seen
      
     } catch (error) {
+      setLoading(false);
+      
       let errorMessage = 'An error occurred during sign up';
 
       // Handle specific Firebase auth errors
@@ -194,8 +199,6 @@ const SignUp = () => {
       }
 
       showMessageAlert('Error', errorMessage, 'danger');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -315,11 +318,11 @@ const SignUp = () => {
             <View style={styles.line} />
           </View>
 
-          <Button
+          {/* <Button
               title=" Continue with Google"
               type="social"
               icon={'google-plus'}
-          />
+          /> */}
 
           {/* Footer */}
           <View style={styles.footer}>

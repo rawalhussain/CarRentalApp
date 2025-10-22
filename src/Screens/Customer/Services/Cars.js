@@ -11,10 +11,10 @@ import {
   ActivityIndicator,
   Dimensions, Alert,
 } from 'react-native';
-import { createBooking } from '../../../Config/firebase';
+import { createPackageBooking, getRidePackages, getPackagePricing, getPackageCars, calculateFare } from '../../../Config/firebase';
 import useAuthStore from '../../../store/useAuthStore';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
@@ -38,6 +38,7 @@ export default function CarsScreen({ navigation, route }) {
   // State for route info
   const [distance, setDistance] = useState(null);
   const [duration, setDuration] = useState(null);
+  const [packages, setPackages] = useState([]);
 
   // Fit map to show both pickup and destination when they are available
   useEffect(() => {
@@ -55,83 +56,40 @@ export default function CarsScreen({ navigation, route }) {
     }
   }, [currentLocation, destination]);
 
-  // Dummy ride options data
-  const [rideOptions] = useState([
-    {
-      id: 1,
-      name: 'Lowest TransportX',
-      capacity: 4,
-      price: '$32.90',
-      time: '21:12 - 3 min away',
-      description: 'Affordable rides all to yourself',
-      type: 'economy',
-    },
-    {
-      id: 2,
-      name: 'Lowest TransportXL',
-      capacity: 6,
-      price: '$60.90',
-      time: '21:12 - 3 min away',
-      description: 'Affordable rides for groups up to 6',
-      type: 'xl',
-    },
-    {
-      id: 3,
-      name: 'Lowest Transport Premier',
-      capacity: 4,
-      price: '$67.90',
-      time: '21:12 - 3 min away',
-      description: 'Luxury rides with highly-rated drivers',
-      type: 'premier',
-    },
-    {
-      id: 4,
-      name: 'Lowest Transport Pet',
-      capacity: 4,
-      price: '$38.90',
-      time: '21:12 - 3 min away',
-      description: 'Pet-friendly rides',
-      type: 'pet',
-    },
-    {
-      id: 5,
-      name: 'Lowest Transport Green',
-      capacity: 4,
-      price: '$36.90',
-      time: '21:12 - 3 min away',
-      description: 'Eco-friendly rides',
-      type: 'green',
-    },
-    {
-      id: 6,
-      name: 'Lowest Transport Car Seat',
-      capacity: 4,
-      price: '$40.90',
-      time: '21:12 - 3 min away',
-      description: 'Child car seat available (5-65 lbs)',
-      type: 'car_seat',
-      hasTimeSelection: true,
-    },
-    {
-      id: 7,
-      name: 'Lowest Transport XXL',
-      capacity: 6,
-      price: '$70.90',
-      time: '21:12 - 3 min away',
-      description: 'Extra large rides for groups',
-      type: 'xxl',
-    },
-    {
-      id: 8,
-      name: 'Lowest Transport Premium SUV',
-      capacity: 6,
-      price: '$77.90',
-      time: '21:12 - 3 min away',
-      description: 'Premium SUV with luxury features',
-      type: 'premium_suv',
-      isPremium: true,
-    },
-  ]);
+  // Load packages from Firebase
+  useEffect(() => {
+    loadPackages();
+  }, []);
+
+  const loadPackages = async () => {
+    try {
+      console.log('Loading ride packages for user...');
+      const packagesData = await getRidePackages();
+      console.log('Packages data:', packagesData);
+      
+      const packagesWithDetails = await Promise.all(
+        packagesData.map(async (pkg) => {
+          const [pricing, cars] = await Promise.all([
+            getPackagePricing(pkg.id),
+            getPackageCars(pkg.id)
+          ]);
+          return {
+            ...pkg,
+            pricing,
+            cars,
+            ratePerMile: pricing?.ratePerMile || 0,
+            baseFare: pricing?.baseFare || 0,
+            carIds: cars || [],
+          };
+        })
+      );
+      
+      console.log('Packages with details:', packagesWithDetails);
+      setPackages(packagesWithDetails.filter(pkg => pkg.isActive));
+    } catch (error) {
+      console.error('Error loading packages:', error);
+    }
+  };
 
   // Selected ride state
   const [selectedRide, setSelectedRide] = useState(null);
@@ -152,32 +110,23 @@ export default function CarsScreen({ navigation, route }) {
     return () => clearTimeout(timer);
   }, []);
 
-  // Snap points for the bottom sheet
-  const snapPoints = useMemo(() => showDetailSheet ? ['85%', '90%'] : ['85%', '90%'], [showDetailSheet]);
+  // Snap points for the bottom sheet - opens at 55%, can expand to 90%
+  const snapPoints = useMemo(() => ['55%', '90%'], []);
 
   // Handle sheet changes
   const handleSheetChanges = useCallback((index) => {
-    if (index === -1) {
-      // Sheet is closed, navigate back
-      navigation.goBack();
-    }
-  }, [navigation]);
+    // Don't navigate back automatically when sheet closes
+    console.log('Sheet index changed:', index);
+  }, []);
 
-  // Backdrop component
+  // No backdrop - allows background interaction
   const renderBackdrop = useCallback(
-    (props) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.3}
-      />
-    ),
+    () => null,
     []
   );
 
   const handleBack = () => {
-    bottomSheetRef.current?.close();
+    navigation.goBack();
   };
 
   const handleMyLocationPress = async () => {
@@ -204,48 +153,84 @@ export default function CarsScreen({ navigation, route }) {
   };
 
   const handleBookRide = async () => {
-    if (selectedRide) {
-      setIsBooking(true);
-      try {
-        // Create booking data using existing structure
-        const bookingData = {
-          vehicle: {
-            id: selectedRide.id,
-            name: selectedRide.name,
-            price: selectedRide.price,
-            capacity: selectedRide.capacity,
-            description: selectedRide.description,
-            type: 'ride',
-            vendorId: '', // No vendor for ride services
-          },
-          customerId: user?.user?.uid || user?.uid,
-          pickupLocation: currentLocationText,
-          destination: destinationText,
-          pickupCoordinates: currentLocation,
-          destinationCoordinates: destination?.coordinates,
-          serviceType: route?.params?.serviceType || 'Ride',
-          pickupTime: route?.params?.selectedPickupTime,
-          dropoffTime: route?.params?.selectedDropoffTime,
-          pickupDate: route?.params?.selectedPickupDate,
-          dropoffDate: route?.params?.selectedDropoffDate,
-        };
+    if (!selectedRide) {
+      Alert.alert('Error', 'Please select a ride option');
+      return;
+    }
 
-        // Use existing createBooking function
-        const newBookingId = await createBooking(bookingData);
-        setBookingId(newBookingId);
+    if (!user?.uid && !user?.user?.uid) {
+      Alert.alert('Error', 'User not authenticated. Please log in again.');
+      return;
+    }
 
-        // Show booking summary
-        setShowBookingSummary(true);
-        setShowDetailSheet(false);
+    setIsBooking(true);
+    try {
+      console.log('Starting package booking process...');
+      console.log('Selected Ride:', selectedRide);
+      console.log('User:', user);
+      console.log('Distance:', distance);
+      
+      const estimatedFare = distance ? calculateFare(distance, selectedRide.ratePerMile, selectedRide.baseFare || 0) : 0;
+      console.log('Estimated Fare:', estimatedFare);
+      
+      // Create package booking data
+      const bookingData = {
+        // Package details
+        packageId: selectedRide.id || '',
+        packageName: selectedRide.name || 'Unknown Package',
+        packageImage: selectedRide.image || '',
+        packageDescription: selectedRide.description || '',
         
-      } catch (error) {
-        console.error('Error creating booking:', error);
-        Alert.alert('Error', 'Failed to create booking. Please try again.');
-      } finally {
-        setIsBooking(false);
-      }
-    } else {
-      Alert.alert('Please select a ride option');
+        // Pricing details
+        ratePerMile: selectedRide.ratePerMile || 0,
+        baseFare: selectedRide.baseFare || 0,
+        distance: distance || 0,
+        estimatedFare: estimatedFare,
+        totalPrice: `$${estimatedFare.toFixed(2)}`,
+        
+        // Customer details
+        customerId: user?.uid || user?.user?.uid,
+        
+        // Location details
+        pickupLocation: currentLocationText || 'Current Location',
+        destination: destinationText || 'Destination',
+        pickupCoordinates: currentLocation || null,
+        destinationCoordinates: destination?.coordinates || null,
+        
+        // Service details
+        serviceType: route?.params?.serviceType || 'Ride',
+        pickupTime: route?.params?.selectedPickupTime || null,
+        dropoffTime: route?.params?.selectedDropoffTime || null,
+        pickupDate: route?.params?.selectedPickupDate || null,
+        dropoffDate: route?.params?.selectedDropoffDate || null,
+        
+        // Payment details
+        paymentMethod: 'Cash',
+        
+        // Package cars info
+        carsCount: selectedRide.cars?.length || 0,
+        cars: selectedRide.cars || [],
+      };
+
+      console.log('Package Booking Data:', JSON.stringify(bookingData, null, 2));
+
+      // Use createPackageBooking function
+      const newBookingId = await createPackageBooking(bookingData);
+      console.log('Package booking created successfully with ID:', newBookingId);
+      
+      setBookingId(newBookingId);
+
+      // Show booking summary
+      setShowBookingSummary(true);
+      setShowDetailSheet(false);
+      
+    } catch (error) {
+      console.error('Error creating package booking:', error);
+      console.error('Error details:', error.message);
+      console.error('Error code:', error.code);
+      Alert.alert('Error', `Failed to create booking: ${error.message || 'Please try again.'}`);
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -352,7 +337,11 @@ export default function CarsScreen({ navigation, route }) {
         snapPoints={snapPoints}
         onChange={handleSheetChanges}
         backdropComponent={renderBackdrop}
-        enablePanDownToClose={true}
+        enablePanDownToClose={false}
+        enableDynamicSizing={false}
+        animateOnMount={true}
+        enableHandlePanningGesture={true}
+        enableContentPanningGesture={true}
         handleIndicatorStyle={styles.dragHandle}
         backgroundStyle={styles.bottomSheetBackground}
       >
@@ -378,7 +367,7 @@ export default function CarsScreen({ navigation, route }) {
           ) : null}
 
           {/* Ride Options List or Detail View */}
-          <ScrollView 
+          <BottomSheetScrollView 
             style={styles.ridesList} 
             contentContainerStyle={styles.ridesListContent}
             showsVerticalScrollIndicator={false}
@@ -391,20 +380,23 @@ export default function CarsScreen({ navigation, route }) {
             ) : showDetailSheet && selectedRide ? (
               // Confirm Details View
               <View style={styles.confirmDetailsView}>
-                {/* Header */}
-                <View style={styles.confirmHeader}>
-                  <Text style={styles.confirmTitle}>Confirm details</Text>
-                </View>
-
                 {/* Ride Details Card */}
                 <View style={styles.rideDetailsCard}>
-                  {/* Car Image */}
-                  <View style={styles.carImageContainer}>
-                    <Image
-                      source={require('../../../../assets/car11.png')}
-                      style={styles.carImageLarge}
-                      resizeMode="contain"
-                    />
+                  {/* Package Image */}
+                  <View style={styles.packageImageWrapper}>
+                    {selectedRide.image ? (
+                      <Image
+                        source={{ uri: selectedRide.image }}
+                        style={styles.carImageLarge}
+                        resizeMode="stretch"
+                      />
+                    ) : (
+                      <Image
+                        source={require('../../../../assets/car11.png')}
+                        style={styles.carImageLarge}
+                        resizeMode="contain"
+                      />
+                    )}
                   </View>
 
                   {/* Ride Info */}
@@ -412,16 +404,43 @@ export default function CarsScreen({ navigation, route }) {
                     <View style={styles.rideNameContainer}>
                       <Text style={styles.rideNameLarge}>{selectedRide.name}</Text>
                       <View style={styles.capacityContainer}>
-                        <Text style={styles.capacityTextLarge}>{selectedRide.capacity}</Text>
+                        <Ionicons name="car" size={14} color={Colors.WHITE} style={{ marginRight: 4 }} />
+                        <Text style={styles.capacityTextLarge}>{selectedRide.cars?.length || 0}</Text>
                       </View>
                     </View>
                     
-                    <Text style={styles.estimatedTime}>21:12 - 3 min away</Text>
-                    <Text style={styles.rideDescriptionLarge}>
-                      {selectedRide.description}
-                    </Text>
+                    <Text style={styles.estimatedTime}>Available now • Ready to go</Text>
                     
-                    <Text style={styles.ridePriceLarge}>{selectedRide.price}</Text>
+                    {selectedRide.description && (
+                      <Text style={styles.rideDescriptionLarge}>
+                        {selectedRide.description}
+                      </Text>
+                    )}
+                    
+                    {/* Pricing Details */}
+                    <View style={styles.pricingDetailsContainer}>
+                      {/* <View style={styles.priceRow}>
+                        <Text style={styles.priceLabel}>Base Fare</Text>
+                        <Text style={styles.priceValue}>${selectedRide.baseFare || 0}</Text>
+                      </View>
+                      <View style={styles.priceRow}>
+                        <Text style={styles.priceLabel}>Rate per Mile</Text>
+                        <Text style={styles.priceValue}>${selectedRide.ratePerMile}/mile</Text>
+                      </View> */}
+                      {distance && (
+                        <View style={styles.priceRow}>
+                          <Text style={styles.priceLabel}>Distance</Text>
+                          <Text style={styles.priceValue}>{distance.toFixed(2)} miles</Text>
+                        </View>
+                      )}
+                      <View style={styles.priceDivider} />
+                      <View style={styles.priceRow}>
+                        <Text style={styles.totalPriceLabel}>Total Price</Text>
+                        <Text style={styles.ridePriceLarge}>
+                          {distance ? `$${calculateFare(distance, selectedRide.ratePerMile, selectedRide.baseFare).toFixed(2)}` : 'Calculating...'}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
 
@@ -430,7 +449,7 @@ export default function CarsScreen({ navigation, route }) {
                   <TouchableOpacity style={styles.paymentMethodButton}>
                     <View style={styles.paymentMethodContent}>
                       <View style={styles.paymentIconContainer}>
-                        <Ionicons name="cash-outline" size={24} color={Colors.PRIMARY} />
+                        <Ionicons name="cash-outline" size={24} color={Colors.GREEN} />
                       </View>
                       <View style={styles.paymentTextContainer}>
                         <Text style={styles.paymentType}>Personal</Text>
@@ -562,49 +581,65 @@ export default function CarsScreen({ navigation, route }) {
             ) : !showBookingSummary ? (
               // Ride Options List
               <>
-                {rideOptions.map((ride) => (
-                  <TouchableOpacity
-                    key={ride.id}
-                    style={[
-                      styles.rideItem,
-                      selectedRide?.id === ride.id && styles.selectedRideItem,
-                    ]}
-                    onPress={() => handleRideSelect(ride)}
-                  >
-                    <View style={styles.rideIconContainer}>
-                      <Image
-                        source={require('../../../../assets/car11.png')}
-                        style={styles.carImage}
-                        resizeMode="contain"
-                        onError={(error) => console.log('Image load error:', error)}
-                        onLoad={() => console.log('Image loaded successfully')}
-                      />
-                      <Text style={styles.capacityText}>{ride.capacity}</Text>
-                    </View>
+                {packages.map((pkg) => {
+                  const estimatedFare = distance ? calculateFare(distance, pkg.ratePerMile, pkg.baseFare) : 0;
+                  const fareText = distance ? `$${estimatedFare.toFixed(2)}` : 'Calculating...';
+                  
+                  return (
+                    <TouchableOpacity
+                      key={pkg.id}
+                      style={[
+                        styles.rideItem,
+                        selectedRide?.id === pkg.id && styles.selectedRideItem,
+                      ]}
+                      onPress={() => handleRideSelect(pkg)}
+                    >
+                      <View style={styles.rideIconContainer}>
+                        {pkg.image ? (
+                          <Image
+                            source={{ uri: pkg.image }}
+                            style={styles.carImage}
+                            resizeMode="stretch"
+                            onError={(error) => console.log('Package image load error:', error)}
+                            onLoad={() => console.log('Package image loaded successfully')}
+                          />
+                        ) : (
+                          <Image
+                            source={require('../../../../assets/car11.png')}
+                            style={styles.carImage}
+                            resizeMode="contain"
+                          />
+                        )}
+                        <Text style={styles.capacityText}>{pkg.cars?.length || 0}</Text>
+                      </View>
 
-                    <View style={styles.rideDetails}>
-                      <Text style={[
-                        styles.rideName,
-                        selectedRide?.id === ride.id && styles.selectedRideName,
-                      ]}>
-                        {ride.name}
-                      </Text>
+                      <View style={styles.rideDetails}>
+                        <Text style={[
+                          styles.rideName,
+                          selectedRide?.id === pkg.id && styles.selectedRideName,
+                        ]}>
+                          {pkg.name}
+                        </Text>
 
-                      <Text style={styles.rideTime}>{ride.time}</Text>
-                      <Text style={styles.rideDescription}>{ride.description}</Text>
-                    </View>
+                        <Text style={styles.rideTime}>Available now</Text>
+                        <Text style={styles.rideDescription}>{pkg.description || 'Professional ride service'}</Text>
+                      </View>
 
-                    <View style={styles.ridePricing}>
-                      <Text style={styles.ridePrice}>{ride.price}</Text>
-                    </View>
+                      <View style={styles.ridePricing}>
+                        <Text style={styles.ridePrice}>{fareText}</Text>
+                        {distance && (
+                          <Text style={styles.rateText}>${pkg.ratePerMile}/mile</Text>
+                        )}
+                      </View>
 
-                    {selectedRide?.id === ride.id ? (
-                      <Ionicons name="checkmark-circle" size={24} color={Colors.PRIMARY} />
-                    ) : (
-                      <Ionicons name="chevron-forward" size={20} color={Colors.PRIMARY_GREY} />
-                    )}
-                  </TouchableOpacity>
-                ))}
+                      {selectedRide?.id === pkg.id ? (
+                        <Ionicons name="checkmark-circle" size={24} color={Colors.PRIMARY} />
+                      ) : (
+                        <Ionicons name="chevron-forward" size={20} color={Colors.PRIMARY_GREY} />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
 
                 {/* Payment Method */}
                 <View style={styles.paymentMethodContainer}>
@@ -618,7 +653,7 @@ export default function CarsScreen({ navigation, route }) {
                 </View>
               </>
             ) : null}
-          </ScrollView>
+          </BottomSheetScrollView>
 
           {/* Fat Divider Above Button */}
           <View style={styles.fullWidthContainer}>
@@ -650,7 +685,7 @@ export default function CarsScreen({ navigation, route }) {
                 styles.bookButtonText,
                 (!selectedRide || isBooking) && styles.disabledButtonText,
               ]}>
-                {showDetailSheet ? `Choose ${selectedRide?.name}` : 'Choose Lowest TransportX'}
+                {showDetailSheet ? 'Confirm and Book' : 'Choose a Package'}
               </Text>
             )}
           </TouchableOpacity>
@@ -755,9 +790,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   bottomSheetBackground: {
-    backgroundColor: '#F8F9FA',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: '#F5F7FA',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
   },
   bottomSheetContent: {
     flex: 1,
@@ -786,9 +821,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '800',
     color: Colors.BLACK,
+    letterSpacing: -0.5,
   },
   placeholder: {
     width: 40,
@@ -797,35 +833,38 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   subtitleText: {
-    fontSize: 16,
-    color: Colors.PRIMARY_GREY,
+    fontSize: 15,
+    color: '#6B7280',
+    fontWeight: '500',
   },
   ridesList: {
-    flex: 1,
+    // flex: 1,
     marginBottom: 20,
     paddingHorizontal: 4,
   },
   ridesListContent: {
-    flexGrow: 1,
+    // flexGrow: 1,
     paddingBottom: 20,
   },
   rideItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     backgroundColor: Colors.WHITE,
-    borderRadius: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
       },
       android: {
-        elevation: 3,
+        elevation: 4,
       },
     }),
   },
@@ -835,55 +874,59 @@ const styles = StyleSheet.create({
     borderColor: Colors.PRIMARY,
   },
   rideIconContainer: {
-    width: 80,
-    height: 50,
-    borderRadius: 12,
+    width: 90,
+    height: 70,
+    borderRadius: 16,
     backgroundColor: '#F8F9FA',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
     position: 'relative',
-    overflow: 'visible',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
       },
       android: {
-        elevation: 2,
+        elevation: 3,
       },
     }),
   },
   carImage: {
-    width: 70,
-    height: 40,
+    width: '100%',
+    height: '100%',
     backgroundColor: 'transparent',
-    tintColor: undefined,
+    borderRadius: 12,
   },
   capacityText: {
     position: 'absolute',
-    bottom: -6,
-    right: -6,
+    bottom: 4,
+    right: 4,
     backgroundColor: Colors.PRIMARY,
     color: Colors.WHITE,
-    fontSize: 11,
-    fontWeight: '600',
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    fontSize: 10,
+    fontWeight: '700',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
+    borderWidth: 2,
+    borderColor: Colors.WHITE,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3,
       },
       android: {
-        elevation: 2,
+        elevation: 4,
       },
     }),
   },
@@ -897,18 +940,26 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   rideName: {
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: Colors.BLACK,
-    marginBottom: 2,
+    marginBottom: 4,
+    letterSpacing: -0.3,
   },
   selectedRideName: {
     color: Colors.PRIMARY,
   },
   ridePrice: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
     color: Colors.BLACK,
+    letterSpacing: -0.5,
+  },
+  rateText: {
+    fontSize: 11,
+    color: Colors.PRIMARY_GREY,
+    marginTop: 3,
+    fontWeight: '500',
   },
   rideTime: {
     fontSize: 13,
@@ -920,6 +971,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.PRIMARY_GREY,
     fontWeight: '400',
+    lineHeight: 18,
   },
   fullWidthContainer: {
     width: '100%',
@@ -939,39 +991,59 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.WHITE,
     paddingHorizontal: 20,
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-    paddingTop: 10,
+    paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#F0F0F0',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
       },
       android: {
-        elevation: 8,
+        elevation: 12,
       },
     }),
   },
   bookButton: {
     backgroundColor: Colors.PRIMARY,
-    height: 50,
-    borderRadius: 8,
+    height: 56,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.PRIMARY,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   disabledButton: {
-    backgroundColor: Colors.PRIMARY_GREY,
+    backgroundColor: '#D1D5DB',
+    ...Platform.select({
+      ios: {
+        shadowOpacity: 0,
+      },
+      android: {
+        elevation: 0,
+      },
+    }),
   },
   bookButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: Colors.WHITE,
+    letterSpacing: -0.3,
   },
   disabledButtonText: {
     color: Colors.WHITE,
-    opacity: 0.7,
+    opacity: 0.6,
   },
   loadingButtonText: {
     fontSize: 16,
@@ -1120,11 +1192,11 @@ const styles = StyleSheet.create({
   },
   // Confirm Details Styles
   confirmDetailsView: {
-    padding: 20,
+    // paddingTop: 10,
   },
   confirmHeader: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   confirmTitle: {
     fontSize: 20,
@@ -1133,134 +1205,215 @@ const styles = StyleSheet.create({
   },
   rideDetailsCard: {
     backgroundColor: Colors.WHITE,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 20,
+    padding: 12,
+    marginBottom: 8,
+    marginHorizontal: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
-  carImageContainer: {
-    marginBottom: 20,
+  packageImageWrapper: {
+    width: '100%',
+    height: 130,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 5,
+    backgroundColor: '#F8F9FA',
   },
   carImageLarge: {
-    width: 120,
-    height: 80,
+    width: '100%',
+    height: '100%',
   },
   rideInfoContainer: {
     width: '100%',
-    alignItems: 'center',
   },
   rideNameContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   rideNameLarge: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: Colors.BLACK,
+    flex: 1,
+    letterSpacing: -0.5,
   },
   capacityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.PRIMARY,
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   capacityTextLarge: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '700',
     color: Colors.WHITE,
   },
   estimatedTime: {
-    fontSize: 16,
-    color: Colors.PRIMARY_GREY,
-    marginBottom: 8,
+    fontSize: 14,
+    color: '#10B981',
+    marginBottom: 2,
+    fontWeight: '600',
   },
   rideDescriptionLarge: {
     fontSize: 14,
     color: Colors.PRIMARY_GREY,
-    marginBottom: 16,
-    textAlign: 'center',
+    marginBottom: 5,
+    lineHeight: 20,
+  },
+  pricingDetailsContainer: {
+    width: '100%',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    padding: 12,
+    // marginTop: 4,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  priceLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  priceValue: {
+    fontSize: 14,
+    color: Colors.BLACK,
+    fontWeight: '600',
+  },
+  priceDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 8,
+  },
+  totalPriceLabel: {
+    fontSize: 16,
+    color: Colors.BLACK,
+    fontWeight: '700',
   },
   ridePriceLarge: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.BLACK,
+    fontSize: 20,
+    fontWeight: '800',
+    color: Colors.PRIMARY,
+    letterSpacing: -0.5,
   },
   paymentSection: {
-    marginBottom: 20,
+    marginBottom: 8,
+    marginHorizontal: 4,
   },
   paymentMethodButton: {
-    backgroundColor: Colors.lightGray,
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: Colors.WHITE,
+    borderRadius: 16,
+    padding: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   paymentMethodContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   paymentIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.WHITE,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.lightGray,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 14,
   },
   paymentTextContainer: {
     flex: 1,
   },
   paymentType: {
-    fontSize: 14,
-    color: Colors.BLACK,
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '500',
     marginBottom: 2,
   },
   paymentMethod: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
     color: Colors.BLACK,
   },
   tripDetailsSection: {
-    marginBottom: 20,
+    backgroundColor: Colors.WHITE,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 8,
+    marginHorizontal: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: Colors.BLACK,
-    marginBottom: 16,
+    marginBottom: 8,
+    letterSpacing: -0.3,
   },
   tripDetailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 6,
   },
   tripDetailIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.lightGray,
+    backgroundColor: '#FEF3C7',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 14,
   },
   tripDetailContent: {
     flex: 1,
   },
   tripDetailLabel: {
-    fontSize: 14,
-    color: Colors.PRIMARY_GREY,
-    marginBottom: 2,
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 4,
+    fontWeight: '600',
   },
   tripDetailText: {
-    fontSize: 16,
+    fontSize: 15,
     color: Colors.BLACK,
+    fontWeight: '500',
+    lineHeight: 21,
   },
   // Booking Summary Styles
   bookingSummaryView: {

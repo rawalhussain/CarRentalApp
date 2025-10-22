@@ -1,14 +1,15 @@
 import { StyleSheet } from 'react-native';
+import { Colors } from '../../Themes/MyColors';
 
 export default StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.BACKGROUND_GREY,
   },
 
   header: {
-    backgroundColor: '#fff',
-    paddingTop: 50,
+    backgroundColor: Colors.WHITE,
+    // paddingTop: 50,
     paddingBottom: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
@@ -29,6 +30,9 @@ export default StyleSheet.create({
 
   profileButton: {
     padding: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
   },
 
   content: {
@@ -196,5 +200,40 @@ export default StyleSheet.create({
     fontSize: 14,
     color: '#4CAF50',
     fontWeight: '500',
+  },
+
+  emptyText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    paddingVertical: 20,
+  },
+
+  quickActionsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+
+  quickActionCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    marginHorizontal: 5,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+
+  quickActionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });

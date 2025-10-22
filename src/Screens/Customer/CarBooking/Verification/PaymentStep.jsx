@@ -8,21 +8,28 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Alert,
 } from 'react-native';
 import styles from './styles';
 import Steps from './Steps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MainHeader from '../../../../Components/MainHeader';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Icons } from '../../../../Themes/icons';
 import { Checkbox } from 'react-native-paper';
 import { Colors } from '../../../../Themes/MyColors';
+import { createBooking } from '../../../../Config/firebase';
+import useAuthStore from '../../../../store/useAuthStore';
+import Loader from '../../../../Components/Loader';
 
 const PaymentStep = ({ onNext }) => { 
   const navigation = useNavigation();
+  const route = useRoute();
+  const { user } = useAuthStore();
   const [method, setMethod] = useState('Cash payment');
   const [country, setCountry] = useState('United States');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [loading, setLoading] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -56,11 +63,33 @@ const PaymentStep = ({ onNext }) => {
   };
   
   // Handle continue with validation
-  const handleContinue = () => {
-    if (isFormValid()) {
-      // Navigate to BookingSummary with payment details
-      navigation.navigate('BookingSummary', {
-        bookingId: `#T${Date.now()}B0J1`,
+  const handleContinue = async () => {
+    if (!isFormValid()) {
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      // Get car data from route params (passed from CarDetails)
+      const { carData, pickupDate, returnDate, where } = route.params || {};
+      
+      // Prepare booking data
+      const bookingData = {
+        vehicle: {
+          id: carData?.id,
+          name: carData?.name,
+          model: carData?.model,
+          price: carData?.price,
+          variant: carData?.variant,
+          type: 'car',
+          vendorId: carData?.vendorId || '',
+        },
+        customerId: user?.user?.uid || user?.uid,
+        pickupLocation: where,
+        pickupDate: pickupDate,
+        returnDate: returnDate,
+        serviceType: 'Car Rental',
         contactDetails: {
           firstName: formData.fullName.split(' ')[0] || '',
           lastName: formData.fullName.split(' ').slice(1).join(' ') || '',
@@ -75,22 +104,51 @@ const PaymentStep = ({ onNext }) => {
           zip: formData.zip,
           country: country,
         },
+        amount: carData?.price || 1400,
+        serviceFee: 15,
+        tax: 0,
+        total: (carData?.price || 1400) + 15,
+      };
+
+      console.log('Creating booking with data:', bookingData);
+      
+      // Create booking in Firebase
+      const bookingId = await createBooking(bookingData);
+      console.log('Booking created with ID:', bookingId);
+
+      // Navigate to BookingSummary with all details
+      navigation.navigate('BookingSummary', {
+        bookingId,
+        contactDetails: bookingData.contactDetails,
+        selectedBus: bookingData.vehicle, // Using same structure as bus booking
+        searchPreferences: {
+          pickupDate,
+          returnDate,
+          where,
+        },
+        paymentDetails: bookingData.paymentDetails,
         transactionDetails: {
           id: `#T${Date.now()}B0J1`,
           date: new Date().toLocaleDateString('en-GB') + ' - ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-          amount: 1400,
-          serviceFee: 15,
-          tax: 0,
-          total: 1415,
+          amount: bookingData.amount,
+          serviceFee: bookingData.serviceFee,
+          tax: bookingData.tax,
+          total: bookingData.total,
         }
       });
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      Alert.alert('Booking Failed', 'Could not create booking. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      {loading && <Loader />}
       <MainHeader 
-        title="Payment Method"
+        // title="Payment Method"
         showBackButton={true}
         // showOptionsButton={true}
         onBackPress={() => navigation.goBack()}
@@ -240,16 +298,16 @@ const PaymentStep = ({ onNext }) => {
           <TouchableOpacity 
             style={[
               styles.continueButton, 
-              !isFormValid() && styles.continueButtonDisabled
+              (!isFormValid() || loading) && styles.continueButtonDisabled
             ]} 
             onPress={handleContinue}
-            disabled={!isFormValid()}
+            disabled={!isFormValid() || loading}
           >
             <Text style={[
               styles.continueText,
-              !isFormValid() && styles.continueTextDisabled
+              (!isFormValid() || loading) && styles.continueTextDisabled
             ]}>
-              Continue
+              {loading ? 'Creating Booking...' : 'Continue'}
             </Text>
           </TouchableOpacity>
         </ScrollView>

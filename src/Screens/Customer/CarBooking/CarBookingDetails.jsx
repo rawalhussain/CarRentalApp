@@ -20,16 +20,12 @@ import { GOOGLE_MAPS_API_KEY } from '../../../Config/constants';
 
 const CarBookingDetails = () => {
   const navigation = useNavigation();
-
   const [pickupDate, setPickupDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [pickupTime, setPickupTime] = useState('');
   const [returnTime, setReturnTime] = useState('');
   const [deliveryOption, setDeliveryOption] = useState('');
   const [where, setWhere] = useState('');
-
- 
-
 
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [calendarTarget, setCalendarTarget] = useState(null);
@@ -153,7 +149,7 @@ const CarBookingDetails = () => {
   return (
     <SafeAreaView style={styles.container}>
       <MainHeader
-      title='Payment Status'
+      title='Car Booking Details'
       onBackPress={() => navigation.goBack()}
       showOptionsButton={false}
 

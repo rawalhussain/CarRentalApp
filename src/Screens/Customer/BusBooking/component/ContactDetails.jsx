@@ -1,5 +1,5 @@
 import React, {useLayoutEffect, useState} from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
 import InputField from '../../../../Components/InputField';
@@ -9,27 +9,10 @@ import { createBooking } from '../../../../Config/firebase';
 import { showMessageAlert } from '../../../../Lib/utils/CommonHelper';
 import Loader from '../../../../Components/Loader';
 import useAuthStore from '../../../../store/useAuthStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import MainHeader from '../../../../Components/MainHeader';
 
 const ContactDetails = ({ navigation, route }) => {
-
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      header: () => (
-          <View style={styles.headerContainer}>
-            <TouchableOpacity
-                onPress={() => navigation.goBack()}
-                style={styles.headerBack}
-            >
-              <Ionicons name="chevron-back" size={24} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Contact Information</Text>
-            <TouchableOpacity style={styles.headerRight} />
-          </View>
-      ),
-    });
-  }, [navigation]);
-
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -84,7 +67,12 @@ const ContactDetails = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, {padding: 0}]}>
+    <SafeAreaView style={[styles.container, {padding: 0, backgroundColor: '#fff'}]}>
+      <MainHeader
+        title="Contact Information"
+        onBackPress={() => navigation.goBack()}
+        showOptionsButton={false}
+      />
       {loading && <Loader />}
       <ScrollView contentContainerStyle={{ paddingVertical: 30, paddingHorizontal: 20 }} keyboardShouldPersistTaps="handled">
         <Text style={{ fontSize: 28, fontWeight: 'bold', color: Colors.BLACK, marginBottom: 8, textAlign: 'center' }}>Provide Contact Details</Text>
@@ -122,12 +110,12 @@ const ContactDetails = ({ navigation, route }) => {
           onChangeText={setComments}
           multiline
           numberOfLines={4}
-          inputStyle={{ minHeight: 80, textAlignVertical: 'top' }}
+          // inputStyle={{ minHeight: 100, textAlignVertical: 'top', paddingTop: 15 ,paddingVertical: 10 }}
         />
         <Button
           title="Next"
           onPress={handleNext}
-          style={{ marginTop: 20 }}
+          style={{ marginTop: 40, backgroundColor: '#D94A47', borderRadius: 30, paddingVertical: 16 }}
         />
       </ScrollView>
     </SafeAreaView>

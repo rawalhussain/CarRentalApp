@@ -1,39 +1,105 @@
-import React, { useLayoutEffect } from 'react';
-import {View, Text, FlatList, SafeAreaView, TouchableOpacity, Image, StatusBar} from 'react-native';
+import React, { useLayoutEffect, useState, useEffect } from 'react';
+import {View, Text, FlatList, TouchableOpacity, Image, StatusBar, ActivityIndicator} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
 import {Colors} from '../../../../Themes/MyColors';
+import {getCars} from '../../../../Config/firebase';
+import {showMessageAlert} from '../../../../Lib/utils/CommonHelper';
+import MainHeader from '../../../../Components/MainHeader';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const BusSearchResults = ({ navigation, route }) => {
-  const { pickupAddress, dropoffAddress, pickupDate, pickupTime, hours, buses } = route.params;
+  const { pickupAddress, dropoffAddress, pickupDate, pickupTime, hours } = route.params;
+  
+  const [buses, setBuses] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const busList = buses ? Object.entries(buses) : [];
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      header: () => (
-        <View style={styles.headerContainer}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.headerBack}
-          >
-            <Ionicons name="chevron-back" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Choose A Vehicle</Text>
-          <TouchableOpacity style={styles.headerRight} />
-        </View>
-      ),
-    });
-  }, [navigation]);
+
+  useEffect(() => {
+    fetchBuses();
+  }, []);
+
+  const fetchBuses = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const filters = { type: 'buses' };
+      const fetchedBuses = await getCars(filters);
+      setBuses(fetchedBuses || {});
+    } catch (err) {
+      console.error('Error fetching buses:', err);
+      setError('Failed to load buses. Please try again.');
+      showMessageAlert('Error', 'Failed to load buses. Please try again.', 'danger');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={Colors.BACKGROUND_GREY} />
+        <ActivityIndicator size="large" color={Colors.PRIMARY} />
+        <Text style={{ marginTop: 16, fontSize: 16, color: Colors.PRIMARY_GREY }}>
+          Loading buses...
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, {padding: 0}]}>
-        <StatusBar barStyle="dark-content" backgroundColor={Colors.BACKGROUND_GREY} />
-      {/* Filters Row (static for now) */}
-      {/* <View style={{ flexDirection: 'row', margin: 10, gap: 8 }}>
-        <View style={styles.filterButton}><Text style={styles.filterButtonText}>All Filters</Text></View>
-        <View style={styles.filterButton}><Text style={styles.filterButtonText}>Name</Text></View>
-        <View style={styles.filterButton}><Text style={styles.filterButtonText}>Name</Text></View>
-        <View style={styles.filterButton}><Text style={styles.filterButtonText}>Name</Text></View>
+      <MainHeader
+        title="Choose A Vehicle"
+        onBackPress={() => navigation.goBack()}
+        showOptionsButton={false}
+      />
+        {/* <StatusBar barStyle="dark-content" backgroundColor={Colors.BACKGROUND_GREY} /> */}
+      {/* Filters Row */}
+      {/* <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 16, gap: 8 }}>
+        <TouchableOpacity style={{ 
+          backgroundColor: '#f5f5f5', 
+          paddingHorizontal: 16, 
+          paddingVertical: 8, 
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: '#e0e0e0'
+        }}>
+          <Text style={{ fontSize: 14, color: '#333' }}>All Filters</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ 
+          backgroundColor: '#f5f5f5', 
+          paddingHorizontal: 16, 
+          paddingVertical: 8, 
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: '#e0e0e0'
+        }}>
+          <Text style={{ fontSize: 14, color: '#333' }}>Name</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ 
+          backgroundColor: '#f5f5f5', 
+          paddingHorizontal: 16, 
+          paddingVertical: 8, 
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: '#e0e0e0'
+        }}>
+          <Text style={{ fontSize: 14, color: '#333' }}>Name</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ 
+          backgroundColor: '#f5f5f5', 
+          paddingHorizontal: 16, 
+          paddingVertical: 8, 
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: '#e0e0e0'
+        }}>
+          <Text style={{ fontSize: 14, color: '#333' }}>Name</Text>
+        </TouchableOpacity>
       </View> */}
       <FlatList
         data={busList}
@@ -55,11 +121,27 @@ const BusSearchResults = ({ navigation, route }) => {
               })}
             >
               <View style={styles.busCard}>
-                {/*<Image*/}
-                {/*  source={bus.photo ? { uri: bus.photo } : {uri: 'https://via.placeholder.com/150'}}*/}
-                {/*  style={styles.busImage}*/}
-                {/*  resizeMode="cover"*/}
-                {/*/>*/}
+                {/* Heart Icon Overlay */}
+                <View style={styles.heartIconContainer}>
+                  <Ionicons name="heart" size={24} color={Colors.PRIMARY} />
+                </View>
+                
+                {/* Bus Image */}
+                {bus.photo && typeof bus.photo === 'string' && bus.photo.startsWith('http') ? (
+                  <Image
+                    source={{ uri: bus.photo }}
+                    style={styles.busImage}
+                    resizeMode="cover"
+                    defaultSource={require('../../../../../assets/car1.jpg')}
+                  />
+                ) : (
+                  <Image
+                    source={require('../../../../../assets/car1.jpg')}
+                    style={styles.busImage}
+                    resizeMode="cover"
+                  />
+                )}
+                
                 <View style={styles.busDetails}>
                   <Text style={styles.busName}>{bus.make || 'Make'} {bus.model || 'Model'}{bus.variant ? ` (${bus.variant})` : ''}</Text>
                   <View style={styles.busInfoRow}>
@@ -81,8 +163,29 @@ const BusSearchResults = ({ navigation, route }) => {
             </TouchableOpacity>
           );
         }}
-        ListEmptyComponent={<Text style={styles.empty}>No buses found.</Text>}
-        contentContainerStyle={{ paddingBottom: 30 }}
+        ListEmptyComponent={
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+            <Ionicons name="bus-outline" size={64} color={Colors.PRIMARY_GREY} />
+            <Text style={[styles.empty, { marginTop: 16, marginBottom: 8 }]}>
+              {error ? error : 'No buses found.'}
+            </Text>
+            {error && (
+              <TouchableOpacity
+                onPress={fetchBuses}
+                style={{
+                  backgroundColor: Colors.PRIMARY,
+                  paddingHorizontal: 24,
+                  paddingVertical: 12,
+                  borderRadius: 8,
+                  marginTop: 8,
+                }}
+              >
+                <Text style={{ color: Colors.WHITE, fontWeight: '600' }}>Retry</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        }
+        contentContainerStyle={{ paddingBottom: 30, flexGrow: 1 }}
       />
     </SafeAreaView>
   );

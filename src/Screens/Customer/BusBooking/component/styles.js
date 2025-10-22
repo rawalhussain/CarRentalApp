@@ -83,11 +83,15 @@ paddingTop:25,
     fontSize: 18,
     fontWeight: 'bold',
   },
-
+  subContainer:{
+paddingHorizontal:16,
+paddingTop:25,
+// backgroundColor:Colors.BACKGROUND_GREY,
+  },
   // Inputs
   inputContainer: {
     marginBottom: 25,
-    // marginTop:25,
+    marginTop:5,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 6,

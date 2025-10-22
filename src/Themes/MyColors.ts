@@ -35,5 +35,6 @@ export const Colors = {
   CIRCLE_RED: '#FF4B55',
   CIRCLE_GREY: '#CA8084',
   SLIDER_GRAY: '#777575',
+  GRAY: '#7F7F7F',
 
 };

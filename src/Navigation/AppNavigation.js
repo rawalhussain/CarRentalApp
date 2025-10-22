@@ -51,6 +51,8 @@ import VehicleManagement from '../Screens/AdminDashboard/component/MyCars';
 // Admin Screens
 import AdminDashboard from '../Screens/AdminDashboard';
 import AdminBookings from '../Screens/AdminDashboard/component/Booking';
+import PackagesManagement from '../Screens/AdminDashboard/component/Packages';
+import AddPackages from '../Screens/AdminDashboard/component/AddPackages';
 import Welcome from '../Screens/Welcome';
 import { SafeAreaView } from 'react-native';
 
@@ -90,7 +92,7 @@ const ProviderTabs = () => {
           let iconName;
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'MyCars') {
+          } else if (route.name === 'My Vehicles') {
             iconName = focused ? 'car' : 'car-outline';
           } else if (route.name === 'Bookings') {
             iconName = focused ? 'calendar' : 'calendar-outline';
@@ -102,7 +104,7 @@ const ProviderTabs = () => {
         headerShown: false,
       })}>
       <Tab.Screen name="Home" component={ProviderHome} />
-      <Tab.Screen name="MyCars" component={MyCars} />
+      <Tab.Screen name="My Vehicles" component={MyCars} />
       <Tab.Screen name="Bookings" component={ProviderBookings} />
     </Tab.Navigator>
   );
@@ -218,9 +220,9 @@ const Navigation = () => {
                   {/* Existing */}
                   <Stack.Screen name="CustomerTabs" component={CustomerTabs} />
                   <Stack.Screen name="Profile" component={CustomerProfile} options={{ headerShown: true }} />
-                  <Stack.Screen name="BusSearch" component={BusSearch} options={{ headerShown: true }} />
-                  <Stack.Screen name="BusSearchResults" component={BusSearchResults} options={{ headerShown: true }} />
-                  <Stack.Screen name="ContactDetails" component={ContactDetails} options={{ headerShown: true }} />
+                  <Stack.Screen name="BusSearch" component={BusSearch}/>
+                  <Stack.Screen name="BusSearchResults" component={BusSearchResults} />
+                  <Stack.Screen name="ContactDetails" component={ContactDetails} />
                   <Stack.Screen name="BookingSummary" component={BookingSummary}  />
                   <Stack.Screen name="BookingDetails" component={BookingDetails} options={{ headerShown: false }} />
                   <Stack.Screen name="CarSearch" component={CarSearch} />
@@ -233,7 +235,7 @@ const Navigation = () => {
               {userData.userType === 'provider' && (
                 <>
                   <Stack.Screen name="ProviderTabs" component={ProviderTabs} />
-                  <Stack.Screen name="AddCar" component={ProviderAddCar} options={{ headerShown: true }} />
+                  <Stack.Screen name="AddCar" component={ProviderAddCar}/>
                   <Stack.Screen name="CarDetails" component={Cars} options={{ headerShown: true }} />
                   <Stack.Screen name="BankDetails" component={BankDetails} options={{ headerShown: true }} />
                   <Stack.Screen name="SubmissionSuccess" component={SubmissionSuccess} />
@@ -241,7 +243,11 @@ const Navigation = () => {
               )}
 
               {userData.userType === 'admin' && (
-                <Stack.Screen name="AdminTabs" component={AdminTabs} />
+                <>
+                  <Stack.Screen name="AdminTabs" component={AdminTabs} />
+                  <Stack.Screen name="Packages" component={PackagesManagement} options={{ headerShown: false }} />
+                  <Stack.Screen name="AddPackages" component={AddPackages} options={{ headerShown: false }} />
+                </>
               )}
             </>
           )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  StatusBar,
+  RefreshControl,
 } from 'react-native';
 import { Colors } from '../../Themes/MyColors';
 import { getCars, updateVehicle, deleteVehicle, uploadVehicleImage } from '../../Config/firebase';
@@ -18,6 +18,8 @@ import database from '@react-native-firebase/database';
 import storage from '@react-native-firebase/storage';
 import { showMessageAlert } from '../../Lib/utils/CommonHelper';
 import Loader from '../../Components/Loader';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import MainHeader from '../../Components/MainHeader';
 
 const MyCars = ({ navigation, route }) => {
   const [vehicles, setVehicles] = useState({ cars: [], buses: [] });
@@ -38,7 +40,7 @@ const MyCars = ({ navigation, route }) => {
     }
   }, [route.params?.refresh]);
 
-  const fetchVehicles = async () => {
+  const fetchVehicles = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getCars({ type: activeTab, vendorId: user?.user?.uid });
@@ -57,12 +59,12 @@ const MyCars = ({ navigation, route }) => {
       setVehicles(prev => ({ ...prev, [activeTab]: vehiclesArray }));
     } catch (error) {
       console.error('Error fetching vehicles:', error);
-      showMessageAlert('Error', 'Failed to fetch vehicles', 'danger');
+      showMessageAlert('Error', 'Failed to fetch vehicles. Please try again.', 'danger');
       setVehicles(prev => ({ ...prev, [activeTab]: [] }));
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, user?.user?.uid]);
 
   const deletePreviousImage = async (imageUrl) => {
     if (!imageUrl) {return;}
@@ -75,7 +77,7 @@ const MyCars = ({ navigation, route }) => {
     }
   };
 
-  const handleUpdateVehicle = async (vehicle, updateData) => {
+  const handleUpdateVehicle = useCallback(async (vehicle, updateData) => {
     try {
       setLoading(true);
       await updateVehicle(vehicle.id, updateData, activeTab);
@@ -83,13 +85,13 @@ const MyCars = ({ navigation, route }) => {
       showMessageAlert('Success', 'Vehicle updated successfully', 'success');
     } catch (error) {
       console.error('Error updating vehicle:', error);
-      showMessageAlert('Error', 'Failed to update vehicle', 'danger');
+      showMessageAlert('Error', 'Failed to update vehicle. Please try again.', 'danger');
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, fetchVehicles]);
 
-  const handleDeleteVehicle = async (vehicleId) => {
+  const handleDeleteVehicle = useCallback(async (vehicleId) => {
     if (!vehicleId) {
       console.error('No vehicle ID provided for deletion');
       showMessageAlert('Error', 'Invalid vehicle ID', 'danger');
@@ -98,20 +100,18 @@ const MyCars = ({ navigation, route }) => {
 
     try {
       setLoading(true);
-
       await deleteVehicle(vehicleId, activeTab);
-
       await fetchVehicles();
       showMessageAlert('Success', 'Vehicle deleted successfully', 'success');
     } catch (error) {
       console.error('Error deleting vehicle:', error);
-      showMessageAlert('Error', 'Failed to delete vehicle: ' + error.message, 'danger');
+      showMessageAlert('Error', 'Failed to delete vehicle. Please try again.', 'danger');
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, fetchVehicles]);
 
-  const handleImageUpload = async (imageUri, vehicleId) => {
+  const handleImageUpload = useCallback(async (imageUri, vehicleId) => {
     try {
       const path = `${activeTab}/${user?.user?.uid}/${Date.now()}`;
       const imageUrl = await uploadVehicleImage(imageUri, path);
@@ -120,13 +120,15 @@ const MyCars = ({ navigation, route }) => {
       return imageUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
-      showMessageAlert('Error', 'Failed to upload image', 'danger');
+      showMessageAlert('Error', 'Failed to upload image. Please try again.', 'danger');
       throw error;
     }
-  };
+  }, [activeTab, user?.user?.uid, fetchVehicles]);
 
-  const getImageSource = (photo) => {
-    if (!photo) {return { uri: 'https://via.placeholder.com/150' };}
+  const getImageSource = useCallback((photo) => {
+    if (!photo) {
+      return { uri: 'https://via.placeholder.com/150' };
+    }
 
     try {
       // If it's a new upload with uri
@@ -148,15 +150,14 @@ const MyCars = ({ navigation, route }) => {
     }
 
     return { uri: 'https://via.placeholder.com/150' };
-  };
+  }, []);
 
-  const renderVehicleItem = ({ item }) => (
-    <View
-      style={styles.carCard}
-    >
+  const renderVehicleItem = useCallback(({ item }) => (
+    <View style={styles.carCard}>
       <Image
         source={getImageSource(item?.photo)}
         style={styles.carImage}
+        resizeMode="cover"
       />
       <View style={styles.carInfo}>
         <View style={styles.mainInfo}>
@@ -167,7 +168,7 @@ const MyCars = ({ navigation, route }) => {
               <Ionicons
                 name={item?.verified ? 'checkmark-circle' : 'time'}
                 size={16}
-                color={item?.verified ? Colors.PRIMARY : Colors.GRAY}
+                color={item?.verified ? Colors.PRIMARY : Colors.gray3}
               />
               <Text style={[
                 styles.statusText,
@@ -195,6 +196,7 @@ const MyCars = ({ navigation, route }) => {
                     showMessageAlert('Error', 'Failed to open edit screen', 'danger');
                   }
                 }}
+                activeOpacity={0.7}
               >
                 <Ionicons name="pencil" size={18} color={Colors.PRIMARY} />
               </TouchableOpacity>
@@ -218,6 +220,7 @@ const MyCars = ({ navigation, route }) => {
                     { cancelable: true }
                   );
                 }}
+                activeOpacity={0.7}
               >
                 <Ionicons name="trash" size={18} color="#FF3B30" />
               </TouchableOpacity>
@@ -226,21 +229,30 @@ const MyCars = ({ navigation, route }) => {
         </View>
       </View>
     </View>
-  );
+  ), [getImageSource, activeTab, navigation, handleDeleteVehicle]);
+
+  const currentVehicles = useMemo(() => vehicles?.[activeTab] || [], [vehicles, activeTab]);
+
+  const onRefresh = useCallback(() => {
+    fetchVehicles();
+  }, [fetchVehicles]);
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.WHITE} />
+    <SafeAreaView style={styles.container}>
+      <MainHeader title="My Vehicles" showOptionsButton={false} showBackButton={false} />
+      
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'cars' && styles.activeTab]}
           onPress={() => setActiveTab('cars')}
+          activeOpacity={0.7}
         >
           <Text style={[styles.tabText, activeTab === 'cars' && styles.activeTabText]}>Cars</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'buses' && styles.activeTab]}
           onPress={() => setActiveTab('buses')}
+          activeOpacity={0.7}
         >
           <Text style={[styles.tabText, activeTab === 'buses' && styles.activeTabText]}>Buses</Text>
         </TouchableOpacity>
@@ -251,20 +263,30 @@ const MyCars = ({ navigation, route }) => {
           <ActivityIndicator size="large" color={Colors.PRIMARY} />
           <Text style={styles.loadingText}>Loading {activeTab}...</Text>
         </View>
-      ) : vehicles?.[activeTab]?.length === 0 ? (
+      ) : currentVehicles.length === 0 ? (
         <View style={styles.emptyContainer}>
+          <Ionicons name="car-outline" size={64} color={Colors.GRAY} />
           <Text style={styles.emptyText}>No {activeTab} added yet</Text>
           <Text style={styles.emptySubText}>Add your first {activeTab === 'cars' ? 'car' : 'bus'} to start renting</Text>
         </View>
       ) : (
         <FlatList
-          data={vehicles?.[activeTab]}
+          data={currentVehicles}
           renderItem={renderVehicleItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={onRefresh}
+              colors={[Colors.PRIMARY]}
+              tintColor={Colors.PRIMARY}
+            />
+          }
+          showsVerticalScrollIndicator={false}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -276,20 +298,25 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     backgroundColor: Colors.WHITE,
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.LINE_GRAY,
+    marginHorizontal: 20,
+    marginTop: 10,
+    borderRadius: 4,
+    padding: 4,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   tab: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderRadius: 8,
+    backgroundColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: Colors.PRIMARY,
+    backgroundColor: Colors.PRIMARY,
   },
   tabText: {
     fontSize: 16,
@@ -297,7 +324,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   activeTabText: {
-    color: Colors.PRIMARY,
+    color: Colors.WHITE,
     fontWeight: '600',
   },
   header: {
@@ -318,28 +345,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   listContainer: {
-    padding: 16,
+    padding: 20,
+    paddingTop: 10,
   },
   carCard: {
     backgroundColor: Colors.WHITE,
-    borderRadius: 12,
-    marginBottom: 12,
+    borderRadius: 16,
+    marginBottom: 16,
     overflow: 'hidden',
     flexDirection: 'row',
-    elevation: 2,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
   },
   carImage: {
-    width: 100,
-    height: 100,
+    width: 120,
+    height: 120,
     resizeMode: 'cover',
   },
   carInfo: {
     flex: 1,
-    padding: 12,
+    padding: 16,
   },
   mainInfo: {
     flex: 1,
@@ -348,43 +376,52 @@ const styles = StyleSheet.create({
   },
   carDetails: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 12,
   },
   carName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: Colors.BLACK,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   carVariant: {
-    fontSize: 13,
+    fontSize: 14,
     color: Colors.GRAY,
-    marginBottom: 4,
+    marginBottom: 8,
+    fontWeight: '500',
   },
   verificationStatus: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: Colors.BACKGROUND_GREY,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
   },
   statusText: {
-    marginLeft: 4,
+    marginLeft: 6,
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   priceActions: {
     alignItems: 'flex-end',
     justifyContent: 'space-between',
   },
   carPrice: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: Colors.PRIMARY,
+    marginBottom: 8,
   },
   actionButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   actionButton: {
-    padding: 4,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: Colors.BACKGROUND_GREY,
   },
   loadingContainer: {
     flex: 1,

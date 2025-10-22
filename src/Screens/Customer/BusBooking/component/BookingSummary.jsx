@@ -19,7 +19,7 @@ const BookingSummary = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={[styles.container, {padding: 0}]}>
-      <MainHeader title="Payment States" onBackPress={() => navigation.goBack()} showOptionsButton={true} />
+      <MainHeader title="Payment States" onBackPress={() => navigation.goBack()} showOptionsButton={false}/>
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
         {/* Success Icon & Message */}
         <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 16 }}>

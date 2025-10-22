@@ -32,9 +32,42 @@
     },
     "bookings": {
       ".read": "auth != null",
+      ".write": "auth != null",
       "$bookingId": {
         ".read": "auth != null && (data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')",
-        ".write": "auth != null && (data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')"
+        ".write": "auth != null && (!data.exists() || data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')"
+      }
+    },
+    "package_bookings": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$bookingId": {
+        ".read": "auth != null && (data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')",
+        ".write": "auth != null && (!data.exists() || data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'admin')"
+      }
+    },
+    "ride_packages": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'",
+      "$packageId": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'"
+      }
+    },
+    "package_cars": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'",
+      "$packageId": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'"
+      }
+    },
+    "package_pricing": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'",
+      "$packageId": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'admin'"
       }
     }
   }

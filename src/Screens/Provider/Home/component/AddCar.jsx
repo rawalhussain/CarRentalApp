@@ -3,6 +3,8 @@ import {View, Text, StyleSheet, TouchableOpacity, StatusBar, Modal, FlatList} fr
 import { Colors } from '../../../../Themes/MyColors';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Button from '../../../../Components/Button';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import MainHeader from '../../../../Components/MainHeader';
 
 const AddCar = ({navigation, route}) => {
     const { type } = route.params || {};
@@ -13,52 +15,75 @@ const AddCar = ({navigation, route}) => {
 
     const numberOptions = Array.from({length: 10}, (_, i) => i + 1);
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            header: () => (
-                <View style={styles.headerContainer}>
-                    <TouchableOpacity
-                        onPress={() => navigation.goBack()}
-                        style={styles.headerBack}
-                    >
-                        <Ionicons name="chevron-back" size={24} color="#fff" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Details</Text>
-                    <TouchableOpacity style={styles.headerRight} />
-                </View>
-            ),
-        });
-    }, [navigation]);
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor={Colors.BACKGROUND_GREY} />
+        <SafeAreaView style={styles.container}>
+            <MainHeader title="Details" onBackPress={() => navigation.goBack()} showOptionsButton={false}/>
+                <View style={{padding: 20}}>
             <Text style={styles.question}>
                 HOW MANY {isBus ? 'BUSES' : 'CARS'} YOU WANT TO RENT
             </Text>
             <TouchableOpacity
                 style={styles.dropdownButton}
                 onPress={() => setDropdownVisible(true)}
+                activeOpacity={0.7}
             >
                 <Text style={styles.dropdownText}>
-                    {selectedNumber ? `${selectedNumber} ${isBus ? 'bus(es)' : 'car(s)'}` : `No of ${isBus ? 'buses' : 'cars'}`}
+                    {selectedNumber ? `${selectedNumber} ${isBus ? (selectedNumber === 1 ? 'bus' : 'buses') : (selectedNumber === 1 ? 'car' : 'cars')}` : `No of ${isBus ? 'buses' : 'cars'}`}
                 </Text>
+                <Ionicons 
+                    name={dropdownVisible ? "chevron-up" : "chevron-down"} 
+                    size={20} 
+                    color={Colors.BLACK} 
+                />
             </TouchableOpacity>
-            <Modal visible={dropdownVisible} transparent animationType="fade">
-                <TouchableOpacity style={styles.modalOverlay} onPress={() => setDropdownVisible(false)}>
+            <Modal 
+                visible={dropdownVisible} 
+                transparent 
+                animationType="fade"
+                onRequestClose={() => setDropdownVisible(false)}
+            >
+                <TouchableOpacity 
+                    style={styles.modalOverlay} 
+                    activeOpacity={1}
+                    onPress={() => setDropdownVisible(false)}
+                >
                     <View style={styles.dropdownModal}>
+                        <View style={styles.dropdownHeader}>
+                            <Text style={styles.dropdownTitle}>Select Number</Text>
+                            <TouchableOpacity 
+                                style={styles.closeButton}
+                                onPress={() => setDropdownVisible(false)}
+                            >
+                                <Ionicons name="close" size={20} color={Colors.BLACK} />
+                            </TouchableOpacity>
+                        </View>
                         <FlatList
                             data={numberOptions}
                             keyExtractor={item => item.toString()}
-                            renderItem={({item}) => (
+                            showsVerticalScrollIndicator={false}
+                            renderItem={({item, index}) => (
                                 <TouchableOpacity
-                                    style={styles.dropdownItem}
+                                    style={[
+                                        styles.dropdownItem,
+                                        selectedNumber === item && styles.selectedDropdownItem,
+                                        index === numberOptions.length - 1 && styles.lastDropdownItem
+                                    ]}
                                     onPress={() => {
                                         setSelectedNumber(item);
                                         setDropdownVisible(false);
                                     }}
+                                    activeOpacity={0.7}
                                 >
-                                    <Text style={styles.dropdownText}>{item}</Text>
+                                    <Text style={[
+                                        styles.dropdownItemText,
+                                        selectedNumber === item && styles.selectedDropdownItemText
+                                    ]}>
+                                        {item} {isBus ? (item === 1 ? 'bus' : 'buses') : (item === 1 ? 'car' : 'cars')}
+                                    </Text>
+                                    {selectedNumber === item && (
+                                        <Ionicons name="checkmark" size={20} color={Colors.PRIMARY} />
+                                    )}
                                 </TouchableOpacity>
                             )}
                         />
@@ -88,7 +113,8 @@ const AddCar = ({navigation, route}) => {
                 onPress={() => navigation.navigate('CarDetails', { canDeliver, selectedNumber, type })}
                 type="primary"
             />
-        </View>
+            </View>
+        </SafeAreaView>
     );
 };
 
@@ -96,8 +122,8 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.BACKGROUND_GREY,
-        padding: 20,
-        paddingTop: 40,
+        // padding: 20,
+        // paddingTop: 40,
     },
     question: {
         fontSize: 20,
@@ -107,6 +133,9 @@ const styles = StyleSheet.create({
         marginBottom: 30,
     },
     dropdownButton: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         borderWidth: 1,
         borderColor: Colors.LINE_GRAY,
         borderRadius: 8,
@@ -122,19 +151,61 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.2)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     dropdownModal: {
         backgroundColor: Colors.WHITE,
-        borderRadius: 8,
-        padding: 10,
-        width: 250,
-        maxHeight: 300,
+        borderRadius: 12,
+        width: 280,
+        maxHeight: 350,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
-    dropdownItem: {
-        padding: 12,
+    dropdownHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
         borderBottomWidth: 1,
         borderBottomColor: Colors.LINE_GRAY,
+    },
+    dropdownTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: Colors.BLACK,
+    },
+    closeButton: {
+        padding: 4,
+        borderRadius: 15,
+        backgroundColor: Colors.BACKGROUND_GREY,
+    },
+    dropdownItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.LINE_GRAY,
+    },
+    lastDropdownItem: {
+        borderBottomWidth: 0,
+    },
+    selectedDropdownItem: {
+        backgroundColor: Colors.BACKGROUND_GREY,
+    },
+    dropdownItemText: {
+        fontSize: 16,
+        color: Colors.BLACK,
+    },
+    selectedDropdownItemText: {
+        color: Colors.PRIMARY,
+        fontWeight: '600',
     },
     deliveryQuestion: {
         fontSize: 16,
