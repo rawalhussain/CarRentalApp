@@ -22,7 +22,7 @@ import { createBooking } from '../../../../Config/firebase';
 import useAuthStore from '../../../../store/useAuthStore';
 import Loader from '../../../../Components/Loader';
 
-const PaymentStep = ({ onNext }) => { 
+const PaymentStep = ({ onNext }) => {
   const navigation = useNavigation();
   const route = useRoute();
   const { user } = useAuthStore();
@@ -30,7 +30,7 @@ const PaymentStep = ({ onNext }) => {
   const [country, setCountry] = useState('United States');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     fullName: '',
@@ -40,7 +40,7 @@ const PaymentStep = ({ onNext }) => {
     cvc: '',
     zip: ''
   });
-  
+
   // Check if all fields are filled
   const isFormValid = () => {
     return (
@@ -53,7 +53,7 @@ const PaymentStep = ({ onNext }) => {
       termsAccepted
     );
   };
-  
+
   // Handle form input changes
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -61,7 +61,7 @@ const PaymentStep = ({ onNext }) => {
       [field]: value
     }));
   };
-  
+
   // Handle continue with validation
   const handleContinue = async () => {
     if (!isFormValid()) {
@@ -69,11 +69,11 @@ const PaymentStep = ({ onNext }) => {
     }
 
     setLoading(true);
-    
+
     try {
       // Get car data from route params (passed from CarDetails)
       const { carData, pickupDate, returnDate, where } = route.params || {};
-      
+
       // Prepare booking data
       const bookingData = {
         vehicle: {
@@ -110,12 +110,8 @@ const PaymentStep = ({ onNext }) => {
         total: (carData?.price || 1400) + 15,
       };
 
-      console.log('Creating booking with data:', bookingData);
-      
       // Create booking in Firebase
       const bookingId = await createBooking(bookingData);
-      console.log('Booking created with ID:', bookingId);
-
       // Navigate to BookingSummary with all details
       navigation.navigate('BookingSummary', {
         bookingId,
@@ -147,7 +143,7 @@ const PaymentStep = ({ onNext }) => {
   return (
     <SafeAreaView style={styles.container}>
       {loading && <Loader />}
-      <MainHeader 
+      <MainHeader
         // title="Payment Method"
         showBackButton={true}
         // showOptionsButton={true}
@@ -166,9 +162,9 @@ const PaymentStep = ({ onNext }) => {
               </View>
               <Text style={{ fontSize: 24, color: '#fff', fontWeight: 'bold' }}>VISA</Text>
             </View>
-            
+
             <View style={styles.cardChip} />
-            
+
             <View>
               <Text style={styles.cardName}>BENJAMIN JACK</Text>
               <Text style={styles.cardExpire}>Expire: 10-5-2030</Text>
@@ -190,29 +186,29 @@ const PaymentStep = ({ onNext }) => {
 
           {/* Card Information */}
           <Text style={styles.sectionLabel}>Card information</Text>
-          <TextInput 
-            placeholder="Full Name" 
-            style={styles.phoneInput} 
+          <TextInput
+            placeholder="Full Name"
+            style={styles.phoneInput}
             placeholderTextColor={Colors.PRIMARY_GREY}
             value={formData.fullName}
             onChangeText={(value) => handleInputChange('fullName', value)}
             color={Colors.BLACK}
           />
-          <TextInput 
-            placeholder="Email Address" 
-            style={styles.phoneInput} 
+          <TextInput
+            placeholder="Email Address"
+            style={styles.phoneInput}
             placeholderTextColor={Colors.PRIMARY_GREY}
             keyboardType="email-address"
             value={formData.email}
             onChangeText={(value) => handleInputChange('email', value)}
             color={Colors.BLACK}
           />
-          
+
           {/* Card Number with Icons */}
           <View style={styles.inputWithIcons}>
-            <TextInput 
-              placeholder="Number" 
-              style={styles.cardNumberInput} 
+            <TextInput
+              placeholder="Number"
+              style={styles.cardNumberInput}
               placeholderTextColor={Colors.PRIMARY_GREY}
               keyboardType="number-pad"
               value={formData.cardNumber}
@@ -239,9 +235,9 @@ const PaymentStep = ({ onNext }) => {
           </View>
 
           <View style={styles.row}>
-            <TextInput 
-              placeholder="MM / YY" 
-              style={[styles.phoneInput, { flex: 1 }]} 
+            <TextInput
+              placeholder="MM / YY"
+              style={[styles.phoneInput, { flex: 1 }]}
               placeholderTextColor={Colors.PRIMARY_GREY}
               keyboardType="number-pad"
               value={formData.expiry}
@@ -249,9 +245,9 @@ const PaymentStep = ({ onNext }) => {
               color={Colors.BLACK}
             />
             <View style={styles.halfInputWithIcon}>
-              <TextInput 
-                placeholder="CVC" 
-                style={[styles.phoneInput, { flex: 1 }]} 
+              <TextInput
+                placeholder="CVC"
+                style={[styles.phoneInput, { flex: 1 }]}
                 placeholderTextColor={Colors.PRIMARY_GREY}
                 keyboardType="number-pad"
                 secureTextEntry
@@ -259,9 +255,9 @@ const PaymentStep = ({ onNext }) => {
                 onChangeText={(value) => handleInputChange('cvc', value)}
                 color={Colors.BLACK}
               />
-              <Image 
-                source={Icons.craditCard} 
-                style={styles.cvcIcon} 
+              <Image
+                source={Icons.craditCard}
+                style={styles.cvcIcon}
               />
             </View>
           </View>
@@ -272,10 +268,10 @@ const PaymentStep = ({ onNext }) => {
             <Text style={styles.dropdownLabel}>{country}</Text>
             <Text style={{ color: Colors.PRIMARY_GREY }}>▼</Text>
           </TouchableOpacity>
-          
-          <TextInput 
-            placeholder="ZIP" 
-            style={styles.phoneInput} 
+
+          <TextInput
+            placeholder="ZIP"
+            style={styles.phoneInput}
               placeholderTextColor={Colors.PRIMARY_GREY}
             keyboardType="number-pad"
             value={formData.zip}
@@ -295,11 +291,11 @@ const PaymentStep = ({ onNext }) => {
           </View>
 
           {/* Continue Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
-              styles.continueButton, 
+              styles.continueButton,
               (!isFormValid() || loading) && styles.continueButtonDisabled
-            ]} 
+            ]}
             onPress={handleContinue}
             disabled={!isFormValid() || loading}
           >

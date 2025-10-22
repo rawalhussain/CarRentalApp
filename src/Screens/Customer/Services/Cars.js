@@ -28,7 +28,7 @@ export default function CarsScreen({ navigation, route }) {
   const bottomSheetRef = useRef(null);
   const mapRef = useRef(null);
   const insets = useSafeAreaInsets();
-  
+
   // Get user data
   const { user } = useAuthStore();
 
@@ -44,7 +44,6 @@ export default function CarsScreen({ navigation, route }) {
   useEffect(() => {
     if (currentLocation && destination && destination?.coordinates && mapRef?.current) {
       setTimeout(() => {
-        console.log('Fitting map to show both pickup and destination');
         mapRef.current.fitToCoordinates(
           [currentLocation, destination?.coordinates],
           {
@@ -63,15 +62,13 @@ export default function CarsScreen({ navigation, route }) {
 
   const loadPackages = async () => {
     try {
-      console.log('Loading ride packages for user...');
       const packagesData = await getRidePackages();
-      console.log('Packages data:', packagesData);
-      
+
       const packagesWithDetails = await Promise.all(
         packagesData.map(async (pkg) => {
           const [pricing, cars] = await Promise.all([
             getPackagePricing(pkg.id),
-            getPackageCars(pkg.id)
+            getPackageCars(pkg.id),
           ]);
           return {
             ...pkg,
@@ -83,8 +80,6 @@ export default function CarsScreen({ navigation, route }) {
           };
         })
       );
-      
-      console.log('Packages with details:', packagesWithDetails);
       setPackages(packagesWithDetails.filter(pkg => pkg.isActive));
     } catch (error) {
       console.error('Error loading packages:', error);
@@ -165,14 +160,7 @@ export default function CarsScreen({ navigation, route }) {
 
     setIsBooking(true);
     try {
-      console.log('Starting package booking process...');
-      console.log('Selected Ride:', selectedRide);
-      console.log('User:', user);
-      console.log('Distance:', distance);
-      
       const estimatedFare = distance ? calculateFare(distance, selectedRide.ratePerMile, selectedRide.baseFare || 0) : 0;
-      console.log('Estimated Fare:', estimatedFare);
-      
       // Create package booking data
       const bookingData = {
         // Package details
@@ -180,54 +168,46 @@ export default function CarsScreen({ navigation, route }) {
         packageName: selectedRide.name || 'Unknown Package',
         packageImage: selectedRide.image || '',
         packageDescription: selectedRide.description || '',
-        
+
         // Pricing details
         ratePerMile: selectedRide.ratePerMile || 0,
         baseFare: selectedRide.baseFare || 0,
         distance: distance || 0,
         estimatedFare: estimatedFare,
         totalPrice: `$${estimatedFare.toFixed(2)}`,
-        
+
         // Customer details
         customerId: user?.uid || user?.user?.uid,
-        
+
         // Location details
         pickupLocation: currentLocationText || 'Current Location',
         destination: destinationText || 'Destination',
         pickupCoordinates: currentLocation || null,
         destinationCoordinates: destination?.coordinates || null,
-        
+
         // Service details
         serviceType: route?.params?.serviceType || 'Ride',
         pickupTime: route?.params?.selectedPickupTime || null,
         dropoffTime: route?.params?.selectedDropoffTime || null,
         pickupDate: route?.params?.selectedPickupDate || null,
         dropoffDate: route?.params?.selectedDropoffDate || null,
-        
+
         // Payment details
         paymentMethod: 'Cash',
-        
+
         // Package cars info
         carsCount: selectedRide.cars?.length || 0,
         cars: selectedRide.cars || [],
       };
-
-      console.log('Package Booking Data:', JSON.stringify(bookingData, null, 2));
-
       // Use createPackageBooking function
       const newBookingId = await createPackageBooking(bookingData);
-      console.log('Package booking created successfully with ID:', newBookingId);
-      
       setBookingId(newBookingId);
 
       // Show booking summary
       setShowBookingSummary(true);
       setShowDetailSheet(false);
-      
+
     } catch (error) {
-      console.error('Error creating package booking:', error);
-      console.error('Error details:', error.message);
-      console.error('Error code:', error.code);
       Alert.alert('Error', `Failed to create booking: ${error.message || 'Please try again.'}`);
     } finally {
       setIsBooking(false);
@@ -307,7 +287,6 @@ export default function CarsScreen({ navigation, route }) {
               onReady={(result) => {
                 setDistance(result.distance);
                 setDuration(result.duration);
-                console.log('Route calculated:', result);
               }}
               onError={(errorMessage) => {
                 console.warn('Directions error:', errorMessage);
@@ -367,8 +346,8 @@ export default function CarsScreen({ navigation, route }) {
           ) : null}
 
           {/* Ride Options List or Detail View */}
-          <BottomSheetScrollView 
-            style={styles.ridesList} 
+          <BottomSheetScrollView
+            style={styles.ridesList}
             contentContainerStyle={styles.ridesListContent}
             showsVerticalScrollIndicator={false}
           >
@@ -408,15 +387,15 @@ export default function CarsScreen({ navigation, route }) {
                         <Text style={styles.capacityTextLarge}>{selectedRide.cars?.length || 0}</Text>
                       </View>
                     </View>
-                    
+
                     <Text style={styles.estimatedTime}>Available now • Ready to go</Text>
-                    
+
                     {selectedRide.description && (
                       <Text style={styles.rideDescriptionLarge}>
                         {selectedRide.description}
                       </Text>
                     )}
-                    
+
                     {/* Pricing Details */}
                     <View style={styles.pricingDetailsContainer}>
                       {/* <View style={styles.priceRow}>
@@ -463,7 +442,7 @@ export default function CarsScreen({ navigation, route }) {
                 {/* Trip Details */}
                 <View style={styles.tripDetailsSection}>
                   <Text style={styles.sectionTitle}>Trip Details</Text>
-                  
+
                   <View style={styles.tripDetailRow}>
                     <View style={styles.tripDetailIcon}>
                       <Ionicons name="location" size={20} color={Colors.PRIMARY} />
@@ -530,27 +509,27 @@ export default function CarsScreen({ navigation, route }) {
                 {/* Booking Details */}
                 <View style={styles.bookingDetailsCard}>
                   <Text style={styles.bookingDetailsTitle}>Booking Details</Text>
-                  
+
                   <View style={styles.bookingDetailRow}>
                     <Text style={styles.bookingDetailLabel}>Booking ID</Text>
                     <Text style={styles.bookingDetailValue}>{bookingId}</Text>
                   </View>
-                  
+
                   <View style={styles.bookingDetailRow}>
                     <Text style={styles.bookingDetailLabel}>Ride</Text>
                     <Text style={styles.bookingDetailValue}>{selectedRide?.name}</Text>
                   </View>
-                  
+
                   <View style={styles.bookingDetailRow}>
                     <Text style={styles.bookingDetailLabel}>Price</Text>
                     <Text style={styles.bookingDetailValue}>{selectedRide?.price}</Text>
                   </View>
-                  
+
                   <View style={styles.bookingDetailRow}>
                     <Text style={styles.bookingDetailLabel}>Pickup</Text>
                     <Text style={styles.bookingDetailValue}>{currentLocationText}</Text>
                   </View>
-                  
+
                   <View style={styles.bookingDetailRow}>
                     <Text style={styles.bookingDetailLabel}>Destination</Text>
                     <Text style={styles.bookingDetailValue}>{destinationText}</Text>
@@ -559,14 +538,14 @@ export default function CarsScreen({ navigation, route }) {
 
                 {/* Action Buttons */}
                 <View style={styles.summaryButtonsContainer}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.viewBookingsButton}
                     onPress={() => navigation.navigate('CustomerTabs', { screen: 'Bookings' })}
                   >
                     <Text style={styles.viewBookingsButtonText}>View My Bookings</Text>
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity 
+
+                  <TouchableOpacity
                     style={styles.newRideButton}
                     onPress={() => {
                       setShowBookingSummary(false);
@@ -584,7 +563,7 @@ export default function CarsScreen({ navigation, route }) {
                 {packages.map((pkg) => {
                   const estimatedFare = distance ? calculateFare(distance, pkg.ratePerMile, pkg.baseFare) : 0;
                   const fareText = distance ? `$${estimatedFare.toFixed(2)}` : 'Calculating...';
-                  
+
                   return (
                     <TouchableOpacity
                       key={pkg.id}
@@ -600,8 +579,6 @@ export default function CarsScreen({ navigation, route }) {
                             source={{ uri: pkg.image }}
                             style={styles.carImage}
                             resizeMode="stretch"
-                            onError={(error) => console.log('Package image load error:', error)}
-                            onLoad={() => console.log('Package image loaded successfully')}
                           />
                         ) : (
                           <Image

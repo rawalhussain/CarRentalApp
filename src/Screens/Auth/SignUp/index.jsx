@@ -75,7 +75,7 @@ const SignUp = () => {
     }));
   };
 
-  
+
   const validateForm = () => {
     // Check for empty fields
     if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword || !formData.phoneNumber) {
@@ -98,7 +98,6 @@ const SignUp = () => {
     // Email validation - improved regex
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(formData.email)) {
-      console.log('Email validation failed for:', formData.email);
       showMessageAlert('Error', 'Please enter a valid email address', 'warning');
       return false;
     }
@@ -174,10 +173,10 @@ const SignUp = () => {
           routes: [{ name: 'Login' }],
         });
       }, 1500); // 1.5 second delay to allow alert to be seen
-     
+
     } catch (error) {
       setLoading(false);
-      
+
       let errorMessage = 'An error occurred during sign up';
 
       // Handle specific Firebase auth errors
@@ -204,8 +203,8 @@ const SignUp = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-        <MainHeader 
-          title="Sign Up" 
+        <MainHeader
+          title="Sign Up"
           onBackPress={() => navigation.goBack()}
           showOptionsButton={false}
         />

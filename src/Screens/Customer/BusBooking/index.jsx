@@ -34,7 +34,6 @@ const ServiceScreen = () => {
 
                 <TouchableOpacity onPress={async () => {
                     try {
-                        console.log('Logging out');
                         setLoading(true);
                         clearUserData();
                         clearAuth();

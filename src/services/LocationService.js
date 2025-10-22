@@ -1,7 +1,7 @@
-import { PermissionsAndroid, Platform, Alert } from 'react-native';
+import {Alert, PermissionsAndroid, Platform} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import Geocoder from 'react-native-geocoding';
-import { GOOGLE_MAPS_API_KEY } from '../Config/constants';
+import {GOOGLE_MAPS_API_KEY} from '../Config/constants';
 
 // Initialize Geocoder with Google Maps API key
 Geocoder.init(GOOGLE_MAPS_API_KEY, { language: 'en' });
@@ -71,16 +71,11 @@ class LocationService {
   static async getCurrentLocationAddress() {
     const location = await this.getCurrentLocation();
     if (!location) {
-      console.log('No location available');
       return 'Current Location';
     }
-
-    console.log('Getting address for location:', location);
     try {
       // Use react-native-geocoding for reverse geocoding
-      const address = await this.reverseGeocode(location.latitude, location.longitude);
-      console.log('Resolved address:', address);
-      return address;
+      return await this.reverseGeocode(location.latitude, location.longitude);
     } catch (error) {
       console.warn('Address lookup error:', error);
       return 'Current Location';
@@ -100,27 +95,23 @@ class LocationService {
   // Method to perform reverse geocoding using react-native-geocoding
   static async reverseGeocode(latitude, longitude) {
     try {
-      console.log('Reverse geocoding coordinates:', latitude, longitude);
-      
       // Use Geocoder.from() to get address from coordinates
       const json = await Geocoder.from(latitude, longitude);
-      
-      console.log('Geocoder response:', json);
-      
+
       if (json.results && json.results.length > 0) {
         const result = json.results[0];
         const addressComponents = result.address_components;
-        
+
         // Extract address components for a clean format
         let neighborhood = '';
         let sublocality = '';
         let city = '';
         let state = '';
         let country = '';
-        
+
         for (let component of addressComponents) {
           const types = component.types;
-          
+
           if (types.includes('neighborhood') || types.includes('sublocality_level_1')) {
             neighborhood = component.long_name;
           } else if (types.includes('sublocality') || types.includes('sublocality_level_2')) {
@@ -133,21 +124,20 @@ class LocationService {
             country = component.long_name;
           }
         }
-        
+
         // Build a clean address string
         let addressParts = [];
-        if (neighborhood) addressParts.push(neighborhood);
-        else if (sublocality) addressParts.push(sublocality);
-        if (city) addressParts.push(city);
-        if (state) addressParts.push(state);
-        if (country) addressParts.push(country);
-        
+        if (neighborhood) {addressParts.push(neighborhood);}
+        else if (sublocality) {addressParts.push(sublocality);}
+        if (city) {addressParts.push(city);}
+        if (state) {addressParts.push(state);}
+        if (country) {addressParts.push(country);}
+
         if (addressParts.length > 0) {
           const formattedAddress = addressParts.join(', ');
-          console.log('Formatted address:', formattedAddress);
           return formattedAddress;
         }
-        
+
         // Fallback to formatted address
         return result.formatted_address;
       } else {
@@ -157,31 +147,6 @@ class LocationService {
     } catch (error) {
       console.warn('Reverse geocoding error:', error);
       return `Location at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-    }
-  }
-
-  // Method to get a more descriptive address
-  static getDescriptiveAddress(latitude, longitude) {
-    try {
-      // Return a descriptive format with coordinates
-      const latDir = latitude >= 0 ? 'N' : 'S';
-      const lngDir = longitude >= 0 ? 'E' : 'W';
-
-      return `Current Location (${Math.abs(latitude).toFixed(4)}°${latDir}, ${Math.abs(longitude).toFixed(4)}°${lngDir})`;
-    } catch (error) {
-      console.warn('Descriptive address error:', error);
-      return 'Current Location';
-    }
-  }
-
-  // Alternative method using a simpler approach
-  static getSimpleAddress(latitude, longitude) {
-    try {
-      // Return a more user-friendly location string
-      return `Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
-    } catch (error) {
-      console.warn('Simple address error:', error);
-      return 'Current Location';
     }
   }
 
@@ -206,14 +171,14 @@ class LocationService {
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
         const currentTime = Date.now();
-        
+
         // Throttle updates to save battery
         if (currentTime - lastUpdateTime < UPDATE_THROTTLE_MS) {
           return;
         }
-        
+
         lastUpdateTime = currentTime;
-        
+
         const locationData = {
           latitude,
           longitude,

@@ -38,17 +38,6 @@ const MapViewComponent = forwardRef(({
   const [locationWatchId, setLocationWatchId] = useState(null);
   const mapViewRef = useRef(null);
 
-  // Debug logging for markers
-  useEffect(() => {
-    console.log('MapView props debug:', {
-      destinationMarker,
-      marker,
-      markers: markers?.length || 0,
-      showCurrentLocationMarker,
-      currentLocation,
-    });
-  }, [destinationMarker, marker, markers, showCurrentLocationMarker, currentLocation]);
-
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     animateToRegion: (region, duration) => {
@@ -216,7 +205,6 @@ const MapViewComponent = forwardRef(({
       (error) => {
         console.warn('Location error:', error);
         // Don't set fallback location, let parent component handle it
-        console.log('Location access failed, waiting for parent to provide location');
       },
       {
         enableHighAccuracy: true,
@@ -358,7 +346,6 @@ const MapViewComponent = forwardRef(({
             title={destinationMarker.title || 'Destination'}
             description={destinationMarker.description}
             tracksViewChanges={false}
-            onPress={() => console.log('Destination marker pressed:', destinationMarker)}
             pinColor="red"
           />
         )}
@@ -374,7 +361,6 @@ const MapViewComponent = forwardRef(({
             title={marker.title || 'Selected Location'}
             description={marker.description}
             tracksViewChanges={false}
-            onPress={() => console.log('Single marker pressed:', marker)}
             pinColor="blue"
           />
         )}

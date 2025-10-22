@@ -9,7 +9,7 @@ import {
   TextInput,
   Dimensions,
   Image,
-  AsyncStorage,
+  AsyncStorage, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -31,37 +31,37 @@ const { width: screenWidth } = Dimensions.get('window');
 export default function ReserveRideScreen({ navigation, route }) {
   // Get service type from route params
   const { serviceType = 'Ride' } = route?.params || {};
-  
+
   // Bottom sheet refs
   const bottomSheetRef = useRef(null);
   const pickupTimeBottomSheetRef = useRef(null);
   const passengerBottomSheetRef = useRef(null);
   const mapRef = useRef(null);
-  
+
   // State for current location
   const [currentLocation, setCurrentLocation] = useState(null);
   const [currentLocationText, setCurrentLocationText] = useState('Detecting location...');
   const [currentLocationCoordinates, setCurrentLocationCoordinates] = useState('');
   const [isLoadingAddress, setIsLoadingAddress] = useState(true);
   const [locationWatchId, setLocationWatchId] = useState(null);
-  
+
   // State for destination
   const [destination, setDestination] = useState(null);
   const [destinationText, setDestinationText] = useState('');
-  
+
   // State for route info
   const [distance, setDistance] = useState(null);
   const [duration, setDuration] = useState(null);
-  
+
   // State for pickup time
   const [selectedPickupTime, setSelectedPickupTime] = useState(serviceType === 'Ride' ? 'now' : 'later');
-  
+
   // State for passenger selection
   const [selectedPassenger, setSelectedPassenger] = useState('for_me');
-  
+
   // Snap points for the bottom sheet
   const snapPoints = useMemo(() => ['62%', '95%'], []);
-  
+
   // Load saved destinations from AsyncStorage
   useEffect(() => {
     loadSavedDestinations();
@@ -86,25 +86,22 @@ export default function ReserveRideScreen({ navigation, route }) {
     const initializeLocation = async () => {
       setIsLoadingAddress(true);
       setCurrentLocationText('Detecting location...');
-      
+
       try {
         // Get initial location (detect once)
         const location = await LocationService.getCurrentLocation();
         if (location) {
-          console.log('Initial Location Coordinates:', location);
-          console.log('Setting current location for markers:', location);
           setCurrentLocation(location);
-          
+
           // Set coordinates for display
           const coordText = `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
           setCurrentLocationCoordinates(coordText);
-          
+
           // Get the actual address using reverse geocoding
           const address = await LocationService.getCurrentLocationAddress();
-          console.log('Current Location Address:', address);
           setCurrentLocationText(address);
           setIsLoadingAddress(false);
-          
+
           // Animate map to current location after a short delay to ensure map is loaded
           // Offset the latitude slightly so marker shows in upper part (not hidden by bottom sheet)
           setTimeout(() => {
@@ -122,62 +119,51 @@ export default function ReserveRideScreen({ navigation, route }) {
           setCurrentLocationText('Current Location');
           setIsLoadingAddress(false);
         }
-        
+
       } catch (error) {
         console.warn('Failed to initialize location:', error);
         setCurrentLocationText('Current Location');
         setIsLoadingAddress(false);
       }
     };
-    
+
     initializeLocation();
   }, []);
 
   // Start real-time location tracking
   useEffect(() => {
     const startLocationWatching = () => {
-      console.log('Starting real-time location tracking...');
-      
       const watchId = LocationService.watchLocation(
         (newLocation) => {
-          console.log('Real-time location update:', newLocation);
           setCurrentLocation(newLocation);
-          
+
           // Update coordinates display
           const coordText = `${newLocation.latitude.toFixed(6)}, ${newLocation.longitude.toFixed(6)}`;
           setCurrentLocationCoordinates(coordText);
-          
+
           // Update address periodically (not on every location update to avoid API calls)
           if (Math.random() < 0.1) { // 10% chance to update address
             LocationService.getCurrentLocationAddress().then(address => {
               setCurrentLocationText(address);
             });
           }
-          
-          // If destination exists, update the route automatically
-          if (destination && destination.coordinates && mapRef.current) {
-            // The MapViewDirections component will automatically recalculate the route
-            console.log('Location changed, route will be recalculated automatically');
-          }
         },
         (error) => {
           console.warn('Real-time location tracking error:', error);
         }
       );
-      
+
       if (watchId) {
         setLocationWatchId(watchId);
-        console.log('Location watching started with ID:', watchId);
       }
     };
 
     // Start watching after initial location is set
     const timer = setTimeout(startLocationWatching, 2000);
-    
+
     return () => {
       clearTimeout(timer);
       if (locationWatchId) {
-        console.log('Stopping location watching...');
         LocationService.stopWatchingLocation(locationWatchId);
       }
     };
@@ -190,8 +176,6 @@ export default function ReserveRideScreen({ navigation, route }) {
       const dest = route.params.destination;
       setDestination(dest);
       setDestinationText(dest.address || dest.name);
-      console.log('Destination received:', dest);
-      
       // Fit map to show both pickup and destination in upper visible area
       if (currentLocation && dest.coordinates && mapRef.current) {
         setTimeout(() => {
@@ -212,12 +196,10 @@ export default function ReserveRideScreen({ navigation, route }) {
     if (route?.params?.updatedPickupLocation) {
       const updatedLocation = route.params.updatedPickupLocation;
       const updatedAddress = route.params.updatedPickupAddress || 'Selected Location';
-      
-      console.log('Pickup location updated dynamically:', updatedLocation);
       setCurrentLocation(updatedLocation);
       setCurrentLocationText(updatedAddress);
       setCurrentLocationCoordinates(`${updatedLocation.latitude.toFixed(6)}, ${updatedLocation.longitude.toFixed(6)}`);
-      
+
       // Animate to new location in upper visible area
       if (mapRef.current) {
         setTimeout(() => {
@@ -247,7 +229,6 @@ export default function ReserveRideScreen({ navigation, route }) {
   // Update map region when current location changes
   useEffect(() => {
     if (currentLocation && mapRef.current) {
-      console.log('Current location changed, updating map region:', currentLocation);
       // Only update if no destination is selected to avoid conflicts
       if (!destination || !destination.coordinates) {
         setTimeout(() => {
@@ -299,7 +280,7 @@ export default function ReserveRideScreen({ navigation, route }) {
       // If no current location, try to get it again
       setIsLoadingAddress(true);
       setCurrentLocationText('Detecting location...');
-      
+
       try {
         const location = await LocationService.getCurrentLocation();
         if (location) {
@@ -311,7 +292,7 @@ export default function ReserveRideScreen({ navigation, route }) {
           const address = await LocationService.getCurrentLocationAddress();
           setCurrentLocationText(address);
           setIsLoadingAddress(false);
-          
+
           // Now animate to the new location with offset
           if (mapRef.current) {
             mapRef.current?.animateToRegion({
@@ -340,15 +321,15 @@ export default function ReserveRideScreen({ navigation, route }) {
 
   const handleNext = () => {
     if (!destination) {
-      alert('Please select a destination');
+      Alert.alert('Please select a destination');
       return;
     }
-    
+
     if (!currentLocation) {
-      alert('Current location is required to proceed');
+      Alert.alert('Current location is required to proceed');
       return;
     }
-    
+
     // Check selected pickup time to determine navigation
     if (selectedPickupTime === 'later') {
       // Navigate to TimeSelection screen for later pickup
@@ -374,10 +355,10 @@ export default function ReserveRideScreen({ navigation, route }) {
 
   const handleCurrentLocationPress = () => {
     // Navigate to PickupScreen to edit current location
-    navigation.navigate('Pickup', { 
+    navigation.navigate('Pickup', {
       showCurrentLocation: true,
       currentLocation: currentLocation,
-      currentLocationText: currentLocationText
+      currentLocationText: currentLocationText,
     });
   };
 
@@ -385,7 +366,7 @@ export default function ReserveRideScreen({ navigation, route }) {
     // Navigate to DestinationScreen
     navigation.navigate('Destination', {
       currentLocation: currentLocation,
-      pickupAddress: currentLocationText
+      pickupAddress: currentLocationText,
     });
   };
 
@@ -395,11 +376,10 @@ export default function ReserveRideScreen({ navigation, route }) {
 
   const handlePickupTimeSelect = (timeOption) => {
     setSelectedPickupTime(timeOption);
-    console.log('Selected pickup time:', timeOption);
-    
+
     // Close the time selection modal
     pickupTimeBottomSheetRef.current?.close();
-    
+
     // No immediate navigation - user must click "Next" to proceed
   };
 
@@ -409,20 +389,15 @@ export default function ReserveRideScreen({ navigation, route }) {
 
   const handlePassengerSelect = (passengerOption) => {
     setSelectedPassenger(passengerOption);
-    console.log('Selected passenger:', passengerOption);
   };
 
   const handleSavedDestinationSelect = (selectedDestination) => {
     // Set the destination
     setDestination(selectedDestination);
     setDestinationText(selectedDestination.address || selectedDestination.title);
-    
-    console.log('Selected saved destination dynamically:', selectedDestination);
-    
     // Fit map to show both pickup and destination
     if (currentLocation && selectedDestination.coordinates && mapRef.current) {
       setTimeout(() => {
-        console.log('Animating map to show both pickup and destination');
         mapRef.current.fitToCoordinates(
           [currentLocation, selectedDestination.coordinates],
           {
@@ -506,7 +481,6 @@ export default function ReserveRideScreen({ navigation, route }) {
               onReady={(result) => {
                 setDistance(result.distance);
                 setDuration(result.duration);
-                console.log('Route calculated:', result);
               }}
               onError={(errorMessage) => {
                 console.warn('Directions error:', errorMessage);
@@ -514,14 +488,14 @@ export default function ReserveRideScreen({ navigation, route }) {
             />
           )}
         </MapView>
-                
+
         {/* Map Overlay Buttons */}
         <View style={styles.mapOverlay}>
           {/* Back Button - Top Left */}
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Ionicons name="chevron-back" size={24} color={Colors.BLACK} />
           </TouchableOpacity>
-          
+
           {/* My Location Button - Top Right */}
           <TouchableOpacity style={styles.myLocationButton} onPress={handleMyLocationPress}>
             <Ionicons name="locate" size={20} color={Colors.BLACK} />
@@ -544,9 +518,9 @@ export default function ReserveRideScreen({ navigation, route }) {
         enableDynamicSizing={false}
       >
         <BottomSheetView style={styles.bottomSheetContent}>
-          <ModalHeader 
-            title="Plan your ride" 
-            // onBack={handleBack} 
+          <ModalHeader
+            title="Plan your ride"
+            // onBack={handleBack}
             showBackButton={false}
           />
 
@@ -574,7 +548,7 @@ export default function ReserveRideScreen({ navigation, route }) {
           <View style={styles.locationInputs}>
           <Text style={styles.currentLocationTex}>Current Location:</Text>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.locationInput]}
               onPress={handleCurrentLocationPress}
             >
@@ -594,7 +568,7 @@ export default function ReserveRideScreen({ navigation, route }) {
                 />
                 <View style={styles.inputUnderline} />
               </View>
-              {/* <TouchableOpacity 
+              {/* <TouchableOpacity
                 style={styles.editIcon}
                 onPress={handleCurrentLocationPress}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -607,7 +581,7 @@ export default function ReserveRideScreen({ navigation, route }) {
 
             <Text style={styles.currentLocationTex}>Select Destination Location:</Text>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.locationInput}
               onPress={handleDestinationPress}
             >
@@ -706,17 +680,17 @@ export default function ReserveRideScreen({ navigation, route }) {
 
       {/* Fixed Next Button */}
       <View style={styles.fixedButtonContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
-            styles.nextButton, 
-            (!destination || !currentLocation) && styles.disabledButton
-          ]} 
+            styles.nextButton,
+            (!destination || !currentLocation) && styles.disabledButton,
+          ]}
           onPress={handleNext}
           disabled={!destination || !currentLocation}
         >
           <Text style={[
             styles.nextButtonText,
-            (!destination || !currentLocation) && styles.disabledButtonText
+            (!destination || !currentLocation) && styles.disabledButtonText,
           ]}>
             Next
           </Text>
@@ -860,7 +834,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 10,
-    
+
   },
 
   actionButtons:{
@@ -941,7 +915,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#6B6B6B'
+    backgroundColor: '#6B6B6B',
   },
   destinationSquare: {
     width: 11,
@@ -981,7 +955,7 @@ const styles = StyleSheet.create({
     marginVertical: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    
+
   },
   inputContainer: {
     flex: 1,

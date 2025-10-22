@@ -6,15 +6,13 @@ import {
   StyleSheet,
   StatusBar,
   Platform,
-  TextInput,
   Dimensions,
-  Image,
   ScrollView,
   Keyboard,
   TouchableWithoutFeedback,
-  AsyncStorage,
+  AsyncStorage, Alert,
 } from 'react-native';
-import BottomSheet, { BottomSheetView, BottomSheetScrollView, BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { Colors } from '../../../Themes/MyColors';
@@ -30,39 +28,39 @@ export default function DestinationScreen({ navigation, route }) {
   const bottomSheetRef = useRef(null);
   const mapViewRef = useRef(null);
   const googlePlacesRef = useRef(null);
-  
+
   // Get navigation parameters
-  const { currentLocation = null, pickupAddress = '' } = route?.params || {};
-  
+  const { currentLocation = null} = route?.params || {};
+
   // State for selected destination and map region
   const [selectedDestination, setSelectedDestination] = useState(null);
-  const [searchText, setSearchText] = useState('');
+  const [, setSearchText] = useState('');
   const [mapRegion, setMapRegion] = useState(
     currentLocation || {
-      latitude: 31.5204, 
+      latitude: 31.5204,
       longitude: 74.3587,
       latitudeDelta: 0.0922,
       longitudeDelta: 0.0421,
     }
   );
-  
+
   // State for tracking keyboard and sheet
   const [currentSheetIndex, setCurrentSheetIndex] = useState(0);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  
+  const [, setIsKeyboardVisible] = useState(false);
+
   // Route line state
   const [routeCoordinates, setRouteCoordinates] = useState([]);
-  
+
   // Saved destinations data
   const [savedDestinations, setSavedDestinations] = useState([]);
-  
+
   // Snap points for the bottom sheet
   const snapPoints = useMemo(() => ['65%', '85%', '89%'], []);
 
   useEffect(() => {
     bottomSheetRef.current?.present();
   }, []);
-  
+
   // Load saved destinations from AsyncStorage
   useEffect(() => {
     loadSavedDestinations();
@@ -87,23 +85,20 @@ export default function DestinationScreen({ navigation, route }) {
         id: Date.now(), // Generate unique ID
         type: 'custom', // Mark as custom saved location
       };
-      
+
       const updatedDestinations = [newDestination, ...savedDestinations];
       setSavedDestinations(updatedDestinations);
-      
       await AsyncStorage.setItem('savedDestinations', JSON.stringify(updatedDestinations));
-      console.log('Destination saved successfully');
     } catch (error) {
       console.log('Error saving destination:', error);
     }
   };
-  
+
   // Keyboard listeners
   useEffect(() => {
     const keyboardWillShow = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       (event) => {
-        console.log('Keyboard will show:', event);
         setIsKeyboardVisible(true);
         // Expand bottom sheet to 95% when keyboard opens
         setTimeout(() => {
@@ -115,7 +110,6 @@ export default function DestinationScreen({ navigation, route }) {
     const keyboardWillHide = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
       (event) => {
-        console.log('Keyboard will hide:', event);
         setIsKeyboardVisible(false);
         // Return to original size when keyboard closes (if at index 1 or 2)
         if (currentSheetIndex === 1 || currentSheetIndex === 2) {
@@ -131,7 +125,7 @@ export default function DestinationScreen({ navigation, route }) {
       keyboardWillHide.remove();
     };
   }, [currentSheetIndex]);
-  
+
   // Handle sheet changes
   const handleSheetChanges = useCallback((index) => {
     setCurrentSheetIndex(index);
@@ -139,7 +133,6 @@ export default function DestinationScreen({ navigation, route }) {
       // Sheet is closed, navigate back
       navigation.goBack();
     }
-    console.log('Bottom sheet index changed to:', index);
   }, [navigation]);
 
   const handleBack = () => {
@@ -161,7 +154,7 @@ export default function DestinationScreen({ navigation, route }) {
         `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=${GOOGLE_MAPS_API_KEY}`
       );
       const data = await response.json();
-      
+
       if (data.routes && data.routes.length > 0) {
         const route = data.routes[0];
         const coordinates = route.overview_polyline.points;
@@ -213,15 +206,15 @@ export default function DestinationScreen({ navigation, route }) {
   const handleDestinationSelect = (destination) => {
     setSelectedDestination(destination);
     setSearchText(destination.address);
-    
+
     // Update the GooglePlacesAutocomplete input to show the selected destination
     if (googlePlacesRef.current) {
-      googlePlacesRef.current.setAddressText(destination.address);
+      googlePlacesRef?.current?.setAddressText(destination.address);
     }
-    
+
     // Update map region to show destination
     if (destination.coordinates && mapViewRef.current) {
-      mapViewRef.current.animateToRegion({
+      mapViewRef?.current?.animateToRegion({
         ...destination.coordinates,
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
@@ -247,18 +240,18 @@ export default function DestinationScreen({ navigation, route }) {
         address: details.formatted_address || data.description,
         coordinates: { latitude: lat, longitude: lng }
       };
-      
+
       setSelectedDestination(newDestination);
       setSearchText(newDestination.name || newDestination.address);
-      
+
       // Save the destination to AsyncStorage
       saveDestination(newDestination);
-      
+
       // Set the text in the GooglePlacesAutocomplete input
       if (googlePlacesRef.current) {
-        googlePlacesRef.current.setAddressText(newDestination.name || newDestination.address);
+        googlePlacesRef?.current?.setAddressText(newDestination.name || newDestination.address);
       }
-      
+
       // Update map region
       const newRegion = {
         latitude: lat,
@@ -267,9 +260,9 @@ export default function DestinationScreen({ navigation, route }) {
         longitudeDelta: 0.0421,
       };
       setMapRegion(newRegion);
-      
-      if (mapViewRef.current) {
-        mapViewRef.current.animateToRegion(newRegion, 1000);
+
+      if (mapViewRef?.current) {
+        mapViewRef?.current?.animateToRegion(newRegion, 1000);
       }
 
       // Fetch route if current location is available
@@ -281,11 +274,11 @@ export default function DestinationScreen({ navigation, route }) {
 
   const handleConfirmDestination = () => {
     if (!selectedDestination) {
-      alert('Please select a destination');
+      Alert.alert('Please select a destination');
       return;
     }
- 
-    
+
+
     // Navigate back to ReserveRideScreen with destination data
     navigation.navigate('ReserveRide', {
       destination: selectedDestination,
@@ -295,7 +288,7 @@ export default function DestinationScreen({ navigation, route }) {
   return (
     <GestureHandlerRootView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-      
+
       {/* Map Background - Behind Status Bar */}
       <TouchableWithoutFeedback onPress={handleMapPress}>
         <View style={styles.mapContainer} pointerEvents="box-none">
@@ -314,11 +307,11 @@ export default function DestinationScreen({ navigation, route }) {
             routeCoordinates={routeCoordinates}
             onPress={handleMapPress}
           />
-          
+
           {/* Map Overlay Buttons */}
           <View style={styles.mapOverlay}>
             {/* Back Button - Top Left */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.backButton}
               onPress={handleBack}
               activeOpacity={0.8}
@@ -327,16 +320,16 @@ export default function DestinationScreen({ navigation, route }) {
             </TouchableOpacity>
 
             {/* Center Location Button - Top Right */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.centerLocationButton}
               onPress={() => {
-                if (currentLocation && mapViewRef.current) {
+                if (currentLocation && mapViewRef?.current) {
                   const newRegion = {
                     ...currentLocation,
                     latitudeDelta: 0.0922,
                     longitudeDelta: 0.0421,
                   };
-                  mapViewRef.current.animateToRegion(newRegion, 500);
+                  mapViewRef?.current?.animateToRegion(newRegion, 500);
                   setMapRegion(newRegion);
                 }
               }}
@@ -355,25 +348,24 @@ export default function DestinationScreen({ navigation, route }) {
           snapPoints={snapPoints}
           onChange={handleSheetChanges}
         >
-        <BottomSheetScrollView 
+        <BottomSheetScrollView
           style={styles.contentContainer}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {/* Modal Header */}
-          <ModalHeader 
-            title="Set your destination" 
-            // onBack={handleBack} 
+          <ModalHeader
+            title="Set your destination"
+            // onBack={handleBack}
             showBackButton={false}
             description="Search or select from saved places"
           />
-          
+
           <GooglePlacesAutocomplete
             ref={googlePlacesRef}
             placeholderTextColor={Colors.PRIMARY_GREY}
             placeholder="Search for destination..."
             onPress={(data, details = null) => {
-              console.log('Place selected:', data, details);
               handlePlaceSelect(data, details);
             }}
             onChangeText={(text) => {
@@ -439,37 +431,24 @@ export default function DestinationScreen({ navigation, route }) {
               numberOfLines: 2,
               textAlignVertical: 'center',
               onFocus: () => {
-                console.log('Input focused - expanding sheet to 95%');
                 // Expand bottom sheet to 95% when input is focused
                 setTimeout(() => {
                   bottomSheetRef.current?.snapToIndex(2);
                 }, 100);
               },
               onBlur: () => {
-                console.log('Input blurred');
                 // Keep sheet at expanded size when input loses focus
                 setTimeout(() => {
                   bottomSheetRef.current?.snapToIndex(1);
                 }, 100);
               },
               onSubmitEditing: () => {
-                console.log('Done button pressed');
                 // Close keyboard and keep sheet at expanded size
                 Keyboard.dismiss();
                 setTimeout(() => {
                   bottomSheetRef.current?.snapToIndex(1);
                 }, 100);
               },
-            }}
-            onFail={(error) => {
-              console.log('GooglePlacesAutocomplete Error:', error);
-              console.log('API Key being used:', GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
-            }}
-            onNotFound={() => console.log('No results found')}
-            onTimeout={() => console.log('Request timeout')}
-            onQueryChange={(query) => {
-              console.warn('Query changed:', query);
-              console.log('API Key:', GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing');
             }}
           />
 
@@ -487,8 +466,8 @@ export default function DestinationScreen({ navigation, route }) {
             </View>
             <ScrollView style={styles.destinationsList} showsVerticalScrollIndicator={false}>
               {savedDestinations.map((destination) => (
-                <TouchableOpacity 
-                  key={destination.id} 
+                <TouchableOpacity
+                  key={destination.id}
                   style={[
                     styles.destinationItem,
                     selectedDestination?.id === destination.id && styles.selectedDestinationItem
@@ -499,7 +478,7 @@ export default function DestinationScreen({ navigation, route }) {
                     styles.destinationIconContainer,
                     selectedDestination?.id === destination.id && styles.selectedDestinationIcon
                   ]}>
-                    <Ionicons 
+                    <Ionicons
                       name={
                         destination.type === 'shopping' ? 'bag' :
                         destination.type === 'park' ? 'leaf' :
@@ -507,9 +486,9 @@ export default function DestinationScreen({ navigation, route }) {
                         destination.type === 'education' ? 'school' :
                         destination.type === 'custom' ? 'bookmark' :
                         'restaurant'
-                      } 
-                      size={20} 
-                      color={selectedDestination?.id === destination.id ? Colors.WHITE : Colors.SECONDARY} 
+                      }
+                      size={20}
+                      color={selectedDestination?.id === destination.id ? Colors.WHITE : Colors.SECONDARY}
                     />
                   </View>
                   <View style={styles.destinationDetails}>
@@ -536,11 +515,11 @@ export default function DestinationScreen({ navigation, route }) {
       </BottomSheetModalProvider>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
-            styles.confirmButton, 
+            styles.confirmButton,
             !selectedDestination && styles.disabledButton
-          ]} 
+          ]}
           onPress={handleConfirmDestination}
           disabled={!selectedDestination}
         >
@@ -765,14 +744,6 @@ const styles = StyleSheet.create({
     minHeight: 180
   },
   googlePlacesTextInputContainer: {
-    // flexDirection: 'row',
-    // backgroundColor: 'transparent',
-    // borderWidth: 0,
-    // borderBottomWidth: 0,
-    // paddingHorizontal: 0,
-    // paddingVertical: 0,
-    // alignItems: 'center',
-    // justifyContent: 'center',
   },
   googlePlacesInput: {
     fontSize: 16,
@@ -782,7 +753,6 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 0,
     margin: 0,
-    paddingHorizontal: 0,
     minHeight: 59,
     maxHeight: 80,
     textAlignVertical: 'center',
@@ -793,30 +763,10 @@ const styles = StyleSheet.create({
   googlePlacesList: {
     backgroundColor: Colors.WHITE,
     borderRadius: 7,
-    // marginTop: 8,
-    // maxHeight: 305,
-    // position: 'absolute',
-    // top: 35,
-    // left: -50,
     right: 0,
-    // zIndex: 9999,
-    // borderWidth: 1,  
     width: '100%',
-    // borderColor: '#E5E5E5',
-    // ...Platform.select({
-    //   ios: {
-    //     shadowColor: '#000',
-    //     shadowOffset: { width: 0, height: 6 },
-    //     shadowOpacity: 0.12,
-    //     shadowRadius: 12,
-    //   },
-    //   android: {
-    //     elevation: 15,
-    //   },
-    // }),
   },
   googlePlacesRow: {
-    // backgroundColor: Colors.WHITE,
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderBottomWidth: 0.5,

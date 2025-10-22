@@ -73,7 +73,7 @@ const AppImagePicker = ({ bottomSheetModalRef, onImageSelected }) => {
               buttonNegative: 'Cancel',
             }
           );
-          
+
           // For video support, also request video permission
           const grantedVideo = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
@@ -84,7 +84,7 @@ const AppImagePicker = ({ bottomSheetModalRef, onImageSelected }) => {
               buttonNegative: 'Cancel',
             }
           );
-          
+
           return (
             grantedImages === PermissionsAndroid.RESULTS.GRANTED ||
             grantedVideo === PermissionsAndroid.RESULTS.GRANTED
@@ -129,7 +129,6 @@ const AppImagePicker = ({ bottomSheetModalRef, onImageSelected }) => {
 
   // ✅ GALLERY HANDLER
   const handleLaunchImageLibrary = async () => {
-    console.log('handleLaunchImageLibrary called');
     const hasPermission = await requestStoragePermission();
     if (!hasPermission) {
       Alert.alert(

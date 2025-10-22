@@ -45,13 +45,12 @@ const CarList = () => {
         setLoading(true);
         setError(null);
         const carsData = await getCars({ type: 'cars' });
-        
+
         if (carsData) {
           // Convert Firebase data to array format
           const carsArray = Object.entries(carsData).map(([id, carData]) => {
             // Debug: Log the photo data structure
-            console.log('Car photo data for', id, ':', carData.photo, 'Type:', typeof carData.photo);
-            
+
             // Handle photo data properly - ensure it's a string URL
             let imageSource;
             if (carData.photo) {
@@ -109,7 +108,7 @@ const CarList = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      
+
       {/* Top Bar with circular back and pill info */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -152,7 +151,7 @@ const CarList = () => {
       </View> */}
 
   <Text style={{fontSize:16,fontWeight:500,paddingHorizontal:16,paddingTop:0,color:Colors.BLACK,paddingBottom:12}}> List of vehicles available</Text>
-      
+
       {/* Loading State */}
       {loading && (
         <View style={styles.loadingContainer}>
@@ -182,17 +181,14 @@ const CarList = () => {
                 navigation.navigate('CarDetails', {
                   carData: car,
                   pickupDate,
-                  returnDate, 
+                  returnDate,
                   where,
                 })
               }
             >
-              <Image 
-                source={car.image} 
+              <Image
+                source={car.image}
                 style={styles.carImage}
-                onError={(error) => {
-                  console.log('Image load error for car', car.id, ':', error);
-                }}
               />
               <TouchableOpacity
                 style={styles.heartIcon}
@@ -216,7 +212,7 @@ const CarList = () => {
                   <Text style={styles.carName}>{car.name}</Text>
                   <Text style={styles.carModel}>{car.model}</Text>
                 </View>
-                <View style={{height:1,backgroundColor:Colors.LINE_GRAY,marginBottom:6}}/> 
+                <View style={{height:1,backgroundColor:Colors.LINE_GRAY,marginBottom:6}}/>
                 <View style={styles.detailsRow}>
                   <View style={styles.metaDetails}>
                     <Text style={styles.metaText}>Reviews {car.reviews}★</Text>

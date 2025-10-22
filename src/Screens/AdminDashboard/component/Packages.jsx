@@ -63,20 +63,13 @@ const PackagesManagement = ({ navigation }) => {
       } else {
         setLoading(true);
       }
-
-      console.log('Fetching ride packages...');
       const packagesData = await getRidePackages();
-      console.log('Packages data:', packagesData);
-      
       const packagesWithDetails = await Promise.all(
         packagesData.map(async (pkg) => {
-          console.log('Fetching details for package:', pkg.id);
           const [pricing, cars] = await Promise.all([
             getPackagePricing(pkg.id),
-            getPackageCars(pkg.id)
+            getPackageCars(pkg.id),
           ]);
-          console.log('Package pricing:', pricing);
-          console.log('Package cars:', cars);
           return {
             ...pkg,
             pricing,
@@ -86,7 +79,6 @@ const PackagesManagement = ({ navigation }) => {
           };
         })
       );
-      console.log('Final packages with details:', packagesWithDetails);
       setPackages(packagesWithDetails);
     } catch (error) {
       console.error('Error fetching ride packages:', error);
@@ -119,7 +111,7 @@ const PackagesManagement = ({ navigation }) => {
 
     try {
       setLoading(true);
-      
+
       // Update main package
       const packageUpdateData = {
         name: formData.name.trim(),
@@ -363,7 +355,7 @@ const PackagesManagement = ({ navigation }) => {
           </View>
 
           <View style={styles.scrollContainer}>
-            <ScrollView 
+            <ScrollView
               style={styles.modalContent}
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={true}
@@ -439,9 +431,9 @@ const PackagesManagement = ({ navigation }) => {
                       <TextInput
                         style={styles.input}
                         value={formData.carDetails.make}
-                        onChangeText={(text) => setFormData(prev => ({ 
-                          ...prev, 
-                          carDetails: { ...prev.carDetails, make: text }
+                        onChangeText={(text) => setFormData(prev => ({
+                          ...prev,
+                          carDetails: { ...prev.carDetails, make: text },
                         }))}
                         placeholder="e.g., Toyota"
                         placeholderTextColor={Colors.GRAY}
@@ -452,9 +444,9 @@ const PackagesManagement = ({ navigation }) => {
                       <TextInput
                         style={styles.input}
                         value={formData.carDetails.model}
-                        onChangeText={(text) => setFormData(prev => ({ 
-                          ...prev, 
-                          carDetails: { ...prev.carDetails, model: text }
+                        onChangeText={(text) => setFormData(prev => ({
+                          ...prev,
+                          carDetails: { ...prev.carDetails, model: text },
                         }))}
                         placeholder="e.g., Camry"
                         placeholderTextColor={Colors.GRAY}
@@ -468,9 +460,9 @@ const PackagesManagement = ({ navigation }) => {
                       <TextInput
                         style={styles.input}
                         value={formData.carDetails.year}
-                        onChangeText={(text) => setFormData(prev => ({ 
-                          ...prev, 
-                          carDetails: { ...prev.carDetails, year: text }
+                        onChangeText={(text) => setFormData(prev => ({
+                          ...prev,
+                          carDetails: { ...prev.carDetails, year: text },
                         }))}
                         placeholder="2023"
                         placeholderTextColor={Colors.GRAY}
@@ -482,9 +474,9 @@ const PackagesManagement = ({ navigation }) => {
                       <TextInput
                         style={styles.input}
                         value={formData.carDetails.color}
-                        onChangeText={(text) => setFormData(prev => ({ 
-                          ...prev, 
-                          carDetails: { ...prev.carDetails, color: text }
+                        onChangeText={(text) => setFormData(prev => ({
+                          ...prev,
+                          carDetails: { ...prev.carDetails, color: text },
                         }))}
                         placeholder="e.g., White"
                         placeholderTextColor={Colors.GRAY}
@@ -498,9 +490,9 @@ const PackagesManagement = ({ navigation }) => {
                       <TextInput
                         style={styles.input}
                         value={formData.carDetails.seats}
-                        onChangeText={(text) => setFormData(prev => ({ 
-                          ...prev, 
-                          carDetails: { ...prev.carDetails, seats: text }
+                        onChangeText={(text) => setFormData(prev => ({
+                          ...prev,
+                          carDetails: { ...prev.carDetails, seats: text },
                         }))}
                         placeholder="4"
                         placeholderTextColor={Colors.GRAY}
@@ -512,9 +504,9 @@ const PackagesManagement = ({ navigation }) => {
                       <TextInput
                         style={styles.input}
                         value={formData.carDetails.price}
-                        onChangeText={(text) => setFormData(prev => ({ 
-                          ...prev, 
-                          carDetails: { ...prev.carDetails, price: text }
+                        onChangeText={(text) => setFormData(prev => ({
+                          ...prev,
+                          carDetails: { ...prev.carDetails, price: text },
                         }))}
                         placeholder="50"
                         placeholderTextColor={Colors.GRAY}
@@ -532,7 +524,7 @@ const PackagesManagement = ({ navigation }) => {
 
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Select Cars *</Text>
-                <ScrollView 
+                <ScrollView
                   style={styles.carsSelection}
                   nestedScrollEnabled={true}
                   showsVerticalScrollIndicator={true}
@@ -597,10 +589,10 @@ const PackagesManagement = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <MainHeader 
-        title="Ride Packages" 
-        showOptionsButton={false} 
-        showBackButton={true} 
+      <MainHeader
+        title="Ride Packages"
+        showOptionsButton={false}
+        showBackButton={true}
         onBackPress={() => navigation.goBack()}
       />
       <StatusBar barStyle="dark-content" backgroundColor={Colors.WHITE} />

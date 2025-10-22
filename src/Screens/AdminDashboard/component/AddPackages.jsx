@@ -53,10 +53,7 @@ const AddPackages = ({ navigation }) => {
 
     try {
       setLoading(true);
-      
-      console.log('Starting package creation...');
-      console.log('Form data:', formData);
-      
+
       // 1. Create the main package
       const packageData = {
         name: formData.name.trim(),
@@ -64,21 +61,14 @@ const AddPackages = ({ navigation }) => {
         image: formData.packageImage || null,
         isActive: true,
       };
-
-      console.log('Creating ride package with data:', packageData);
       const packageId = await addRidePackage(packageData);
-      console.log('Package created with ID:', packageId);
-
       // 2. Add pricing rules
       const pricingData = {
         ratePerMile: parseFloat(formData.ratePerMile),
         baseFare: parseFloat(formData.baseFare) || 0,
         currency: 'USD',
       };
-      console.log('Adding pricing data:', pricingData);
       await addPackagePricing(packageId, pricingData);
-      console.log('Pricing added successfully');
-
       // 3. Add the car to package
       const carData = {
         carId: `car_${Date.now()}`,
@@ -90,15 +80,10 @@ const AddPackages = ({ navigation }) => {
         price: formData.carDetails.price,
         isAvailable: true,
       };
-      console.log('Adding car data:', carData);
       await addPackageCar(packageId, carData);
-      console.log('Car added successfully');
-
       showMessageAlert('Success', 'Ride package added successfully', 'success');
       navigation.goBack();
     } catch (error) {
-      console.error('Error adding ride package:', error);
-      console.error('Error details:', error.message);
       showMessageAlert('Error', `Failed to add ride package: ${error.message}`, 'danger');
     } finally {
       setLoading(false);
@@ -111,16 +96,9 @@ const AddPackages = ({ navigation }) => {
 
   const handleImageSelected = async (file) => {
     try {
-      console.log('Starting image upload...');
-      console.log('File URI:', file.uri);
-      
       const fileName = `package_${Date.now()}.jpg`;
       const uploadPath = `packages/${fileName}`;
-      
-      console.log('Upload path:', uploadPath);
       const imageUrl = await uploadFile(file.uri, uploadPath);
-      console.log('Image uploaded successfully:', imageUrl);
-      
       setFormData(prev => ({
         ...prev,
         packageImage: imageUrl,
@@ -137,15 +115,15 @@ const AddPackages = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <MainHeader 
-        title="Add Package" 
-        showOptionsButton={false} 
+      <MainHeader
+        title="Add Package"
+        showOptionsButton={false}
         showBackButton={true}
         onBackPress={() => navigation.goBack()}
       />
       <StatusBar barStyle="dark-content" backgroundColor={Colors.WHITE} />
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}
@@ -155,7 +133,7 @@ const AddPackages = ({ navigation }) => {
         {/* Package Details Section */}
         <View style={styles.packageDetailsSection}>
           <Text style={styles.sectionTitle}>Package Details</Text>
-          
+
           {/* Package Image */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Package Image</Text>
@@ -231,9 +209,9 @@ const AddPackages = ({ navigation }) => {
                 <TextInput
                   style={styles.input}
                   value={formData.carDetails.make}
-                  onChangeText={(text) => setFormData(prev => ({ 
-                    ...prev, 
-                    carDetails: { ...prev.carDetails, make: text }
+                  onChangeText={(text) => setFormData(prev => ({
+                    ...prev,
+                    carDetails: { ...prev.carDetails, make: text },
                   }))}
                   placeholder="e.g., Toyota"
                   placeholderTextColor={Colors.GRAY}
@@ -244,9 +222,9 @@ const AddPackages = ({ navigation }) => {
                 <TextInput
                   style={styles.input}
                   value={formData.carDetails.model}
-                  onChangeText={(text) => setFormData(prev => ({ 
-                    ...prev, 
-                    carDetails: { ...prev.carDetails, model: text }
+                  onChangeText={(text) => setFormData(prev => ({
+                    ...prev,
+                    carDetails: { ...prev.carDetails, model: text },
                   }))}
                   placeholder="e.g., Camry"
                   placeholderTextColor={Colors.GRAY}
@@ -260,9 +238,9 @@ const AddPackages = ({ navigation }) => {
                 <TextInput
                   style={styles.input}
                   value={formData.carDetails.year}
-                  onChangeText={(text) => setFormData(prev => ({ 
-                    ...prev, 
-                    carDetails: { ...prev.carDetails, year: text }
+                  onChangeText={(text) => setFormData(prev => ({
+                    ...prev,
+                    carDetails: { ...prev.carDetails, year: text },
                   }))}
                   placeholder="2023"
                   placeholderTextColor={Colors.GRAY}
@@ -274,9 +252,9 @@ const AddPackages = ({ navigation }) => {
                 <TextInput
                   style={styles.input}
                   value={formData.carDetails.color}
-                  onChangeText={(text) => setFormData(prev => ({ 
-                    ...prev, 
-                    carDetails: { ...prev.carDetails, color: text }
+                  onChangeText={(text) => setFormData(prev => ({
+                    ...prev,
+                    carDetails: { ...prev.carDetails, color: text },
                   }))}
                   placeholder="e.g., White"
                   placeholderTextColor={Colors.GRAY}
@@ -290,9 +268,9 @@ const AddPackages = ({ navigation }) => {
                 <TextInput
                   style={styles.input}
                   value={formData.carDetails.seats}
-                  onChangeText={(text) => setFormData(prev => ({ 
-                    ...prev, 
-                    carDetails: { ...prev.carDetails, seats: text }
+                  onChangeText={(text) => setFormData(prev => ({
+                    ...prev,
+                    carDetails: { ...prev.carDetails, seats: text },
                   }))}
                   placeholder="4"
                   placeholderTextColor={Colors.GRAY}
@@ -304,9 +282,9 @@ const AddPackages = ({ navigation }) => {
                 <TextInput
                   style={styles.input}
                   value={formData.carDetails.price}
-                  onChangeText={(text) => setFormData(prev => ({ 
-                    ...prev, 
-                    carDetails: { ...prev.carDetails, price: text }
+                  onChangeText={(text) => setFormData(prev => ({
+                    ...prev,
+                    carDetails: { ...prev.carDetails, price: text },
                   }))}
                   placeholder="50"
                   placeholderTextColor={Colors.GRAY}

@@ -50,7 +50,6 @@ const Login = () => {
         // Get user data from the signIn response
         const userData = userCredential.userData;
 
-        console.log('Login successful, userData:', userData);
         setUserData(userData);
         // Set user data in stores
         setUser(userCredential);
@@ -66,7 +65,6 @@ const Login = () => {
         }
 
         // Navigate based on user type
-        console.log('Navigating based on userType:', userData?.userType);
         if (userData?.userType === 'customer') {
           navigation.navigate('CustomerTabs');
         } else if (userData?.userType === 'provider') {
@@ -74,7 +72,6 @@ const Login = () => {
         } else if (userData?.userType === 'admin') {
           navigation.navigate('AdminTabs');
         } else {
-          console.log('Unknown user type, staying on login');
           navigation.navigate('Login');
         }
       }

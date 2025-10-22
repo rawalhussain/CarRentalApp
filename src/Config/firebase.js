@@ -11,14 +11,10 @@ import analytics from '@react-native-firebase/analytics';
 // Sign up
 export const signUp = async (email, password, userData) => {
   try {
-    console.log('Creating user with email:', email);
     const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-    console.log('User created with UID:', userCredential.user.uid);
-    
     // Send email verification
     await userCredential.user.sendEmailVerification();
-    console.log('Verification email sent to:', email);
-    
+
     const userProfile = {
       ...userData,
       email: email,
@@ -28,16 +24,13 @@ export const signUp = async (email, password, userData) => {
       updatedAt: database.ServerValue.TIMESTAMP,
     };
 
-    console.log('Storing user profile:', userProfile);
     await database().ref(`users/${userCredential.user.uid}`).set(userProfile);
-    console.log('User profile stored successfully');
 
     return {
       user: userCredential.user,
       userData: userProfile,
     };
   } catch (error) {
-    console.error('Error in signUp:', error);
     throw error;
   }
 };
@@ -45,36 +38,29 @@ export const signUp = async (email, password, userData) => {
 // Sign in
 export const signIn = async (email, password) => {
   try {
-    console.log('Signing in with email:', email);
     const userCredential = await auth().signInWithEmailAndPassword(email, password);
-    console.log('Auth successful, user UID:', userCredential.user.uid);
-    
+
     // Reload user to get latest emailVerified status
     await userCredential.user.reload();
     const isEmailVerified = auth().currentUser.emailVerified;
-    console.log('Email verification status:', isEmailVerified);
-    
     // Check if email is verified
     if (!isEmailVerified) {
       // Sign out the user
       await auth().signOut();
-      
       // Throw custom error
       const error = new Error('Please verify your email to continue. Check your inbox for the verification link.');
       error.code = 'auth/email-not-verified';
       throw error;
     }
-    
+
     const snapshot = await database().ref(`users/${userCredential.user.uid}`).once('value');
     const userData = snapshot.val();
-    console.log('User data from database:', userData);
-    
     // Update emailVerified status in database
     await database().ref(`users/${userCredential.user.uid}`).update({
       emailVerified: true,
       updatedAt: database.ServerValue.TIMESTAMP,
     });
-    
+
     return {
       user: userCredential.user,
       userData: { ...userData, emailVerified: true },
@@ -103,13 +89,10 @@ export const signOut = async () => {
 // Get user data
 export const getUserData = async (userId) => {
   try {
-    console.log('Getting user data for userId:', userId);
     const snapshot = await database().ref(`users/${userId}`).once('value');
     const userData = snapshot.val();
-    console.log('Retrieved userData from database:', userData);
     return userData;
   } catch (error) {
-    console.error('Error getting user data:', error);
     return null;
   }
 };
@@ -171,20 +154,17 @@ export const deleteVehicle = async (vehicleId, type = 'cars') => {
 // Create booking
 export const createBooking = async (bookingData) => {
   try {
-    console.log('createBooking called with data:', bookingData);
-    
     // Validate required fields
     if (!bookingData.customerId) {
       throw new Error('Customer ID is required');
     }
-    
+
     // Use a generic 'vehicle' field and always include customerId and vendorId
     const { vehicle, customerId, ...rest } = bookingData;
     const vendorId = vehicle?.vendorId || '';
-    
-    console.log('Creating booking in Firebase...');
+
     const bookingRef = database().ref('bookings').push();
-    
+
     const bookingRecord = {
       ...rest,
       vehicle,
@@ -193,16 +173,9 @@ export const createBooking = async (bookingData) => {
       status: 'pending',
       createdAt: firebase.database.ServerValue.TIMESTAMP,
     };
-    
-    console.log('Booking record to save:', bookingRecord);
     await bookingRef.set(bookingRecord);
-    
-    console.log('Booking saved successfully with key:', bookingRef.key);
     return bookingRef.key;
   } catch (error) {
-    console.error('Error in createBooking:', error);
-    console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
     throw error;
   }
 };
@@ -210,22 +183,17 @@ export const createBooking = async (bookingData) => {
 // Create package booking (separate from regular bookings)
 export const createPackageBooking = async (bookingData) => {
   try {
-    console.log('createPackageBooking called with data:', bookingData);
-    
     // Validate required fields
     if (!bookingData.customerId) {
       throw new Error('Customer ID is required');
     }
-    
+
     if (!bookingData.packageId) {
       throw new Error('Package ID is required');
     }
-    
+
     const { customerId, packageId, ...rest } = bookingData;
-    
-    console.log('Creating package booking in Firebase...');
     const bookingRef = database().ref('package_bookings').push();
-    
     const bookingRecord = {
       ...rest,
       customerId,
@@ -236,16 +204,9 @@ export const createPackageBooking = async (bookingData) => {
       createdAt: firebase.database.ServerValue.TIMESTAMP,
       updatedAt: firebase.database.ServerValue.TIMESTAMP,
     };
-    
-    console.log('Package booking record to save:', bookingRecord);
     await bookingRef.set(bookingRecord);
-    
-    console.log('Package booking saved successfully with key:', bookingRef.key);
     return bookingRef.key;
   } catch (error) {
-    console.error('Error in createPackageBooking:', error);
-    console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
     throw error;
   }
 };
@@ -263,15 +224,15 @@ export const getPackageBookings = async (userId, userType) => {
 
     const snapshot = await bookingsRef.once('value');
     const bookingsData = snapshot.val();
-    
+
     if (!bookingsData) {
       return [];
     }
-    
+
     // Convert object to array with booking IDs
     return Object.keys(bookingsData).map(key => ({
       id: key,
-      ...bookingsData[key]
+      ...bookingsData[key],
     }));
   } catch (error) {
     console.error('Error in getPackageBookings:', error);
@@ -285,14 +246,13 @@ export const updatePackageBookingStatus = async (bookingId, status) => {
     if (!bookingId) {
       throw new Error('Booking ID is required');
     }
-    
+
     const updates = {
       status: status,
       updatedAt: firebase.database.ServerValue.TIMESTAMP,
     };
-    
+
     await database().ref(`package_bookings/${bookingId}`).update(updates);
-    console.log('Package booking status updated successfully');
   } catch (error) {
     console.error('Error updating package booking status:', error);
     throw error;
@@ -319,12 +279,12 @@ export const updateBookingStatus = async (bookingId, status) => {
     if (!bookingId) {
       throw new Error('Booking ID is required');
     }
-    
+
     const updates = {
       status: status,
       updatedAt: firebase.database.ServerValue.TIMESTAMP,
     };
-    
+
     await database().ref(`bookings/${bookingId}`).update(updates);
     return true;
   } catch (error) {
@@ -471,9 +431,6 @@ export const saveCarsWithImages = async (vendorId, cars, type) => {
     if (!vendorId) {
       throw new Error('Vendor ID is required');
     }
-
-    console.log('Saving cars with images:', cars);
-
     // Prepare car data (images already uploaded in BankDetails component)
     const carsData = cars.map(car => ({
       ...car,
@@ -488,8 +445,6 @@ export const saveCarsWithImages = async (vendorId, cars, type) => {
       database().ref(carTable).push().set(car)
     );
     await Promise.all(carPromises);
-
-    console.log('Cars saved successfully to', carTable);
     return carsData;
   } catch (error) {
     console.error('Error saving cars:', error);

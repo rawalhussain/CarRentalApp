@@ -207,8 +207,6 @@ const CarBookingDetails = () => {
               autoCapitalize: 'none',
               clearButtonMode: 'while-editing',
             }}
-            onFail={(e) => console.log('GooglePlacesAutocomplete error:', e)}
-            onNotFound={() => console.log('No results found')}
         />
       </View>
       <View style={styles.row}>

@@ -8,7 +8,7 @@ import {
   Platform,
   Dimensions,
   ScrollView,
-  Modal,
+  Modal, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/bottom-sheet';
@@ -20,18 +20,18 @@ import MainHeader from '../../../Components/MainHeader';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function TimeSelectionScreen({ navigation, route }) {
-  const { 
-    currentLocation, 
-    destination, 
-    currentLocationText, 
-    destinationText, 
-    serviceType 
+  const {
+    currentLocation,
+    destination,
+    currentLocationText,
+    destinationText,
+    serviceType,
   } = route?.params || {};
-  
+
   // Bottom sheet refs
   const pickupTimeBottomSheetRef = useRef(null);
   const dropoffTimeBottomSheetRef = useRef(null);
-  
+
   // State for time selection
   const [selectedPickupTime, setSelectedPickupTime] = useState(null);
   const [selectedDropoffTime, setSelectedDropoffTime] = useState(null);
@@ -54,23 +54,23 @@ export default function TimeSelectionScreen({ navigation, route }) {
   const [activeTab, setActiveTab] = useState('pickup'); // 'pickup' or 'dropoff'
   // Snap points for the bottom sheet - 90% max height
   const snapPoints = useMemo(() => ['60%', '90%'], []);
-  
+
   // Generate time slots (every 15 minutes)
   const generateTimeSlots = () => {
     const slots = [];
     const base = new Date();
     base.setHours(0, 0, 0, 0);
-    
+
     for (let i = 0; i < 96; i++) { // 24 hours * 4 (15 min intervals)
       const time = new Date(base.getTime() + i * 15 * 60000);
       const timeString = time.toLocaleTimeString([], {
         hour: 'numeric',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
       });
       slots.push({
         value: timeString,
-        time: time
+        time: time,
       });
     }
     return slots;
@@ -210,25 +210,25 @@ export default function TimeSelectionScreen({ navigation, route }) {
 
   const handleNext = () => {
     if (!pickupDate) {
-      alert('Please select pickup date');
+      Alert.alert('Please select pickup date');
       return;
     }
-    
+
     if (!selectedPickupTime) {
-      alert('Please select pickup time');
+      Alert.alert('Please select pickup time');
       return;
     }
-    
+
     if (!returnDate) {
-      alert('Please select dropoff date');
+      Alert.alert('Please select dropoff date');
       return;
     }
-    
+
     if (!selectedDropoffTime) {
-      alert('Please select dropoff time');
+      Alert.alert('Please select dropoff time');
       return;
     }
-    
+
     // Navigate to Cars screen with time information
     navigation.navigate('Cars', {
       currentLocation,
@@ -252,13 +252,13 @@ export default function TimeSelectionScreen({ navigation, route }) {
     <TouchableOpacity
       style={[
         styles.timeSlot,
-        selectedPickupTime === item.value && styles.timeSlotSelected
+        selectedPickupTime === item.value && styles.timeSlotSelected,
       ]}
       onPress={() => handlePickupTimeSelect(item.value)}
     >
       <Text style={[
         styles.timeSlotText,
-        selectedPickupTime === item.value && styles.timeSlotTextSelected
+        selectedPickupTime === item.value && styles.timeSlotTextSelected,
       ]}>
         {item.value}
       </Text>
@@ -269,13 +269,13 @@ export default function TimeSelectionScreen({ navigation, route }) {
     <TouchableOpacity
       style={[
         styles.timeSlot,
-        selectedDropoffTime === item.value && styles.timeSlotSelected
+        selectedDropoffTime === item.value && styles.timeSlotSelected,
       ]}
       onPress={() => handleDropoffTimeSelect(item.value)}
     >
       <Text style={[
         styles.timeSlotText,
-        selectedDropoffTime === item.value && styles.timeSlotTextSelected
+        selectedDropoffTime === item.value && styles.timeSlotTextSelected,
       ]}>
         {item.value}
       </Text>
@@ -285,7 +285,7 @@ export default function TimeSelectionScreen({ navigation, route }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.WHITE} />
-      
+
       {/* Main Header */}
       <MainHeader
         title="Choose a time"
@@ -302,13 +302,13 @@ export default function TimeSelectionScreen({ navigation, route }) {
       <View style={styles.content}>
         {/* Pickup/Dropoff Selection */}
         <View style={styles.selectionContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.selectionButton, activeTab === 'pickup' && styles.selectedButton]}
             onPress={() => setActiveTab('pickup')}
           >
             <Text style={[styles.selectionText, activeTab === 'pickup' && styles.selectedText]}>Pickup at</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.selectionButton, activeTab === 'dropoff' && styles.selectedButton]}
             onPress={() => setActiveTab('dropoff')}
           >
@@ -317,7 +317,7 @@ export default function TimeSelectionScreen({ navigation, route }) {
         </View>
 
         {/* Date Selection - Clickable */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.dateContainer}
           onPress={() => showCalendar(activeTab === 'pickup' ? 'pickup' : 'dropoff')}
         >
@@ -328,7 +328,7 @@ export default function TimeSelectionScreen({ navigation, route }) {
         </TouchableOpacity>
 
         {/* Time Display - Clickable */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.timeContainer}
           onPress={() => {
             if (activeTab === 'pickup') {
@@ -339,7 +339,7 @@ export default function TimeSelectionScreen({ navigation, route }) {
           }}
         >
           <Text style={styles.timeText}>
-            {activeTab === 'pickup' 
+            {activeTab === 'pickup'
               ? (selectedPickupTime || '11:00')
               : (selectedDropoffTime || '11:30')}
           </Text>
@@ -381,7 +381,7 @@ export default function TimeSelectionScreen({ navigation, route }) {
           onBack={() => pickupTimeBottomSheetRef.current?.close()}
           showBackButton={true}
         />
-        
+
         <BottomSheetFlatList
           data={timeSlots}
           renderItem={renderPickupTimeItem}
@@ -412,7 +412,7 @@ export default function TimeSelectionScreen({ navigation, route }) {
           onBack={() => dropoffTimeBottomSheetRef.current?.close()}
           showBackButton={true}
         />
-        
+
         <BottomSheetFlatList
           data={timeSlots}
           renderItem={renderDropoffTimeItem}
@@ -427,7 +427,7 @@ export default function TimeSelectionScreen({ navigation, route }) {
       <Modal visible={isCalendarVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={{flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingVertical:12, paddingHorizontal:18, borderBottomWidth:1, borderBottomColor:"#eee",}}>
+            <View style={{flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingVertical:12, paddingHorizontal:18, borderBottomWidth:1, borderBottomColor:'#eee'}}>
               <TouchableOpacity
                 onPress={() => setCalendarVisible(false)}
                 style={{ width:36, height:36, borderRadius:18, backgroundColor: Colors.PRIMARY, alignItems:'center', justifyContent:'center' }}
@@ -660,7 +660,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: Colors.white,
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: '#eee',
   },
 
   weekdayRow: {
@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
   weekdayText: {
     flex: 1,
@@ -689,8 +689,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     gap: 16,
-    borderBottomColor: "#eee",
-    paddingBottom: 9
+    borderBottomColor: '#eee',
+    paddingBottom: 9,
   },
   dayBoxEmpty: {
     width: 40,
@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'red',
     borderColor: 'red',
   },
- 
+
   timeTextSelected: {
     color: '#fff',
     fontWeight: 'bold',
@@ -754,10 +754,10 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     marginTop: 8,
     paddingBottom: 18,
-    backgroundColor: "white",
+    backgroundColor: 'white',
     alignItems: 'flex-start',
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: '#eee',
   },
   selectedDateText: {
     textAlign: 'left',

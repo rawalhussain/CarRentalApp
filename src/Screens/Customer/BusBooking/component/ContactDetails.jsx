@@ -48,12 +48,9 @@ const ContactDetails = ({ navigation, route }) => {
     // Create booking in Firebase
     let bookingId = null;
     try {
-      console.log('Creating booking with data:', bookingData);
       bookingId = await createBooking(bookingData);
-      console.log('Booking created with ID:', bookingId);
     } catch (e) {
       showMessageAlert('Booking Failed', 'Could not create booking. Please try again.', 'danger');
-      console.error('Booking creation error:', e);
       setLoading(false);
       return;
     }

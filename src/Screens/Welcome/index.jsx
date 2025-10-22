@@ -36,9 +36,6 @@ const WelcomeScreen = ({ navigation }) => {
 
   };
 
-  console.log('WelcomeScreen called screen showing welcome screen');
-  // console.log('hasCompletedOnboarding:', storage.getString('hasCompletedOnboarding'));
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />

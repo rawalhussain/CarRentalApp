@@ -14,15 +14,15 @@ import MaterialDesignIcons from 'react-native-vector-icons/MaterialCommunityIcon
 const CarDetailsScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  
+
   // Bottom sheet refs
   const reportBottomSheetRef = useRef(null);
   const cancellationBottomSheetRef = useRef(null);
   const [bottomSheetType, setBottomSheetType] = useState('report');
-  
+
   // Get dynamic data from navigation params
   const { carData, pickupDate, returnDate, where } = route.params || {};
-  
+
   // Use dynamic data or fallback to default values
   const carName = carData?.name || 'Unknown Car';
   const model = carData?.model || 'Unknown Model';
@@ -32,7 +32,7 @@ const CarDetailsScreen = () => {
   const image = carData?.image || { uri: 'https://via.placeholder.com/400x200.png?text=Car+Image' };
   const variant = carData?.variant || 'Unknown Year';
   const verified = carData?.verified || false;
-  
+
   // Default static data for features and other details
   const cancellationPolicy = 'Free cancellation before pickup time';
   const features = ['AWD', 'AC', 'Heated Seats', 'Bluetooth'];
@@ -51,7 +51,7 @@ const CarDetailsScreen = () => {
     { name: 'User B', rating: 5.0, comment: 'Smooth trip, great host.' },
   ];
   const description = `The ${carName} ${model} is a sleek and stylish vehicle that blends advanced features with performance.`;
-  
+
   // Format dates from navigation params
   const formatDate = (date) => {
     if (!date) return '';
@@ -64,20 +64,20 @@ const CarDetailsScreen = () => {
     const today = new Date();
     const refundDate = new Date(today);
     refundDate.setDate(today.getDate() + 2);
-    
+
     // Format the refund date
     const options = { month: 'long', day: 'numeric' };
     const formattedDate = refundDate.toLocaleDateString('en-US', options);
     return `${formattedDate}, 2:00 PM`;
   };
-  
+
   const tripDates = {
     start: pickupDate ? formatDate(pickupDate) : '14 March',
     end: returnDate ? formatDate(returnDate) : '19 March',
     startTime: pickupDate ? `${formatDate(pickupDate)}, 2:00 PM` : 'Mar 14, 2:00 PM',
     endTime: returnDate ? `${formatDate(returnDate)}, 4:00 PM` : 'Mar 19, 4:00 PM',
   };
-  
+
   const address = where || '123 Main Street, City, State';
 
   // Bottom sheet handlers
@@ -157,7 +157,7 @@ const CarDetailsScreen = () => {
         <Text style={styles.sectionTitleInsurance}>Insurance & Protection</Text>
           <Text style={styles.insuranceText}>Insurance via Travelers</Text>
         </View>
-          <TouchableOpacity onPress={() => console.log('Read More')} style={styles.readMoreButton}>
+          <TouchableOpacity style={styles.readMoreButton}>
             <Text style={styles.readMoreText}>Read More</Text>
           </TouchableOpacity>
         </View>
@@ -287,7 +287,7 @@ const CarDetailsScreen = () => {
             <TouchableOpacity><Text style={styles.moreInfoText}>More Info</Text></TouchableOpacity>
           </View>
           <Text style={styles.extrasDescription}>Add optional Extras to your trip at checkout.</Text>
-          
+
           <View style={styles.extrasList}>
             <View style={styles.extraItem}>
               <View style={styles.extraContent}>
@@ -351,7 +351,7 @@ const CarDetailsScreen = () => {
           </View>
         </View>
         <View style={styles.priceButtonsContainer}>
-         
+
           <TouchableOpacity
             style={styles.continueButton}
             onPress={() => navigation.navigate('Verification')}

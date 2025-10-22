@@ -168,7 +168,7 @@ const BusBookingDetails = () => {
       showMessageAlert('Error', 'Please fill all required fields.', 'warning');
       return;
     }
-    
+
     // Navigate with search criteria only - BusSearchResults will fetch buses
     navigation.navigate('BusSearchResults', {
       pickupAddress,
@@ -249,8 +249,6 @@ const BusBookingDetails = () => {
               autoCapitalize: 'none',
               clearButtonMode: 'while-editing',
             }}
-            onFail={e => console.log('GooglePlacesAutocomplete error:', e)}
-            onNotFound={() => console.log('No results found')}
           />
         </View>
         <View style={styles.inputContainer}>
@@ -310,8 +308,6 @@ const BusBookingDetails = () => {
               autoCapitalize: 'none',
               clearButtonMode: 'while-editing',
             }}
-            onFail={e => console.log('GooglePlacesAutocomplete error:', e)}
-            onNotFound={() => console.log('No results found')}
           />
         </View>
         <View style={styles.row}>
@@ -642,7 +638,7 @@ const BusBookingDetails = () => {
             </View>
           </View>
         </Modal>
- 
+
 
 
 

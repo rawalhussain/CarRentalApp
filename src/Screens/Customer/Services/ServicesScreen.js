@@ -52,7 +52,6 @@ export default function ServicesScreen({ navigation }) {
         setDestinations([]);
       }
     } catch (error) {
-      console.log('Error loading destinations:', error);
       // On error, show empty array
       setDestinations([]);
     }
@@ -79,7 +78,7 @@ export default function ServicesScreen({ navigation }) {
 
         {/* Header with Back Button and Logo */}
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
@@ -91,7 +90,7 @@ export default function ServicesScreen({ navigation }) {
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.searchBar}
             onPress={() => handleServicePress('Ride')}
             activeOpacity={0.6}
@@ -126,10 +125,6 @@ export default function ServicesScreen({ navigation }) {
                 title={destination.name || destination.title}
                 address={destination.address}
                 icon={destination.icon || 'time'}
-                onPress={() => {
-                  // Handle destination selection
-                  console.log('Selected destination:', destination.name || destination.title);
-                }}
               />
               {index < destinations.length - 1 && (
                 <View style={styles.divider} />

@@ -1,24 +1,23 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
-  RefreshControl, 
+import React, {useCallback, useEffect, useState} from 'react';
+import {
   Alert,
-  ActivityIndicator,
-  Dimensions
+  Dimensions,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Colors } from '../../Themes/MyColors';
-import { getBookings, updateBookingStatus } from '../../Config/firebase';
+import {Colors} from '../../Themes/MyColors';
+import {getBookings, updateBookingStatus} from '../../Config/firebase';
 import useAuthStore from '../../store/useAuthStore';
 import Loader from '../../Components/Loader';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import MainHeader from '../../Components/MainHeader';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const { width } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
 const CustomerBookings = ({ navigation }) => {
   const { user } = useAuthStore();
@@ -32,8 +31,6 @@ const CustomerBookings = ({ navigation }) => {
   useEffect(() => {
     if (user && (user.uid || user.user?.uid)) {
       fetchBookings();
-    } else {
-      console.log('User not ready, not fetching bookings');
     }
   }, [user]);
 
@@ -48,7 +45,7 @@ const CustomerBookings = ({ navigation }) => {
       setLoading(true);
     }
     setError(null);
-    
+
     const userId = user?.user?.uid || user?.uid;
     if (!userId) {
       setLoading(false);
@@ -56,7 +53,7 @@ const CustomerBookings = ({ navigation }) => {
       setError('User not authenticated');
       return;
     }
-    
+
     try {
       const data = await getBookings(userId, 'customer');
       if (data) {
@@ -95,43 +92,20 @@ const CustomerBookings = ({ navigation }) => {
     const filterDate = activeFilter === 'today' ? today : tomorrow;
     const filterDateStr = filterDate.toISOString().split('T')[0]; // YYYY-MM-DD format
 
-    console.log(`Filtering for ${activeFilter}:`, {
-      filterDateStr,
-      totalBookings: bookings.length,
-      bookings: bookings.map(b => ({
-        id: b.id,
-        createdAt: b.createdAt,
-        pickupDate: b.searchPreferences?.pickupDate,
-        createdDate: b.createdAt ? new Date(b.createdAt).toISOString().split('T')[0] : 'N/A'
-      }))
-    });
-
     const filtered = bookings.filter(booking => {
       // Use createdAt (booking creation date) instead of pickupDate
       const createdAt = booking.createdAt;
-      if (!createdAt) return false;
-      
+      if (!createdAt) {return false;}
+
       try {
         // Convert timestamp to date
         const bookingDate = new Date(createdAt);
         const bookingDateStr = bookingDate.toISOString().split('T')[0];
-        const matches = bookingDateStr === filterDateStr;
-        
-        console.log(`Booking ${booking.id}:`, {
-          createdAt,
-          bookingDateStr,
-          filterDateStr,
-          matches
-        });
-        
-        return matches;
+        return bookingDateStr === filterDateStr;
       } catch (error) {
-        console.log(`Error parsing date for booking ${booking.id}:`, error);
-        return false;
+        return error;
       }
     });
-
-    console.log(`Filtered results for ${activeFilter}:`, filtered.length);
     setFilteredBookings(filtered);
   }, [bookings, activeFilter]);
 
@@ -194,7 +168,7 @@ const CustomerBookings = ({ navigation }) => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return '-';
+    if (!dateString) {return '-';}
     try {
       // Handle different date formats
       let date;
@@ -208,16 +182,16 @@ const CustomerBookings = ({ navigation }) => {
       } else {
         date = new Date(dateString);
       }
-      
+
       // Check if date is valid
       if (isNaN(date.getTime())) {
         return '-';
       }
-      
+
       return date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
-        year: 'numeric'
+        year: 'numeric',
       });
     } catch {
       return '-';
@@ -225,7 +199,7 @@ const CustomerBookings = ({ navigation }) => {
   };
 
   const formatDateTime = (dateString) => {
-    if (!dateString) return '-';
+    if (!dateString) {return '-';}
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', {
@@ -233,7 +207,7 @@ const CustomerBookings = ({ navigation }) => {
         day: 'numeric',
         year: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
       });
     } catch {
       return dateString;
@@ -241,13 +215,13 @@ const CustomerBookings = ({ navigation }) => {
   };
 
   const formatBookingDate = (timestamp) => {
-    if (!timestamp) return '-';
+    if (!timestamp) {return '-';}
     try {
       const date = new Date(timestamp);
       return date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
-        year: 'numeric'
+        year: 'numeric',
       });
     } catch {
       return '-';
@@ -259,7 +233,7 @@ const CustomerBookings = ({ navigation }) => {
     const status = item.status || 'pending';
     const canCancel = status === 'pending' || status === 'confirmed';
     const searchPrefs = item.searchPreferences || {};
-    
+
     return (
       <TouchableOpacity
         style={styles.card}
@@ -276,10 +250,10 @@ const CustomerBookings = ({ navigation }) => {
             {vehicle.color && <Text style={styles.color}>Color: {vehicle.color}</Text>}
           </View>
           <View style={[styles.statusContainer, { backgroundColor: getStatusColor(status) + '20' }]}>
-            <Icon 
-              name={getStatusIcon(status)} 
-              size={16} 
-              color={getStatusColor(status)} 
+            <Icon
+              name={getStatusIcon(status)}
+              size={16}
+              color={getStatusColor(status)}
             />
             <Text style={[styles.status, { color: getStatusColor(status) }]}>
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -304,7 +278,7 @@ const CustomerBookings = ({ navigation }) => {
             </View>
           </View>
         </View>
-        
+
         {/* Date and Time Information */}
         <View style={styles.dateContainer}>
           <View style={styles.dateItem}>
@@ -315,7 +289,7 @@ const CustomerBookings = ({ navigation }) => {
               <Text style={styles.time}>{searchPrefs.pickupTime}</Text>
             )}
           </View>
-          <View style={[styles.dateItem,]}>
+          <View style={[styles.dateItem]}>
             <Icon name="calendar-outline" size={16} color={Colors.PRIMARY_GREY} />
             <Text style={styles.dateLabel}>Return</Text>
             <Text style={styles.date}>{formatDate(searchPrefs.dropoffDate)}</Text>
@@ -448,21 +422,21 @@ const CustomerBookings = ({ navigation }) => {
   };
 
   const renderEmptyComponent = () => {
-    if (loading) return null;
-    
+    if (loading) {return null;}
+
     const getEmptyMessage = () => {
-      if (error) return 'Unable to load bookings';
-      if (activeFilter === 'today') return 'No bookings for today';
-      if (activeFilter === 'tomorrow') return 'No bookings for tomorrow';
+      if (error) {return 'Unable to load bookings';}
+      if (activeFilter === 'today') {return 'No bookings for today';}
+      if (activeFilter === 'tomorrow') {return 'No bookings for tomorrow';}
       return 'You haven\'t made any bookings yet';
     };
 
     const getEmptyTitle = () => {
-      if (activeFilter === 'today') return 'No Bookings Today';
-      if (activeFilter === 'tomorrow') return 'No Bookings Tomorrow';
+      if (activeFilter === 'today') {return 'No Bookings Today';}
+      if (activeFilter === 'tomorrow') {return 'No Bookings Tomorrow';}
       return 'No Bookings Found';
     };
-    
+
     return (
       <View style={styles.emptyContainer}>
         <Icon name="calendar-outline" size={64} color={Colors.PRIMARY_GREY} />
@@ -480,15 +454,15 @@ const CustomerBookings = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <MainHeader title="My Bookings" showOptionsButton={false} showBackButton={false} />
-      
+
       {renderFilterButtons()}
-      
+
       {loading && !refreshing && (
         <View style={styles.loaderOverlay}>
           <Loader />
         </View>
       )}
-      
+
       <FlatList
         data={filteredBookings}
         keyExtractor={item => item.id}

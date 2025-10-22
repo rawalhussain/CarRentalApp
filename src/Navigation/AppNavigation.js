@@ -6,9 +6,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Colors } from '../Themes/MyColors';
 import useAuthStore from '../store/useAuthStore';
 import useUserStore from '../store/useUserStore';
-import { useMMKVBoolean } from 'react-native-mmkv';
 import { logEvent } from '../Config/firebase';
-
 // Auth Screens
 import Login from '../Screens/Auth/Login';
 import SignUp from '../Screens/Auth/SignUp';
@@ -55,6 +53,7 @@ import PackagesManagement from '../Screens/AdminDashboard/component/Packages';
 import AddPackages from '../Screens/AdminDashboard/component/AddPackages';
 import Welcome from '../Screens/Welcome';
 import { SafeAreaView } from 'react-native';
+import {storage} from '../../App';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -140,10 +139,7 @@ const AdminTabs = () => {
 const Navigation = () => {
   const {user} = useAuthStore();
   const {userData} = useUserStore();
-  const [hasCompletedOnboarding] = useMMKVBoolean('hasCompletedOnboarding');
-
-  // Debug logging
-  console.log('Navigation - user:', !!user, 'userData:', !!userData, 'userType:', userData?.userType);
+  const hasCompletedOnboarding = storage.getBoolean('hasCompletedOnboarding');
 
   const handleNavigationStateChange = async (state) => {
     try {
@@ -157,21 +153,17 @@ const Navigation = () => {
     }
   };
 
-  console.log('hasCompletedOnboarding:', hasCompletedOnboarding);
   // Initial Route Setup
   const getInitialRoute = () => {
+      if (!hasCompletedOnboarding) {
+          return 'WelcomeScreen';
+      }
     if (!user) {
       return 'Login';
     }
     if (!userData) {
       return 'Login';
     }
-    if (!hasCompletedOnboarding) {
-      return 'WelcomeScreen';
-    }
-    
-   
-
     switch (userData.userType) {
       case 'customer':
         return 'CustomerTabs';
@@ -196,7 +188,9 @@ const Navigation = () => {
           initialRouteName={getInitialRoute()}>
 
           {/* Welcome Screen - Always available */}
-          <Stack.Screen name="WelcomeScreen" component={Welcome} />
+          {!hasCompletedOnboarding && (
+              <Stack.Screen name="WelcomeScreen" component={Welcome} />
+          )}
 
           {!user || !userData ? (
             <>
@@ -208,15 +202,6 @@ const Navigation = () => {
             <>
               {userData.userType === 'customer' && (
                 <>
-                  {/* 🚀 New Flow */}
-                  <Stack.Screen name="Services" component={ServicesScreen} />
-                  <Stack.Screen name="ReserveRide" component={ReserveRideScreen} />
-                  <Stack.Screen name="Pickup" component={PickupScreen} />
-                  <Stack.Screen name="Destination" component={DestinationScreen} />
-                  <Stack.Screen name="TimeSelection" component={TimeSelectionScreen} options={{ headerShown: false }} />
-                  <Stack.Screen name="Cars" component={CarsScreen} options={{ headerShown: false }} />
-                  <Stack.Screen name="RideBooking" component={RideBookingScreen} options={{ headerShown: false }} />
-
                   {/* Existing */}
                   <Stack.Screen name="CustomerTabs" component={CustomerTabs} />
                   <Stack.Screen name="Profile" component={CustomerProfile} options={{ headerShown: true }} />
@@ -229,6 +214,14 @@ const Navigation = () => {
                   <Stack.Screen name="CarList" component={CarList} options={{ headerShown: false }} />
                   <Stack.Screen name="CarDetails" component={CustomerCarDetails}  />
                   <Stack.Screen name="Verification" component={Verification} options={{ headerShown: false }} />
+                  {/* 🚀 New Flow */}
+                  <Stack.Screen name="Services" component={ServicesScreen} />
+                  <Stack.Screen name="ReserveRide" component={ReserveRideScreen} />
+                  <Stack.Screen name="Pickup" component={PickupScreen} />
+                  <Stack.Screen name="Destination" component={DestinationScreen} />
+                  <Stack.Screen name="TimeSelection" component={TimeSelectionScreen} options={{ headerShown: false }} />
+                  <Stack.Screen name="Cars" component={CarsScreen} options={{ headerShown: false }} />
+                  <Stack.Screen name="RideBooking" component={RideBookingScreen} options={{ headerShown: false }} />
                 </>
               )}
 

@@ -10,13 +10,15 @@ import {Colors} from '../../../../Themes/MyColors';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Button from '../../../../Components/Button';
 import InputField from '../../../../Components/InputField';
-import storage from '@react-native-firebase/storage';
-import database from '@react-native-firebase/database';
 import useAuthStore from '../../../../store/useAuthStore';
 import useUserStore from '../../../../store/useUserStore';
 import {showMessageAlert} from '../../../../Lib/utils/CommonHelper';
 import Loader from '../../../../Components/Loader';
-import { saveBankDetailsAndPreferences, saveCarsWithImages, uploadFile } from '../../../../Config/firebase';
+import {
+  saveBankDetailsAndPreferences,
+  saveCarsWithImages,
+  uploadFile,
+} from '../../../../Config/firebase';
 
 const BankDetails = ({navigation, route}) => {
   const {cars, type, canDeliver} = route.params || {};
@@ -161,13 +163,8 @@ const BankDetails = ({navigation, route}) => {
       const filename = `${Date.now()}_${car.make}_${car.model}.jpg`;
       const path = `cars/${userId}/${filename}`;
 
-      console.log('Uploading image to path:', path);
-      console.log('File URI:', fileUri);
-
       // Use the uploadFile function from firebase config
-      const downloadURL = await uploadFile(fileUri, path);
-      console.log('Image uploaded successfully:', downloadURL);
-      return downloadURL;
+      return await uploadFile(fileUri, path);
     } catch (error) {
       console.error('Error uploading image:', error);
       // Don't throw error, just return null to continue without image
@@ -178,11 +175,6 @@ const BankDetails = ({navigation, route}) => {
   const saveDataToFirebase = async () => {
     try {
       setLoading(true);
-
-      console.log('User object:', user);
-      console.log('User UID:', user?.uid);
-      console.log('User type:', typeof user);
-
       // Check if user is authenticated - handle different user object structures
       let userId = null;
       if (user?.uid) {
@@ -197,19 +189,11 @@ const BankDetails = ({navigation, route}) => {
         console.error('User not authenticated - user object:', user);
         throw new Error('User not authenticated. Please login again.');
       }
-
-      console.log('Using user ID:', userId);
-
-      console.log('Starting to process cars:', cars);
-
       // Process cars and upload images
       const processedCars = await Promise.all(
-        cars.map(async (car) => {
-          console.log('Processing car:', car);
-          
+        cars.map(async car => {
           // If there's no photo, just return the car data without uploading
           if (!car.photo) {
-            console.log('No photo for car, skipping upload');
             return {
               make: car.make,
               model: car.model,
@@ -223,7 +207,6 @@ const BankDetails = ({navigation, route}) => {
           }
 
           // Upload image if photo exists
-          console.log('Uploading image for car:', car.make);
           const imageUrl = await uploadCarImages(car, userId);
           return {
             make: car.make,
@@ -235,17 +218,12 @@ const BankDetails = ({navigation, route}) => {
             verified: false,
             photo: imageUrl || null,
           };
-        })
+        }),
       );
-
-      console.log('Processed cars:', processedCars);
-
       // Save cars to Firebase (without images for now)
-      console.log('Saving cars to Firebase...');
       await saveCarsWithImages(userId, processedCars, type);
 
       // Update user profile with bank details and preferences
-      console.log('Saving bank details...');
       const userUpdate = await saveBankDetailsAndPreferences(userId, {
         bankDetails,
         canDeliver,
@@ -256,8 +234,6 @@ const BankDetails = ({navigation, route}) => {
         ...userData,
         ...userUpdate,
       });
-
-      console.log('Data saved successfully');
       setLoading(false);
       navigation.reset({
         index: 0,
