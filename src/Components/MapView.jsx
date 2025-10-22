@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } f
 import { View, StyleSheet, Alert, PermissionsAndroid, Platform, Text, TouchableOpacity, TextInput } from 'react-native';
 import MapView, { Marker, Circle, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { Colors } from '../Themes/MyColors';
 
 const MapViewComponent = forwardRef(({
@@ -42,17 +40,17 @@ const MapViewComponent = forwardRef(({
   useImperativeHandle(ref, () => ({
     animateToRegion: (region, duration) => {
       if (mapViewRef.current) {
-        mapViewRef.current.animateToRegion(region, duration);
+        mapViewRef.current?.animateToRegion(region, duration);
       }
     },
     getCamera: () => {
       if (mapViewRef.current) {
-        return mapViewRef.current.getCamera();
+        return mapViewRef.current?.getCamera();
       }
     },
     fitToCoordinates: (coordinates, options) => {
       if (mapViewRef.current) {
-        mapViewRef.current.fitToCoordinates(coordinates, options);
+        mapViewRef.current?.fitToCoordinates(coordinates, options);
       }
     },
   }));
@@ -256,7 +254,7 @@ const MapViewComponent = forwardRef(({
         ref={mapViewRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
-        region={region}
+        // region={region}
         onRegionChangeComplete={handleRegionChange}
         onPress={handleMapPress}
         showsUserLocation={showUserLocation}

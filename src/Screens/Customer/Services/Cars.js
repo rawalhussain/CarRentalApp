@@ -44,7 +44,7 @@ export default function CarsScreen({ navigation, route }) {
   useEffect(() => {
     if (currentLocation && destination && destination?.coordinates && mapRef?.current) {
       setTimeout(() => {
-        mapRef.current.fitToCoordinates(
+        mapRef?.current?.fitToCoordinates(
           [currentLocation, destination?.coordinates],
           {
             edgePadding: { top: 150, right: 80, bottom: 500, left: 80 },
@@ -324,12 +324,10 @@ export default function CarsScreen({ navigation, route }) {
         handleIndicatorStyle={styles.dragHandle}
         backgroundStyle={styles.bottomSheetBackground}
       >
-        <BottomSheetView style={[styles.bottomSheetContent, { paddingBottom: Math.max(insets.bottom, 20) + 40 }]}>
+        <BottomSheetScrollView style={styles.bottomSheetContent}>
           {/* Modal Header */}
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={showDetailSheet ? handleBackToRideList : handleBack} style={styles.backButton}>
-              <Ionicons name="chevron-back" size={24} color={Colors.BLACK} />
-            </TouchableOpacity>
+            <View style={styles.backButton} />
             <Text style={styles.modalTitle}>
               {showDetailSheet ? 'Confirm details' : 'Choose a ride'}
             </Text>
@@ -431,8 +429,7 @@ export default function CarsScreen({ navigation, route }) {
                         <Ionicons name="cash-outline" size={24} color={Colors.GREEN} />
                       </View>
                       <View style={styles.paymentTextContainer}>
-                        <Text style={styles.paymentType}>Personal</Text>
-                        <Text style={styles.paymentMethod}>Cash</Text>
+                        <Text style={styles.paymentType}>Cash</Text>
                       </View>
                       <Ionicons name="chevron-forward" size={20} color={Colors.BLACK} />
                     </View>
@@ -617,17 +614,6 @@ export default function CarsScreen({ navigation, route }) {
                     </TouchableOpacity>
                   );
                 })}
-
-                {/* Payment Method */}
-                <View style={styles.paymentMethodContainer}>
-                  <View style={styles.paymentMethod}>
-                    <View style={styles.paymentIcon}>
-                      <Ionicons name="cash" size={20} color={Colors.WHITE} />
-                    </View>
-                    <Text style={styles.paymentText}>Cash</Text>
-                    <Ionicons name="chevron-forward" size={16} color={Colors.PRIMARY_GREY} />
-                  </View>
-                </View>
               </>
             ) : null}
           </BottomSheetScrollView>
@@ -640,7 +626,7 @@ export default function CarsScreen({ navigation, route }) {
           {/* <View style={[styles.buttonContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
 
           </View> */}
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheet>
       {!showBookingSummary && (
         <View style={styles.buttonContainer}>
@@ -700,25 +686,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     pointerEvents: 'box-none',
   },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.WHITE,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
   myLocationButton: {
     width: 44,
     height: 44,
@@ -772,7 +739,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
   },
   bottomSheetContent: {
-    flex: 1,
     paddingHorizontal: 20,
     paddingTop: 10,
   },
@@ -815,12 +781,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   ridesList: {
-    // flex: 1,
-    marginBottom: 20,
+    paddingBottom: 120,
     paddingHorizontal: 4,
   },
   ridesListContent: {
-    // flexGrow: 1,
     paddingBottom: 20,
   },
   rideItem: {
@@ -1018,10 +982,6 @@ const styles = StyleSheet.create({
     color: Colors.WHITE,
     letterSpacing: -0.3,
   },
-  disabledButtonText: {
-    color: Colors.WHITE,
-    opacity: 0.6,
-  },
   loadingButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -1106,11 +1066,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.BLACK,
     fontWeight: '500',
-  },
-  // Disabled Button Styles
-  disabledButton: {
-    backgroundColor: Colors.PRIMARY_GREY,
-    opacity: 0.6,
   },
   disabledButtonText: {
     color: Colors.WHITE,
@@ -1328,15 +1283,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   paymentType: {
-    fontSize: 12,
+    fontSize: 16,
     color: '#6B7280',
     fontWeight: '500',
     marginBottom: 2,
-  },
-  paymentMethod: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: Colors.BLACK,
   },
   tripDetailsSection: {
     backgroundColor: Colors.WHITE,

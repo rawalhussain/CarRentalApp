@@ -238,7 +238,7 @@ export default function DestinationScreen({ navigation, route }) {
       const newDestination = {
         name: details.name || data.description,
         address: details.formatted_address || data.description,
-        coordinates: { latitude: lat, longitude: lng }
+        coordinates: { latitude: lat, longitude: lng },
       };
 
       setSelectedDestination(newDestination);
@@ -278,10 +278,21 @@ export default function DestinationScreen({ navigation, route }) {
       return;
     }
 
+    const onConfirmDestination = route?.params?.onConfirmDestination;
 
-    // Navigate back to ReserveRideScreen with destination data
+    if (typeof onConfirmDestination === 'function') {
+      onConfirmDestination({
+        destination: selectedDestination,
+        destinationLocation: selectedDestination.coordinates,
+      });
+      navigation.goBack();
+      return;
+    }
+
+    // Fallback: navigate with params if callback not provided
     navigation.navigate('ReserveRide', {
       destination: selectedDestination,
+      destinationLocation: selectedDestination.coordinates,
     });
   };
 
@@ -470,13 +481,13 @@ export default function DestinationScreen({ navigation, route }) {
                   key={destination.id}
                   style={[
                     styles.destinationItem,
-                    selectedDestination?.id === destination.id && styles.selectedDestinationItem
+                    selectedDestination?.id === destination.id && styles.selectedDestinationItem,
                   ]}
                   onPress={() => handleDestinationSelect(destination)}
                 >
                   <View style={[
                     styles.destinationIconContainer,
-                    selectedDestination?.id === destination.id && styles.selectedDestinationIcon
+                    selectedDestination?.id === destination.id && styles.selectedDestinationIcon,
                   ]}>
                     <Ionicons
                       name={
@@ -494,7 +505,7 @@ export default function DestinationScreen({ navigation, route }) {
                   <View style={styles.destinationDetails}>
                     <Text style={[
                       styles.destinationName,
-                      selectedDestination?.id === destination.id && styles.selectedDestinationName
+                      selectedDestination?.id === destination.id && styles.selectedDestinationName,
                     ]}>
                       {destination.name}
                     </Text>
@@ -518,14 +529,14 @@ export default function DestinationScreen({ navigation, route }) {
         <TouchableOpacity
           style={[
             styles.confirmButton,
-            !selectedDestination && styles.disabledButton
+            !selectedDestination && styles.disabledButton,
           ]}
           onPress={handleConfirmDestination}
           disabled={!selectedDestination}
         >
           <Text style={[
             styles.confirmButtonText,
-            !selectedDestination && styles.disabledButtonText
+            !selectedDestination && styles.disabledButtonText,
           ]}>
             Confirm destination
           </Text>
@@ -612,7 +623,7 @@ const styles = StyleSheet.create({
   bottomSheetContent: {
     flex: 1,
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-    minHeight: 300
+    minHeight: 300,
   },
   dragHandle: {
     width: 100,
@@ -741,7 +752,7 @@ const styles = StyleSheet.create({
   googlePlacesContainer: {
     flex: 0,
     width: '100%',
-    minHeight: 180
+    minHeight: 180,
   },
   googlePlacesTextInputContainer: {
   },

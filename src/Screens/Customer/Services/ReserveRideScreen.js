@@ -41,8 +41,8 @@ export default function ReserveRideScreen({ navigation, route }) {
   // State for current location
   const [currentLocation, setCurrentLocation] = useState(null);
   const [currentLocationText, setCurrentLocationText] = useState('Detecting location...');
-  const [currentLocationCoordinates, setCurrentLocationCoordinates] = useState('');
-  const [isLoadingAddress, setIsLoadingAddress] = useState(true);
+  const [, setCurrentLocationCoordinates] = useState('');
+  const [, setIsLoadingAddress] = useState(true);
   const [locationWatchId, setLocationWatchId] = useState(null);
 
   // State for destination
@@ -83,52 +83,54 @@ export default function ReserveRideScreen({ navigation, route }) {
   // This implementation provides dynamic location fetching with automatic updates
   // when the user's location changes, and real-time polyline drawing between markers
   useEffect(() => {
-    const initializeLocation = async () => {
-      setIsLoadingAddress(true);
-      setCurrentLocationText('Detecting location...');
+    if (!route?.params?.updatedPickupLocation){
+      initializeLocation();
 
-      try {
-        // Get initial location (detect once)
-        const location = await LocationService.getCurrentLocation();
-        if (location) {
-          setCurrentLocation(location);
+    }
+  }, [route?.params?.updatedPickupLocation]);
 
-          // Set coordinates for display
-          const coordText = `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
-          setCurrentLocationCoordinates(coordText);
+  const initializeLocation = async () => {
+    setIsLoadingAddress(true);
+    setCurrentLocationText('Detecting location...');
 
-          // Get the actual address using reverse geocoding
-          const address = await LocationService.getCurrentLocationAddress();
-          setCurrentLocationText(address);
-          setIsLoadingAddress(false);
+    try {
+      // Get initial location (detect once)
+      const location = await LocationService.getCurrentLocation();
+      if (location) {
+        setCurrentLocation(location);
 
-          // Animate map to current location after a short delay to ensure map is loaded
-          // Offset the latitude slightly so marker shows in upper part (not hidden by bottom sheet)
-          setTimeout(() => {
-            if (mapRef.current) {
-              mapRef.current.animateToRegion({
-                latitude: location.latitude - 0.003, // Offset to show marker in upper visible area
-                longitude: location.longitude,
-                latitudeDelta: 0.015,
-                longitudeDelta: 0.015,
-              }, 1000);
-            }
-          }, 500);
-        } else {
-          console.warn('Location not available');
-          setCurrentLocationText('Current Location');
-          setIsLoadingAddress(false);
-        }
+        // Set coordinates for display
+        const coordText = `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
+        setCurrentLocationCoordinates(coordText);
 
-      } catch (error) {
-        console.warn('Failed to initialize location:', error);
+        // Get the actual address using reverse geocoding
+        const address = await LocationService.getCurrentLocationAddress();
+        setCurrentLocationText(address);
+        setIsLoadingAddress(false);
+
+        // Animate map to current location after a short delay to ensure map is loaded
+        // Offset the latitude slightly so marker shows in upper part (not hidden by bottom sheet)
+        setTimeout(() => {
+          if (mapRef.current) {
+            mapRef.current.animateToRegion({
+              latitude: location.latitude - 0.003, // Offset to show marker in upper visible area
+              longitude: location.longitude,
+              latitudeDelta: 0.015,
+              longitudeDelta: 0.015,
+            }, 1000);
+          }
+        }, 5000);
+      } else {
         setCurrentLocationText('Current Location');
         setIsLoadingAddress(false);
       }
-    };
 
-    initializeLocation();
-  }, []);
+    } catch (error) {
+      console.warn('Failed to initialize location:', error);
+      setCurrentLocationText('Current Location');
+      setIsLoadingAddress(false);
+    }
+  };
 
   // Start real-time location tracking
   useEffect(() => {
@@ -159,7 +161,10 @@ export default function ReserveRideScreen({ navigation, route }) {
     };
 
     // Start watching after initial location is set
-    const timer = setTimeout(startLocationWatching, 2000);
+    let timer;
+    if (!route?.params?.updatedPickupLocation)    {
+      timer = setTimeout(startLocationWatching, 20000);
+    }
 
     return () => {
       clearTimeout(timer);
@@ -167,7 +172,7 @@ export default function ReserveRideScreen({ navigation, route }) {
         LocationService.stopWatchingLocation(locationWatchId);
       }
     };
-  }, []);
+  }, [route?.params?.updatedPickupLocation]);
 
 
   // Handle route params - destination from DestinationScreen
@@ -228,7 +233,7 @@ export default function ReserveRideScreen({ navigation, route }) {
 
   // Update map region when current location changes
   useEffect(() => {
-    if (currentLocation && mapRef.current) {
+    if (currentLocation && mapRef.current && !route?.params?.updatedPickupLocation) {
       // Only update if no destination is selected to avoid conflicts
       if (!destination || !destination.coordinates) {
         setTimeout(() => {
@@ -241,7 +246,7 @@ export default function ReserveRideScreen({ navigation, route }) {
         }, 500);
       }
     }
-  }, [currentLocation]);
+  }, [currentLocation, route?.params?.updatedPickupLocation]);
 
 
   // Cleanup location watching on component unmount
@@ -359,6 +364,34 @@ export default function ReserveRideScreen({ navigation, route }) {
       showCurrentLocation: true,
       currentLocation: currentLocation,
       currentLocationText: currentLocationText,
+      onConfirmPickup: ({ location, address }) => {
+        if (!location) return;
+        setCurrentLocation(location);
+        setCurrentLocationText(address || 'Selected Location');
+        setCurrentLocationCoordinates(`${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`);
+
+        // Animate map after updating pickup
+        setTimeout(() => {
+          if (mapRef.current) {
+            if (destination && destination.coordinates) {
+              mapRef.current?.fitToCoordinates(
+                [location, destination.coordinates],
+                {
+                  edgePadding: { top: 150, right: 80, bottom: 500, left: 80 },
+                  animated: true,
+                }
+              );
+            } else {
+              mapRef.current?.animateToRegion({
+                latitude: location.latitude - 0.003,
+                longitude: location.longitude,
+                latitudeDelta: 0.015,
+                longitudeDelta: 0.015,
+              }, 1000);
+            }
+          }
+        }, 300);
+      },
     });
   };
 
@@ -367,6 +400,31 @@ export default function ReserveRideScreen({ navigation, route }) {
     navigation.navigate('Destination', {
       currentLocation: currentLocation,
       pickupAddress: currentLocationText,
+      onConfirmDestination: ({ destination: dest, destinationLocation }) => {
+        const finalDestination = dest || (destinationLocation ? {
+          name: 'Destination',
+          address: '',
+          coordinates: destinationLocation,
+        } : null);
+
+        if (!finalDestination) return;
+
+        setDestination(finalDestination);
+        setDestinationText(finalDestination.address || finalDestination.name || '');
+
+        // Fit map to show both pickup and destination
+        if (currentLocation && finalDestination.coordinates && mapRef.current) {
+          setTimeout(() => {
+            mapRef.current?.fitToCoordinates(
+              [currentLocation, finalDestination.coordinates],
+              {
+                edgePadding: { top: 150, right: 80, bottom: 500, left: 80 },
+                animated: true,
+              }
+            );
+          }, 300);
+        }
+      },
     });
   };
 
