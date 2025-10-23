@@ -629,6 +629,18 @@ export const getPackageCars = async (packageId) => {
   }
 };
 
+export const updatePackageCar = async (packageId, carId, carData) => {
+  try {
+    await database().ref(`package_cars/${packageId}/${carId}`).update({
+      ...carData,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
+    });
+  } catch (error) {
+    console.error('Error updating package car:', error);
+    throw error;
+  }
+};
+
 // Package Pricing Rules Functions
 export const addPackagePricing = async (packageId, pricingData) => {
   try {

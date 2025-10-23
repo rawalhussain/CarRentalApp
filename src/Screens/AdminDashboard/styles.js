@@ -10,7 +10,7 @@ export default StyleSheet.create({
   header: {
     backgroundColor: Colors.WHITE,
     // paddingTop: 50,
-    paddingBottom: 15,
+    // paddingBottom: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
@@ -75,6 +75,11 @@ export default StyleSheet.create({
   section: {
     padding: 20,
   },
+  sectionQuickActions:{
+    paddingHorizontal: 20,
+    paddingVertical: 1,
+    // backgroundColor: Colors.WHITE,
+  },
 
   sectionHeader: {
     flexDirection: 'row',
@@ -88,6 +93,13 @@ export default StyleSheet.create({
     fontWeight: '600',
     color: '#333',
   },
+  sectionTitleQuickActions: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 15,
+  },
+
 
   seeAllText: {
     color: '#E53935',

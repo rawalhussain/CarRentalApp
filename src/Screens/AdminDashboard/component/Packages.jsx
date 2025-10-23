@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Colors } from '../../../Themes/MyColors';
-import { getRidePackages, updateRidePackage, deleteRidePackage, getPackageCars, getPackagePricing, addPackagePricing, getCars } from '../../../Config/firebase';
+import { getRidePackages, updateRidePackage, deleteRidePackage, getPackageCars, getPackagePricing, addPackagePricing, getCars, updatePackageCar } from '../../../Config/firebase';
 import { showMessageAlert } from '../../../Lib/utils/CommonHelper';
 import MainHeader from '../../../Components/MainHeader';
 
@@ -127,6 +127,25 @@ const PackagesManagement = ({ navigation }) => {
       };
       await addPackagePricing(selectedPackage.id, pricingData);
 
+      // Update car details if they were modified
+      if (formData.carDetails && selectedPackage.cars && selectedPackage.cars.length > 0) {
+        const firstCar = selectedPackage.cars[0];
+        if (firstCar && firstCar.id) {
+          const updatedCarData = {
+            make: formData.carDetails.make,
+            model: formData.carDetails.model,
+            year: formData.carDetails.year,
+            color: formData.carDetails.color,
+            variant: formData.carDetails.variant,
+            seats: formData.carDetails.seats,
+            transmission: formData.carDetails.transmission,
+            fuelType: formData.carDetails.fuelType,
+            price: formData.carDetails.price,
+          };
+          await updatePackageCar(selectedPackage.id, firstCar.id, updatedCarData);
+        }
+      }
+
       await fetchPackages();
       setShowEditModal(false);
       setSelectedPackage(null);
@@ -191,13 +210,28 @@ const PackagesManagement = ({ navigation }) => {
 
   const openEditModal = (packageItem) => {
     setSelectedPackage(packageItem);
+    
+    // Get the first car's details to populate the form
+    const firstCar = packageItem.cars?.[0] || {};
+    
     setFormData({
       name: packageItem.name,
       description: packageItem.description || '',
       ratePerMile: packageItem.ratePerMile?.toString() || '',
       baseFare: packageItem.baseFare?.toString() || '',
-      selectedCars: packageItem.cars?.map(car => car.carId) || [],
+      selectedCars: packageItem.cars?.map(car => car.id) || [],
       packageImage: packageItem.image || null,
+      carDetails: {
+        make: firstCar.make || '',
+        model: firstCar.model || '',
+        year: firstCar.year || '',
+        color: firstCar.color || '',
+        variant: firstCar.variant || '',
+        seats: firstCar.seats || '',
+        transmission: firstCar.transmission || '',
+        fuelType: firstCar.fuelType || '',
+        price: firstCar.price || '',
+      },
     });
     setShowEditModal(true);
   };
@@ -213,22 +247,22 @@ const PackagesManagement = ({ navigation }) => {
 
 
   const handleAddNewCar = () => {
-    if (!formData.carDetails.make || !formData.carDetails.model) {
+    if (!formData.carDetails?.make || !formData.carDetails?.model) {
       showMessageAlert('Error', 'Please fill car make and model', 'danger');
       return;
     }
 
     const newCar = {
       id: `temp_${Date.now()}`,
-      make: formData.carDetails.make,
-      model: formData.carDetails.model,
-      year: formData.carDetails.year,
-      color: formData.carDetails.color,
-      variant: formData.carDetails.variant,
-      seats: formData.carDetails.seats,
-      transmission: formData.carDetails.transmission,
-      fuelType: formData.carDetails.fuelType,
-      price: formData.carDetails.price,
+      make: formData.carDetails?.make || '',
+      model: formData.carDetails?.model || '',
+      year: formData.carDetails?.year || '',
+      color: formData.carDetails?.color || '',
+      variant: formData.carDetails?.variant || '',
+      seats: formData.carDetails?.seats || '',
+      transmission: formData.carDetails?.transmission || '',
+      fuelType: formData.carDetails?.fuelType || '',
+      price: formData.carDetails?.price || '',
     };
 
     setFormData(prev => ({
@@ -423,17 +457,17 @@ const PackagesManagement = ({ navigation }) => {
 
               {/* Add New Car Section */}
               <View style={styles.formGroup}>
-                <Text style={styles.sectionTitle}>Add New Car</Text>
+                <Text style={styles.sectionTitle}>Edit Car Details</Text>
                 <View style={styles.carDetailsForm}>
                   <View style={styles.formRow}>
                     <View style={[styles.formGroup, styles.halfWidth]}>
                       <Text style={styles.label}>Make *</Text>
                       <TextInput
                         style={styles.input}
-                        value={formData.carDetails.make}
+                        value={formData.carDetails?.make || ''}
                         onChangeText={(text) => setFormData(prev => ({
                           ...prev,
-                          carDetails: { ...prev.carDetails, make: text },
+                          carDetails: { ...(prev.carDetails || {}), make: text },
                         }))}
                         placeholder="e.g., Toyota"
                         placeholderTextColor={Colors.GRAY}
@@ -443,10 +477,10 @@ const PackagesManagement = ({ navigation }) => {
                       <Text style={styles.label}>Model *</Text>
                       <TextInput
                         style={styles.input}
-                        value={formData.carDetails.model}
+                        value={formData.carDetails?.model || ''}
                         onChangeText={(text) => setFormData(prev => ({
                           ...prev,
-                          carDetails: { ...prev.carDetails, model: text },
+                          carDetails: { ...(prev.carDetails || {}), model: text },
                         }))}
                         placeholder="e.g., Camry"
                         placeholderTextColor={Colors.GRAY}
@@ -459,10 +493,10 @@ const PackagesManagement = ({ navigation }) => {
                       <Text style={styles.label}>Year</Text>
                       <TextInput
                         style={styles.input}
-                        value={formData.carDetails.year}
+                        value={formData.carDetails?.year || ''}
                         onChangeText={(text) => setFormData(prev => ({
                           ...prev,
-                          carDetails: { ...prev.carDetails, year: text },
+                          carDetails: { ...(prev.carDetails || {}), year: text },
                         }))}
                         placeholder="2023"
                         placeholderTextColor={Colors.GRAY}
@@ -473,10 +507,10 @@ const PackagesManagement = ({ navigation }) => {
                       <Text style={styles.label}>Color</Text>
                       <TextInput
                         style={styles.input}
-                        value={formData.carDetails.color}
+                        value={formData.carDetails?.color || ''}
                         onChangeText={(text) => setFormData(prev => ({
                           ...prev,
-                          carDetails: { ...prev.carDetails, color: text },
+                          carDetails: { ...(prev.carDetails || {}), color: text },
                         }))}
                         placeholder="e.g., White"
                         placeholderTextColor={Colors.GRAY}
@@ -489,10 +523,10 @@ const PackagesManagement = ({ navigation }) => {
                       <Text style={styles.label}>Seats</Text>
                       <TextInput
                         style={styles.input}
-                        value={formData.carDetails.seats}
+                        value={formData.carDetails?.seats || ''}
                         onChangeText={(text) => setFormData(prev => ({
                           ...prev,
-                          carDetails: { ...prev.carDetails, seats: text },
+                          carDetails: { ...(prev.carDetails || {}), seats: text },
                         }))}
                         placeholder="4"
                         placeholderTextColor={Colors.GRAY}
@@ -503,10 +537,10 @@ const PackagesManagement = ({ navigation }) => {
                       <Text style={styles.label}>Price/Day</Text>
                       <TextInput
                         style={styles.input}
-                        value={formData.carDetails.price}
+                        value={formData.carDetails?.price || ''}
                         onChangeText={(text) => setFormData(prev => ({
                           ...prev,
-                          carDetails: { ...prev.carDetails, price: text },
+                          carDetails: { ...(prev.carDetails || {}), price: text },
                         }))}
                         placeholder="50"
                         placeholderTextColor={Colors.GRAY}
@@ -515,47 +549,11 @@ const PackagesManagement = ({ navigation }) => {
                     </View>
                   </View>
 
-                  <TouchableOpacity style={styles.addCarButton} onPress={handleAddNewCar}>
-                    <Ionicons name="add" size={20} color={Colors.WHITE} />
-                    <Text style={styles.addCarButtonText}>Add Car to Package</Text>
-                  </TouchableOpacity>
+                 
                 </View>
               </View>
 
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Select Cars *</Text>
-                <ScrollView
-                  style={styles.carsSelection}
-                  nestedScrollEnabled={true}
-                  showsVerticalScrollIndicator={true}
-                >
-                  {availableCars.map(car => (
-                    <TouchableOpacity
-                      key={car.id}
-                      style={[
-                        styles.carOption,
-                        formData.selectedCars.includes(car.id) && styles.selectedCarOption,
-                      ]}
-                      onPress={() => toggleCarSelection(car.id)}
-                    >
-                      <View style={styles.carOptionContent}>
-                        <Text style={[
-                          styles.carOptionText,
-                          formData.selectedCars.includes(car.id) && styles.selectedCarOptionText,
-                        ]}>
-                          {car.make} {car.model}
-                        </Text>
-                        {car.year && (
-                          <Text style={styles.carOptionSubText}>{car.year} • {car.color}</Text>
-                        )}
-                      </View>
-                      {formData.selectedCars.includes(car.id) && (
-                        <Ionicons name="checkmark" size={16} color={Colors.PRIMARY} />
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
+         
             </ScrollView>
           </View>
 
@@ -969,8 +967,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.BACKGROUND_GREY,
   },
   packageImage: {
-    width: '100%',
-    height: '100%',
+    width: 180,
+    height: 100,
     borderRadius: 6,
   },
   imagePlaceholder: {

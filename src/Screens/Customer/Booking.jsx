@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import {Colors} from '../../Themes/MyColors';
-import {getBookings, updateBookingStatus} from '../../Config/firebase';
+import {getBookings, updateBookingStatus, getPackageBookings, updatePackageBookingStatus} from '../../Config/firebase';
 import useAuthStore from '../../store/useAuthStore';
 import Loader from '../../Components/Loader';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -22,11 +22,13 @@ const {width} = Dimensions.get('window');
 const CustomerBookings = ({ navigation }) => {
   const { user } = useAuthStore();
   const [bookings, setBookings] = useState([]);
+  const [packageBookings, setPackageBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'today', 'tomorrow'
+  const [bookingType, setBookingType] = useState('ride'); // 'all', 'ride', 'car' - default to 'ride' (Book Ride)
 
   useEffect(() => {
     if (user && (user.uid || user.user?.uid)) {
@@ -36,7 +38,7 @@ const CustomerBookings = ({ navigation }) => {
 
   useEffect(() => {
     filterBookings();
-  }, [bookings, activeFilter]);
+  }, [bookings, packageBookings, activeFilter, bookingType]);
 
   const fetchBookings = useCallback(async (manual = false) => {
     if (manual) {
@@ -55,20 +57,35 @@ const CustomerBookings = ({ navigation }) => {
     }
 
     try {
-      const data = await getBookings(userId, 'customer');
-      if (data) {
-        // Convert object to array with id and sort by creation date
-        const arr = Object.entries(data)
-          .map(([id, booking]) => ({ id, ...booking }))
+      // Fetch both regular bookings and package bookings
+      const [regularBookingsData, packageBookingsData] = await Promise.all([
+        getBookings(userId, 'customer'),
+        getPackageBookings(userId, 'customer')
+      ]);
+
+      // Process regular bookings
+      let regularBookings = [];
+      if (regularBookingsData) {
+        regularBookings = Object.entries(regularBookingsData)
+          .map(([id, booking]) => ({ id, ...booking, bookingType: 'car' }))
           .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        setBookings(arr);
-      } else {
-        setBookings([]);
       }
+      setBookings(regularBookings);
+
+      // Process package bookings
+      let packageBookings = [];
+      if (packageBookingsData) {
+        packageBookings = packageBookingsData
+          .map(booking => ({ ...booking, bookingType: 'ride' }))
+          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      }
+      setPackageBookings(packageBookings);
+
     } catch (e) {
       console.error('Error fetching bookings:', e);
       setError('Failed to load bookings. Please try again.');
       setBookings([]);
+      setPackageBookings([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -80,8 +97,23 @@ const CustomerBookings = ({ navigation }) => {
   }, [fetchBookings]);
 
   const filterBookings = useCallback(() => {
+    // Combine all bookings based on booking type
+    let allBookings = [];
+    
+    if (bookingType === 'all') {
+      allBookings = [...bookings, ...packageBookings];
+    } else if (bookingType === 'ride') {
+      allBookings = packageBookings;
+    } else if (bookingType === 'car') {
+      allBookings = bookings;
+    }
+
+
+    // Sort combined bookings by creation date
+    allBookings.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
     if (activeFilter === 'all') {
-      setFilteredBookings(bookings);
+      setFilteredBookings(allBookings);
       return;
     }
 
@@ -89,31 +121,62 @@ const CustomerBookings = ({ navigation }) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const filterDate = activeFilter === 'today' ? today : tomorrow;
-    const filterDateStr = filterDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+    // Set time to start of day for accurate comparison
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const tomorrowStart = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
 
-    const filtered = bookings.filter(booking => {
-      // Use createdAt (booking creation date) instead of pickupDate
+    const filtered = allBookings.filter(booking => {
       const createdAt = booking.createdAt;
       if (!createdAt) {return false;}
 
       try {
-        // Convert timestamp to date
-        const bookingDate = new Date(createdAt);
-        const bookingDateStr = bookingDate.toISOString().split('T')[0];
-        return bookingDateStr === filterDateStr;
+        // Handle both timestamp formats (number or string)
+        let bookingDate;
+        if (typeof createdAt === 'number') {
+          bookingDate = new Date(createdAt);
+        } else if (typeof createdAt === 'string') {
+          bookingDate = new Date(createdAt);
+        } else {
+          // Handle Firebase timestamp object
+          bookingDate = new Date(createdAt);
+        }
+        
+        // Check if the date is valid
+        if (isNaN(bookingDate.getTime())) {
+          return false;
+        }
+        
+        if (activeFilter === 'today') {
+          // Check if booking was created today
+          const isToday = bookingDate >= todayStart && bookingDate < tomorrowStart;
+          return isToday;
+        } else if (activeFilter === 'tomorrow') {
+          // Check if booking was created tomorrow
+          const dayAfterTomorrow = new Date(tomorrowStart);
+          dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+          return bookingDate >= tomorrowStart && bookingDate < dayAfterTomorrow;
+        }
+        
+        return false;
       } catch (error) {
-        return error;
+        console.error('Error filtering booking date:', error, 'createdAt:', createdAt);
+        return false;
       }
     });
+    
+    
     setFilteredBookings(filtered);
-  }, [bookings, activeFilter]);
+  }, [bookings, packageBookings, activeFilter, bookingType]);
 
   const handleFilterChange = useCallback((filter) => {
     setActiveFilter(filter);
   }, []);
 
-  const handleCancelBooking = useCallback(async (bookingId) => {
+  const handleBookingTypeChange = useCallback((type) => {
+    setBookingType(type);
+  }, []);
+
+  const handleCancelBooking = useCallback(async (bookingId, bookingType) => {
     Alert.alert(
       'Cancel Booking',
       'Are you sure you want to cancel this booking?',
@@ -124,7 +187,11 @@ const CustomerBookings = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await updateBookingStatus(bookingId, 'cancelled');
+              if (bookingType === 'ride') {
+                await updatePackageBookingStatus(bookingId, 'cancelled');
+              } else {
+                await updateBookingStatus(bookingId, 'cancelled');
+              }
               // Refresh bookings after cancellation
               fetchBookings(true);
             } catch (error) {
@@ -229,10 +296,9 @@ const CustomerBookings = ({ navigation }) => {
   };
 
   const renderItem = ({ item }) => {
-    const vehicle = item.vehicle || {};
     const status = item.status || 'pending';
     const canCancel = status === 'pending' || status === 'confirmed';
-    const searchPrefs = item.searchPreferences || {};
+    const isPackageBooking = item.bookingType === 'ride';
 
     return (
       <TouchableOpacity
@@ -240,14 +306,26 @@ const CustomerBookings = ({ navigation }) => {
         onPress={() => navigation.navigate('BookingDetails', { ...item, bookingId: item.id })}
         activeOpacity={0.7}
       >
-        {/* Header with Vehicle Info and Status */}
+        {/* Header with Info and Status */}
         <View style={styles.cardHeader}>
           <View style={styles.vehicleInfo}>
-            <Text style={styles.model}>
-              {vehicle.make || 'Vehicle'} {vehicle.model || ''} {vehicle.variant ? `(${vehicle.variant})` : ''}
-            </Text>
-            <Text style={styles.year}>{vehicle.year || ''}</Text>
-            {vehicle.color && <Text style={styles.color}>Color: {vehicle.color}</Text>}
+            {isPackageBooking ? (
+              <>
+                <Text style={styles.model}>
+                  {item.packageName || 'Ride Package'}
+                </Text>
+                <Text style={styles.year}>Package Booking</Text>
+                {item.pickupLocation && <Text style={styles.color}>Pickup: {item.pickupLocation}</Text>}
+              </>
+            ) : (
+              <>
+                <Text style={styles.model}>
+                  {item.vehicle?.make || 'Vehicle'} {item.vehicle?.model || ''} {item.vehicle?.variant ? `(${item.vehicle.variant})` : ''}
+                </Text>
+                <Text style={styles.year}>{item.vehicle?.year || ''}</Text>
+                {item.vehicle?.color && <Text style={styles.color}>Color: {item.vehicle.color}</Text>}
+              </>
+            )}
           </View>
           <View style={[styles.statusContainer, { backgroundColor: getStatusColor(status) + '20' }]}>
             <Icon
@@ -261,42 +339,84 @@ const CustomerBookings = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Vehicle Specifications */}
+        {/* Specifications */}
         <View style={styles.specsContainer}>
           <View style={styles.specRow}>
-            <View style={styles.specItem}>
-              <Icon name="people-outline" size={14} color={Colors.PRIMARY_GREY} />
-              <Text style={styles.specText}>{vehicle.seats || 'N/A'} Seats</Text>
-            </View>
-            <View style={styles.specItem}>
-              <Icon name="car-outline" size={14} color={Colors.PRIMARY_GREY} />
-              <Text style={styles.specText}>{vehicle.transmission || 'Auto'}</Text>
-            </View>
-            <View style={styles.specItem}>
-              <Icon name="car-sport" size={14} color={Colors.PRIMARY_GREY} />
-              <Text style={styles.specText}>{vehicle.fuelType || 'Petrol'}</Text>
-            </View>
+            {isPackageBooking ? (
+              <>
+                <View style={styles.specItem}>
+                  <Icon name="time-outline" size={14} color={Colors.PRIMARY_GREY} />
+                  <Text style={styles.specText}>{item.duration || 'N/A'} Days</Text>
+                </View>
+                <View style={styles.specItem}>
+                  <Icon name="people-outline" size={14} color={Colors.PRIMARY_GREY} />
+                  <Text style={styles.specText}>{item.passengers || 'N/A'} Passengers</Text>
+                </View>
+                <View style={styles.specItem}>
+                  <Icon name="location-outline" size={14} color={Colors.PRIMARY_GREY} />
+                  <Text style={styles.specText}>{item.destination || 'N/A'}</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.specItem}>
+                  <Icon name="people-outline" size={14} color={Colors.PRIMARY_GREY} />
+                  <Text style={styles.specText}>{item.vehicle?.seats || 'N/A'} Seats</Text>
+                </View>
+                <View style={styles.specItem}>
+                  <Icon name="car-outline" size={14} color={Colors.PRIMARY_GREY} />
+                  <Text style={styles.specText}>{item.vehicle?.transmission || 'Auto'}</Text>
+                </View>
+                <View style={styles.specItem}>
+                  <Icon name="car-sport" size={14} color={Colors.PRIMARY_GREY} />
+                  <Text style={styles.specText}>{item.vehicle?.fuelType || 'Petrol'}</Text>
+                </View>
+              </>
+            )}
           </View>
         </View>
 
         {/* Date and Time Information */}
         <View style={styles.dateContainer}>
-          <View style={styles.dateItem}>
-            <Icon name="calendar-outline" size={16} color={Colors.PRIMARY_GREY} />
-            <Text style={styles.dateLabel}>Pickup</Text>
-            <Text style={styles.date}>{formatDate(searchPrefs.pickupDate)}</Text>
-            {searchPrefs.pickupTime && (
-              <Text style={styles.time}>{searchPrefs.pickupTime}</Text>
-            )}
-          </View>
-          <View style={[styles.dateItem]}>
-            <Icon name="calendar-outline" size={16} color={Colors.PRIMARY_GREY} />
-            <Text style={styles.dateLabel}>Return</Text>
-            <Text style={styles.date}>{formatDate(searchPrefs.dropoffDate)}</Text>
-            {searchPrefs.dropoffTime && (
-              <Text style={styles.time}>{searchPrefs.dropoffTime}</Text>
-            )}
-          </View>
+          {isPackageBooking ? (
+            <>
+              <View style={styles.dateItem}>
+                <Icon name="calendar-outline" size={16} color={Colors.PRIMARY_GREY} />
+                <Text style={styles.dateLabel}>Start Date</Text>
+                <Text style={styles.date}>{formatDate(item.startDate)}</Text>
+                {item.startTime && (
+                  <Text style={styles.time}>{item.startTime}</Text>
+                )}
+              </View>
+              <View style={styles.dateItem}>
+                <Icon name="calendar-outline" size={16} color={Colors.PRIMARY_GREY} />
+                <Text style={styles.dateLabel}>End Date</Text>
+                <Text style={styles.date}>{formatDate(item.endDate)}</Text>
+                {item.endTime && (
+                  <Text style={styles.time}>{item.endTime}</Text>
+                )}
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.dateItem}>
+                <Icon name="calendar-outline" size={16} color={Colors.PRIMARY_GREY} />
+                <Text style={styles.dateLabel}>Pickup</Text>
+                <Text style={styles.date}>{formatDate(item.searchPreferences?.pickupDate)}</Text>
+                {item.searchPreferences?.pickupTime && (
+                  <Text style={styles.time}>{item.searchPreferences.pickupTime}</Text>
+                )}
+              </View>
+              <View style={styles.dateItem}>
+                <Icon name="calendar-outline" size={16} color={Colors.PRIMARY_GREY} />
+                <Text style={styles.dateLabel}>Return</Text>
+                <Text style={styles.date}>{formatDate(item.searchPreferences?.dropoffDate)}</Text>
+                {item.searchPreferences?.dropoffTime && (
+                  <Text style={styles.time}>{item.searchPreferences.dropoffTime}</Text>
+                )}
+              </View>
+            </>
+          )}
         </View>
 
         {/* Booking Date Information */}
@@ -309,19 +429,40 @@ const CustomerBookings = ({ navigation }) => {
         </View>
 
         {/* Location Information */}
-        {(searchPrefs.pickupLocation || searchPrefs.dropoffLocation) && (
-          <View style={styles.locationContainer}>
-            <View style={styles.locationItem}>
-              <Icon name="location-outline" size={14} color={Colors.PRIMARY_GREY} />
-              <Text style={styles.locationLabel}>Pickup Location</Text>
-              <Text style={styles.locationText}>{searchPrefs.pickupLocation || '-'}</Text>
+        {isPackageBooking ? (
+          (item.pickupLocation || item.destination) && (
+            <View style={styles.locationContainer}>
+              {item.pickupLocation && (
+                <View style={styles.locationItem}>
+                  <Icon name="location-outline" size={14} color={Colors.PRIMARY_GREY} />
+                  <Text style={styles.locationLabel}>Pickup Location</Text>
+                  <Text style={styles.locationText}>{item.pickupLocation}</Text>
+                </View>
+              )}
+              {item.destination && (
+                <View style={styles.locationItem}>
+                  <Icon name="location-outline" size={14} color={Colors.PRIMARY_GREY} />
+                  <Text style={styles.locationLabel}>Destination</Text>
+                  <Text style={styles.locationText}>{item.destination}</Text>
+                </View>
+              )}
             </View>
-            <View style={styles.locationItem}>
-              <Icon name="location-outline" size={14} color={Colors.PRIMARY_GREY} />
-              <Text style={styles.locationLabel}>Return Location</Text>
-              <Text style={styles.locationText}>{searchPrefs.dropoffLocation || '-'}</Text>
+          )
+        ) : (
+          (item.searchPreferences?.pickupLocation || item.searchPreferences?.dropoffLocation) && (
+            <View style={styles.locationContainer}>
+              <View style={styles.locationItem}>
+                <Icon name="location-outline" size={14} color={Colors.PRIMARY_GREY} />
+                <Text style={styles.locationLabel}>Pickup Location</Text>
+                <Text style={styles.locationText}>{item.searchPreferences?.pickupLocation || '-'}</Text>
+              </View>
+              <View style={styles.locationItem}>
+                <Icon name="location-outline" size={14} color={Colors.PRIMARY_GREY} />
+                <Text style={styles.locationLabel}>Return Location</Text>
+                <Text style={styles.locationText}>{item.searchPreferences?.dropoffLocation || '-'}</Text>
+              </View>
             </View>
-          </View>
+          )
         )}
 
         {/* Booking Details */}
@@ -346,15 +487,24 @@ const CustomerBookings = ({ navigation }) => {
         <View style={styles.amountContainer}>
           <View style={styles.amountRow}>
             <Text style={styles.amountLabel}>Total Amount</Text>
-            <Text style={styles.amount}>${item.amount || '0'}</Text>
+            <Text style={styles.amount}>${item.totalAmount || item.amount || '0'}</Text>
           </View>
-          {searchPrefs.pickupDate && searchPrefs.dropoffDate && formatDate(searchPrefs.pickupDate) !== '-' && formatDate(searchPrefs.dropoffDate) !== '-' && (
-            <View style={styles.durationRow}>
-              <Text style={styles.durationLabel}>Duration</Text>
-              <Text style={styles.duration}>
-                {Math.ceil((new Date(searchPrefs.dropoffDate) - new Date(searchPrefs.pickupDate)) / (1000 * 60 * 60 * 24))} days
-              </Text>
-            </View>
+          {isPackageBooking ? (
+            item.duration && (
+              <View style={styles.durationRow}>
+                <Text style={styles.durationLabel}>Duration</Text>
+                <Text style={styles.duration}>{item.duration} days</Text>
+              </View>
+            )
+          ) : (
+            item.searchPreferences?.pickupDate && item.searchPreferences?.dropoffDate && formatDate(item.searchPreferences.pickupDate) !== '-' && formatDate(item.searchPreferences.dropoffDate) !== '-' && (
+              <View style={styles.durationRow}>
+                <Text style={styles.durationLabel}>Duration</Text>
+                <Text style={styles.duration}>
+                  {Math.ceil((new Date(item.searchPreferences.dropoffDate) - new Date(item.searchPreferences.pickupDate)) / (1000 * 60 * 60 * 24))} days
+                </Text>
+              </View>
+            )
           )}
         </View>
 
@@ -363,7 +513,7 @@ const CustomerBookings = ({ navigation }) => {
           {canCancel && (
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => handleCancelBooking(item.id)}
+              onPress={() => handleCancelBooking(item.id, item.bookingType)}
               activeOpacity={0.7}
             >
               <Icon name="close-circle-outline" size={16} color={Colors.RED} />
@@ -383,11 +533,48 @@ const CustomerBookings = ({ navigation }) => {
     );
   };
 
+  const renderPackagesFilterButtons = () => {
+    const filters = [
+      { key: 'all', label: 'All Bookings', icon: 'list' },
+      { key: 'ride', label: 'Book Ride', icon: 'car-sport' },
+      { key: 'car', label: 'Rent Vehicle', icon: 'car' },
+    ];
+
+    return (
+      <View style={styles.filterContainer}>
+        {filters.map((filter) => (
+          <TouchableOpacity
+            key={filter.key}
+            style={[
+              styles.filterButton,
+              bookingType === filter.key && styles.activeFilterButton,
+            ]}
+            onPress={() => handleBookingTypeChange(filter.key)}
+            activeOpacity={0.7}
+          >
+            <Icon
+              name={filter.icon}
+              size={16}
+              color={bookingType === filter.key ? Colors.WHITE : Colors.PRIMARY}
+            />
+            <Text
+              style={[
+                styles.filterButtonText,
+                bookingType === filter.key && styles.activeFilterButtonText,
+              ]}
+            >
+              {filter.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
   const renderFilterButtons = () => {
     const filters = [
       { key: 'all', label: 'All', icon: 'list' },
       { key: 'today', label: 'Today', icon: 'today' },
-      { key: 'tomorrow', label: 'Tomorrow', icon: 'calendar' },
     ];
 
     return (
@@ -428,12 +615,16 @@ const CustomerBookings = ({ navigation }) => {
       if (error) {return 'Unable to load bookings';}
       if (activeFilter === 'today') {return 'No bookings for today';}
       if (activeFilter === 'tomorrow') {return 'No bookings for tomorrow';}
+      if (bookingType === 'ride') {return 'You haven\'t made any ride bookings yet';}
+      if (bookingType === 'car') {return 'You haven\'t made any car bookings yet';}
       return 'You haven\'t made any bookings yet';
     };
 
     const getEmptyTitle = () => {
       if (activeFilter === 'today') {return 'No Bookings Today';}
       if (activeFilter === 'tomorrow') {return 'No Bookings Tomorrow';}
+      if (bookingType === 'ride') {return 'No Ride Bookings';}
+      if (bookingType === 'car') {return 'No Car Bookings';}
       return 'No Bookings Found';
     };
 
@@ -454,8 +645,9 @@ const CustomerBookings = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <MainHeader title="My Bookings" showOptionsButton={false} showBackButton={false} />
+      {renderPackagesFilterButtons()} 
 
-      {renderFilterButtons()}
+      {renderFilterButtons()} 
 
       {loading && !refreshing && (
         <View style={styles.loaderOverlay}>

@@ -20,6 +20,10 @@ const BookingDetails = ({ navigation, route }) => {
   const vehicle = bookingData.vehicle || {};
   const searchPreferences = bookingData.searchPreferences || {};
   const customer = bookingData.customer || {};
+  
+  // Determine booking type
+  const isPackageBooking = bookingData.bookingType === 'ride' || bookingData.bookingType === 'ride_package';
+  const isCarBooking = bookingData.bookingType === 'car' || !isPackageBooking;
 
   const handleBackPress = () => {
     navigation.goBack();
@@ -75,99 +79,184 @@ const BookingDetails = ({ navigation, route }) => {
           <Text style={styles.bookingId}>Booking ID: {bookingId}</Text>
         </View>
 
-        {/* Vehicle Image and Basic Info */}
+        {/* Vehicle/Package Information */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vehicle Information</Text>
+          <Text style={styles.sectionTitle}>
+            {isPackageBooking ? 'Package Information' : 'Vehicle Information'}
+          </Text>
           <View style={styles.vehicleCard}>
-            {vehicle.image && (
-              <Image source={{ uri: vehicle.image }} style={styles.vehicleImage} />
+            {isPackageBooking ? (
+              // Package booking information
+              <>
+                {bookingData.packageImage && (
+                  <Image source={{ uri: bookingData.packageImage }} style={styles.vehicleImage} />
+                )}
+                <View style={styles.vehicleInfo}>
+                  <Text style={styles.vehicleTitle}>
+                    {bookingData.packageName || 'Ride Package'}
+                  </Text>
+                  <Text style={styles.vehicleSubtitle}>
+                    Package Booking • {bookingData.duration || 'N/A'} days
+                  </Text>
+                  {bookingData.passengers && (
+                    <Text style={styles.vehicleSubtitle}>
+                      {bookingData.passengers} passengers
+                    </Text>
+                  )}
+                </View>
+              </>
+            ) : (
+              // Car booking information
+              <>
+                {vehicle.image && (
+                  <Image source={{ uri: vehicle.image }} style={styles.vehicleImage} />
+                )}
+                <View style={styles.vehicleInfo}>
+                  <Text style={styles.vehicleTitle}>
+                    {vehicle.make || 'N/A'} {vehicle.model || ''} {vehicle.variant ? `(${vehicle.variant})` : ''}
+                  </Text>
+                  {vehicle.year && (
+                    <Text style={styles.vehicleSubtitle}>{vehicle.year} • {vehicle.color || 'N/A'}</Text>
+                  )}
+                </View>
+              </>
             )}
-            <View style={styles.vehicleInfo}>
-              <Text style={styles.vehicleTitle}>
-                {vehicle.make || 'N/A'} {vehicle.model || ''} {vehicle.variant ? `(${vehicle.variant})` : ''}
-              </Text>
-              {vehicle.year && (
-                <Text style={styles.vehicleSubtitle}>{vehicle.year} • {vehicle.color || 'N/A'}</Text>
-              )}
-            </View>
           </View>
         </View>
 
-        {/* Detailed Vehicle Specifications */}
+        {/* Detailed Specifications */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vehicle Specifications</Text>
+          <Text style={styles.sectionTitle}>
+            {isPackageBooking ? 'Package Details' : 'Vehicle Specifications'}
+          </Text>
           <View style={styles.infoCard}>
             <View style={styles.specsGrid}>
-              {vehicle.year && (
-                <View style={styles.specItem}>
-                  <Icon name="calendar" size={20} color={Colors.PRIMARY} />
-                  <Text style={styles.specLabel}>Model Year</Text>
-                  <Text style={styles.specValue}>{vehicle.year}</Text>
-                </View>
-              )}
-              
-              {vehicle.color && (
-                <View style={styles.specItem}>
-                  <Icon name="color-palette" size={20} color={Colors.PRIMARY} />
-                  <Text style={styles.specLabel}>Color</Text>
-                  <Text style={styles.specValue}>{vehicle.color}</Text>
-                </View>
-              )}
-              
-              {vehicle.seats && (
-                <View style={styles.specItem}>
-                  <Icon name="people" size={20} color={Colors.PRIMARY} />
-                  <Text style={styles.specLabel}>Seating</Text>
-                  <Text style={styles.specValue}>{vehicle.seats} passengers</Text>
-                </View>
-              )}
+              {isPackageBooking ? (
+                // Package booking specifications
+                <>
+                  {bookingData.duration && (
+                    <View style={styles.specItem}>
+                      <Icon name="time" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Duration</Text>
+                      <Text style={styles.specValue}>{bookingData.duration} days</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.passengers && (
+                    <View style={styles.specItem}>
+                      <Icon name="people" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Passengers</Text>
+                      <Text style={styles.specValue}>{bookingData.passengers}</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.destination && (
+                    <View style={styles.specItem}>
+                      <Icon name="location" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Destination</Text>
+                      <Text style={styles.specValue}>{bookingData.destination}</Text>
+                    </View>
+                  )}
 
-              {vehicle.fuelType && (
-                <View style={styles.specItem}>
-                  <Icon name="car-sport" size={20} color={Colors.PRIMARY} />
-                  <Text style={styles.specLabel}>Fuel Type</Text>
-                  <Text style={styles.specValue}>{vehicle.fuelType}</Text>
-                </View>
-              )}
+                  {bookingData.pickupLocation && (
+                    <View style={styles.specItem}>
+                      <Icon name="location-outline" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Pickup</Text>
+                      <Text style={styles.specValue}>{bookingData.pickupLocation}</Text>
+                    </View>
+                  )}
 
-              {vehicle.transmission && (
-                <View style={styles.specItem}>
-                  <Icon name="settings" size={20} color={Colors.PRIMARY} />
-                  <Text style={styles.specLabel}>Transmission</Text>
-                  <Text style={styles.specValue}>{vehicle.transmission}</Text>
-                </View>
-              )}
+                  {bookingData.packageType && (
+                    <View style={styles.specItem}>
+                      <Icon name="star" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Package Type</Text>
+                      <Text style={styles.specValue}>{bookingData.packageType}</Text>
+                    </View>
+                  )}
 
-              {vehicle.mileage && (
-                <View style={styles.specItem}>
-                  <Icon name="speedometer" size={20} color={Colors.PRIMARY} />
-                  <Text style={styles.specLabel}>Mileage</Text>
-                  <Text style={styles.specValue}>{vehicle.mileage} km/l</Text>
-                </View>
-              )}
+                  {bookingData.inclusions && (
+                    <View style={styles.specItem}>
+                      <Icon name="checkmark-circle" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Inclusions</Text>
+                      <Text style={styles.specValue}>{bookingData.inclusions}</Text>
+                    </View>
+                  )}
+                </>
+              ) : (
+                // Car booking specifications
+                <>
+                  {vehicle.year && (
+                    <View style={styles.specItem}>
+                      <Icon name="calendar" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Model Year</Text>
+                      <Text style={styles.specValue}>{vehicle.year}</Text>
+                    </View>
+                  )}
+                  
+                  {vehicle.color && (
+                    <View style={styles.specItem}>
+                      <Icon name="color-palette" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Color</Text>
+                      <Text style={styles.specValue}>{vehicle.color}</Text>
+                    </View>
+                  )}
+                  
+                  {vehicle.seats && (
+                    <View style={styles.specItem}>
+                      <Icon name="people" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Seating</Text>
+                      <Text style={styles.specValue}>{vehicle.seats} passengers</Text>
+                    </View>
+                  )}
 
-              {vehicle.engine && (
-                <View style={styles.specItem}>
-                  <Icon name="construct" size={20} color={Colors.PRIMARY} />
-                  <Text style={styles.specLabel}>Engine</Text>
-                  <Text style={styles.specValue}>{vehicle.engine}</Text>
-                </View>
-              )}
+                  {vehicle.fuelType && (
+                    <View style={styles.specItem}>
+                      <Icon name="car-sport" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Fuel Type</Text>
+                      <Text style={styles.specValue}>{vehicle.fuelType}</Text>
+                    </View>
+                  )}
 
-              {vehicle.licensePlate && (
-                <View style={styles.specItem}>
-                  <Icon name="card" size={20} color={Colors.PRIMARY} />
-                  <Text style={styles.specLabel}>License Plate</Text>
-                  <Text style={styles.specValue}>{vehicle.licensePlate}</Text>
-                </View>
-              )}
+                  {vehicle.transmission && (
+                    <View style={styles.specItem}>
+                      <Icon name="settings" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Transmission</Text>
+                      <Text style={styles.specValue}>{vehicle.transmission}</Text>
+                    </View>
+                  )}
 
-              {vehicle.vin && (
-                <View style={styles.specItem}>
-                  <Icon name="shield-checkmark" size={20} color={Colors.PRIMARY} />
-                  <Text style={styles.specLabel}>VIN</Text>
-                  <Text style={styles.specValue}>{vehicle.vin}</Text>
-                </View>
+                  {vehicle.mileage && (
+                    <View style={styles.specItem}>
+                      <Icon name="speedometer" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Mileage</Text>
+                      <Text style={styles.specValue}>{vehicle.mileage} km/l</Text>
+                    </View>
+                  )}
+
+                  {vehicle.engine && (
+                    <View style={styles.specItem}>
+                      <Icon name="construct" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>Engine</Text>
+                      <Text style={styles.specValue}>{vehicle.engine}</Text>
+                    </View>
+                  )}
+
+                  {vehicle.licensePlate && (
+                    <View style={styles.specItem}>
+                      <Icon name="card" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>License Plate</Text>
+                      <Text style={styles.specValue}>{vehicle.licensePlate}</Text>
+                    </View>
+                  )}
+
+                  {vehicle.vin && (
+                    <View style={styles.specItem}>
+                      <Icon name="shield-checkmark" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.specLabel}>VIN</Text>
+                      <Text style={styles.specValue}>{vehicle.vin}</Text>
+                    </View>
+                  )}
+                </>
               )}
             </View>
           </View>
@@ -192,64 +281,131 @@ const BookingDetails = ({ navigation, route }) => {
 
         {/* Booking Dates */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Booking Period</Text>
+          <Text style={styles.sectionTitle}>
+            {isPackageBooking ? 'Trip Period' : 'Booking Period'}
+          </Text>
           <View style={styles.infoCard}>
             <View style={styles.dateContainer}>
-              <View style={styles.dateItem}>
-                <Icon name="calendar-outline" size={24} color={Colors.PRIMARY} />
-                <View style={styles.dateInfo}>
-                  <Text style={styles.dateLabel}>Pickup Date</Text>
-                  <Text style={styles.dateValue}>{searchPreferences.pickupDate || 'Not specified'}</Text>
-                  {searchPreferences.pickupTime && (
-                    <Text style={styles.timeValue}>{searchPreferences.pickupTime}</Text>
-                  )}
-                </View>
-              </View>
-              
-              <View style={styles.dateItem}>
-                <Icon name="calendar-outline" size={24} color={Colors.PRIMARY} />
-                <View style={styles.dateInfo}>
-                  <Text style={styles.dateLabel}>Return Date</Text>
-                  <Text style={styles.dateValue}>{searchPreferences.dropoffDate || 'Not specified'}</Text>
-                  {searchPreferences.dropoffTime && (
-                    <Text style={styles.timeValue}>{searchPreferences.dropoffTime}</Text>
-                  )}
-                </View>
-              </View>
+              {isPackageBooking ? (
+                // Package booking dates
+                <>
+                  <View style={styles.dateItem}>
+                    <Icon name="calendar-outline" size={24} color={Colors.PRIMARY} />
+                    <View style={styles.dateInfo}>
+                      <Text style={styles.dateLabel}>Start Date</Text>
+                      <Text style={styles.dateValue}>{bookingData.startDate || 'Not specified'}</Text>
+                      {bookingData.startTime && (
+                        <Text style={styles.timeValue}>{bookingData.startTime}</Text>
+                      )}
+                    </View>
+                  </View>
+                  
+                  <View style={styles.dateItem}>
+                    <Icon name="calendar-outline" size={24} color={Colors.PRIMARY} />
+                    <View style={styles.dateInfo}>
+                      <Text style={styles.dateLabel}>End Date</Text>
+                      <Text style={styles.dateValue}>{bookingData.endDate || 'Not specified'}</Text>
+                      {bookingData.endTime && (
+                        <Text style={styles.timeValue}>{bookingData.endTime}</Text>
+                      )}
+                    </View>
+                  </View>
+                </>
+              ) : (
+                // Car booking dates
+                <>
+                  <View style={styles.dateItem}>
+                    <Icon name="calendar-outline" size={24} color={Colors.PRIMARY} />
+                    <View style={styles.dateInfo}>
+                      <Text style={styles.dateLabel}>Pickup Date</Text>
+                      <Text style={styles.dateValue}>{searchPreferences.pickupDate || 'Not specified'}</Text>
+                      {searchPreferences.pickupTime && (
+                        <Text style={styles.timeValue}>{searchPreferences.pickupTime}</Text>
+                      )}
+                    </View>
+                  </View>
+                  
+                  <View style={styles.dateItem}>
+                    <Icon name="calendar-outline" size={24} color={Colors.PRIMARY} />
+                    <View style={styles.dateInfo}>
+                      <Text style={styles.dateLabel}>Return Date</Text>
+                      <Text style={styles.dateValue}>{searchPreferences.dropoffDate || 'Not specified'}</Text>
+                      {searchPreferences.dropoffTime && (
+                        <Text style={styles.timeValue}>{searchPreferences.dropoffTime}</Text>
+                      )}
+                    </View>
+                  </View>
+                </>
+              )}
             </View>
             
             {/* Duration Calculation */}
-            {searchPreferences.pickupDate && searchPreferences.dropoffDate && (
-              <View style={styles.durationContainer}>
-                <Icon name="time" size={20} color={Colors.PRIMARY} />
-                <Text style={styles.durationLabel}>Total Duration:</Text>
-                <Text style={styles.durationValue}>
-                  {Math.ceil((new Date(searchPreferences.dropoffDate) - new Date(searchPreferences.pickupDate)) / (1000 * 60 * 60 * 24))} days
-                </Text>
-              </View>
+            {isPackageBooking ? (
+              bookingData.duration && (
+                <View style={styles.durationContainer}>
+                  <Icon name="time" size={20} color={Colors.PRIMARY} />
+                  <Text style={styles.durationLabel}>Trip Duration:</Text>
+                  <Text style={styles.durationValue}>{bookingData.duration} days</Text>
+                </View>
+              )
+            ) : (
+              searchPreferences.pickupDate && searchPreferences.dropoffDate && (
+                <View style={styles.durationContainer}>
+                  <Icon name="time" size={20} color={Colors.PRIMARY} />
+                  <Text style={styles.durationLabel}>Total Duration:</Text>
+                  <Text style={styles.durationValue}>
+                    {Math.ceil((new Date(searchPreferences.dropoffDate) - new Date(searchPreferences.pickupDate)) / (1000 * 60 * 60 * 24))} days
+                  </Text>
+                </View>
+              )
             )}
           </View>
         </View>
 
         {/* Location Information */}
-        {(searchPreferences.pickupLocation || searchPreferences.dropoffLocation) && (
+        {((isPackageBooking && (bookingData.pickupLocation || bookingData.destination)) || 
+          (!isPackageBooking && (searchPreferences.pickupLocation || searchPreferences.dropoffLocation))) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Location Details</Text>
             <View style={styles.infoCard}>
-              {searchPreferences.pickupLocation && (
-                <View style={styles.infoRow}>
-                  <Icon name="location" size={20} color={Colors.PRIMARY} />
-                  <Text style={styles.infoLabel}>Pickup:</Text>
-                  <Text style={styles.infoValue}>{searchPreferences.pickupLocation}</Text>
-                </View>
-              )}
-              
-              {searchPreferences.dropoffLocation && (
-                <View style={styles.infoRow}>
-                  <Icon name="location" size={20} color={Colors.PRIMARY} />
-                  <Text style={styles.infoLabel}>Drop-off:</Text>
-                  <Text style={styles.infoValue}>{searchPreferences.dropoffLocation}</Text>
-                </View>
+              {isPackageBooking ? (
+                // Package booking locations
+                <>
+                  {bookingData.pickupLocation && (
+                    <View style={styles.infoRow}>
+                      <Icon name="location" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.infoLabel}>Pickup:</Text>
+                      <Text style={styles.infoValue}>{bookingData.pickupLocation}</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.destination && (
+                    <View style={styles.infoRow}>
+                      <Icon name="location" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.infoLabel}>Destination:</Text>
+                      <Text style={styles.infoValue}>{bookingData.destination}</Text>
+                    </View>
+                  )}
+                </>
+              ) : (
+                // Car booking locations
+                <>
+                  {searchPreferences.pickupLocation && (
+                    <View style={styles.infoRow}>
+                      <Icon name="location" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.infoLabel}>Pickup:</Text>
+                      <Text style={styles.infoValue}>{searchPreferences.pickupLocation}</Text>
+                    </View>
+                  )}
+                  
+                  {searchPreferences.dropoffLocation && (
+                    <View style={styles.infoRow}>
+                      <Icon name="location" size={20} color={Colors.PRIMARY} />
+                      <Text style={styles.infoLabel}>Drop-off:</Text>
+                      <Text style={styles.infoValue}>{searchPreferences.dropoffLocation}</Text>
+                    </View>
+                  )}
+                </>
               )}
             </View>
           </View>
@@ -292,53 +448,103 @@ const BookingDetails = ({ navigation, route }) => {
           <Text style={styles.sectionTitle}>Pricing Details</Text>
           <View style={styles.infoCard}>
             <View style={styles.pricingContainer}>
-              {bookingData.basePrice && (
-                <View style={styles.pricingRow}>
-                  <Text style={styles.pricingLabel}>Base Price</Text>
-                  <Text style={styles.pricingValue}>${bookingData.basePrice}</Text>
-                </View>
-              )}
-              
-              {bookingData.dailyRate && (
-                <View style={styles.pricingRow}>
-                  <Text style={styles.pricingLabel}>Daily Rate</Text>
-                  <Text style={styles.pricingValue}>${bookingData.dailyRate}/day</Text>
-                </View>
-              )}
-              
-              {bookingData.duration && (
-                <View style={styles.pricingRow}>
-                  <Text style={styles.pricingLabel}>Duration</Text>
-                  <Text style={styles.pricingValue}>{bookingData.duration} days</Text>
-                </View>
-              )}
-              
-              {bookingData.tax && (
-                <View style={styles.pricingRow}>
-                  <Text style={styles.pricingLabel}>Tax (10%)</Text>
-                  <Text style={styles.pricingValue}>${bookingData.tax}</Text>
-                </View>
-              )}
-              
-              {bookingData.insurance && (
-                <View style={styles.pricingRow}>
-                  <Text style={styles.pricingLabel}>Insurance</Text>
-                  <Text style={styles.pricingValue}>${bookingData.insurance}</Text>
-                </View>
-              )}
-              
-              {bookingData.additionalFees && (
-                <View style={styles.pricingRow}>
-                  <Text style={styles.pricingLabel}>Additional Fees</Text>
-                  <Text style={styles.pricingValue}>${bookingData.additionalFees}</Text>
-                </View>
-              )}
-              
-              {bookingData.deposit && (
-                <View style={styles.pricingRow}>
-                  <Text style={styles.pricingLabel}>Security Deposit</Text>
-                  <Text style={styles.pricingValue}>${bookingData.deposit}</Text>
-                </View>
+              {isPackageBooking ? (
+                // Package booking pricing
+                <>
+                  {bookingData.packagePrice && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Package Price</Text>
+                      <Text style={styles.pricingValue}>${bookingData.packagePrice}</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.duration && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Duration</Text>
+                      <Text style={styles.pricingValue}>{bookingData.duration} days</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.passengers && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Passengers</Text>
+                      <Text style={styles.pricingValue}>{bookingData.passengers}</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.tax && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Tax</Text>
+                      <Text style={styles.pricingValue}>${bookingData.tax}</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.serviceFee && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Service Fee</Text>
+                      <Text style={styles.pricingValue}>${bookingData.serviceFee}</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.additionalFees && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Additional Fees</Text>
+                      <Text style={styles.pricingValue}>${bookingData.additionalFees}</Text>
+                    </View>
+                  )}
+                </>
+              ) : (
+                // Car booking pricing
+                <>
+                  {bookingData.basePrice && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Base Price</Text>
+                      <Text style={styles.pricingValue}>${bookingData.basePrice}</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.dailyRate && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Daily Rate</Text>
+                      <Text style={styles.pricingValue}>${bookingData.dailyRate}/day</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.duration && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Duration</Text>
+                      <Text style={styles.pricingValue}>{bookingData.duration} days</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.tax && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Tax (10%)</Text>
+                      <Text style={styles.pricingValue}>${bookingData.tax}</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.insurance && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Insurance</Text>
+                      <Text style={styles.pricingValue}>${bookingData.insurance}</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.additionalFees && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Additional Fees</Text>
+                      <Text style={styles.pricingValue}>${bookingData.additionalFees}</Text>
+                    </View>
+                  )}
+                  
+                  {bookingData.deposit && (
+                    <View style={styles.pricingRow}>
+                      <Text style={styles.pricingLabel}>Security Deposit</Text>
+                      <Text style={styles.pricingValue}>${bookingData.deposit}</Text>
+                    </View>
+                  )}
+                </>
               )}
               
               <View style={styles.pricingDivider} />
@@ -346,7 +552,7 @@ const BookingDetails = ({ navigation, route }) => {
               <View style={[styles.pricingRow, styles.totalRow]}>
                 <Text style={styles.totalLabel}>Total Amount</Text>
                 <Text style={styles.totalValue}>
-                  ${bookingData.amount || bookingData.totalPrice || bookingData.basePrice || '0'}
+                  ${bookingData.totalAmount || bookingData.amount || bookingData.totalPrice || bookingData.basePrice || '0'}
                 </Text>
               </View>
             </View>
@@ -429,21 +635,46 @@ const BookingDetails = ({ navigation, route }) => {
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.contactButton}>
-            <Icon name="call" size={20} color={Colors.WHITE} />
-            <Text style={styles.buttonText}>Contact Provider</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.messageButton}>
-            <Icon name="chatbubble" size={20} color={Colors.PRIMARY} />
-            <Text style={styles.messageButtonText}>Send Message</Text>
-          </TouchableOpacity>
-          
-          {bookingData.status === 'pending' && (
-            <TouchableOpacity style={styles.cancelButton}>
-              <Icon name="close" size={20} color={Colors.WHITE} />
-              <Text style={styles.buttonText}>Cancel Booking</Text>
-            </TouchableOpacity>
+          {isPackageBooking ? (
+            // Package booking actions
+            <>
+              <TouchableOpacity style={styles.contactButton}>
+                <Icon name="call" size={20} color={Colors.WHITE} />
+                <Text style={styles.buttonText}>Contact Support</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.messageButton}>
+                <Icon name="chatbubble" size={20} color={Colors.PRIMARY} />
+                <Text style={styles.messageButtonText}>Send Message</Text>
+              </TouchableOpacity>
+              
+              {bookingData.status === 'pending' && (
+                <TouchableOpacity style={styles.cancelButton}>
+                  <Icon name="close" size={20} color={Colors.WHITE} />
+                  <Text style={styles.buttonText}>Cancel Trip</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          ) : (
+            // Car booking actions
+            <>
+              <TouchableOpacity style={styles.contactButton}>
+                <Icon name="call" size={20} color={Colors.WHITE} />
+                <Text style={styles.buttonText}>Contact Provider</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.messageButton}>
+                <Icon name="chatbubble" size={20} color={Colors.PRIMARY} />
+                <Text style={styles.messageButtonText}>Send Message</Text>
+              </TouchableOpacity>
+              
+              {bookingData.status === 'pending' && (
+                <TouchableOpacity style={styles.cancelButton}>
+                  <Icon name="close" size={20} color={Colors.WHITE} />
+                  <Text style={styles.buttonText}>Cancel Booking</Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
       </ScrollView>

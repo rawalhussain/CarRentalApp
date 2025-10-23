@@ -10,6 +10,7 @@ import {
   TextInput,
   ScrollView,
   Image,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -122,7 +123,10 @@ const AddPackages = ({ navigation }) => {
         onBackPress={() => navigation.goBack()}
       />
       <StatusBar barStyle="dark-content" backgroundColor={Colors.WHITE} />
-
+      <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
       <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
@@ -297,6 +301,7 @@ const AddPackages = ({ navigation }) => {
         </View>
 
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <View style={styles.footer}>
         <TouchableOpacity

@@ -51,6 +51,7 @@ import AdminDashboard from '../Screens/AdminDashboard';
 import AdminBookings from '../Screens/AdminDashboard/component/Booking';
 import PackagesManagement from '../Screens/AdminDashboard/component/Packages';
 import AddPackages from '../Screens/AdminDashboard/component/AddPackages';
+import PackagesBookings from '../Screens/AdminDashboard/PackagesBookings';
 import Welcome from '../Screens/Welcome';
 import { SafeAreaView } from 'react-native';
 import {storage} from '../../App';
@@ -240,6 +241,7 @@ const Navigation = () => {
                   <Stack.Screen name="AdminTabs" component={AdminTabs} />
                   <Stack.Screen name="Packages" component={PackagesManagement} options={{ headerShown: false }} />
                   <Stack.Screen name="AddPackages" component={AddPackages} options={{ headerShown: false }} />
+                  <Stack.Screen name="PackagesBookings" component={PackagesBookings} options={{ headerShown: false }} />
                 </>
               )}
             </>

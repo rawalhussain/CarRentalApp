@@ -1,21 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Feather from 'react-native-vector-icons/Feather';
 import styles from './styles';
 import Loader from '../../Components/Loader';
-import { showMessageAlert } from '../../Lib/utils/CommonHelper';
+import {showMessageAlert} from '../../Lib/utils/CommonHelper';
 import useUserStore from '../../store/useUserStore';
 import useAuthStore from '../../store/useAuthStore';
-import { signOut, getAdminStats, getDatabaseRef } from '../../Config/firebase';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {signOut, getAdminStats, getDatabaseRef} from '../../Config/firebase';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import { Colors } from '../../Themes/MyColors';
 
-const AdminDashboard = ({ navigation }) => {
+const AdminDashboard = ({navigation}) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
@@ -24,8 +27,8 @@ const AdminDashboard = ({ navigation }) => {
     totalBookings: 0,
     revenue: 0,
   });
-  const { userData, clearUserData } = useUserStore();
-  const { clearAuth } = useAuthStore();
+  const {userData, clearUserData} = useUserStore();
+  const {clearAuth} = useAuthStore();
   const [recentBookings, setRecentBookings] = useState([]);
 
   useEffect(() => {
@@ -64,11 +67,14 @@ const AdminDashboard = ({ navigation }) => {
     try {
       const ref = getDatabaseRef('bookings');
       // Order by createdAt descending, limit to 5
-      const snapshot = await ref.orderByChild('createdAt').limitToLast(5).once('value');
+      const snapshot = await ref
+        .orderByChild('createdAt')
+        .limitToLast(5)
+        .once('value');
       const data = snapshot.val() || {};
       // Convert to array and sort descending
       const arr = Object.entries(data)
-        .map(([id, booking]) => ({ id, ...booking }))
+        .map(([id, booking]) => ({id, ...booking}))
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       setRecentBookings(arr);
     } catch (error) {
@@ -85,56 +91,73 @@ const AdminDashboard = ({ navigation }) => {
       await signOut();
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Login' }],
+        routes: [{name: 'Login'}],
       });
     } catch (error) {
       console.error('Error during logout:', error);
-      showMessageAlert('Error', 'Failed to logout. Please try again.', 'danger');
+      showMessageAlert(
+        'Error',
+        'Failed to logout. Please try again.',
+        'danger',
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const statsData = [
-    { title: 'Total Users', value: stats.totalUsers.toString(), icon: 'people-outline' },
-    { title: 'Active Vendors', value: stats.activeVendors.toString(), icon: 'business-outline' },
-    { title: 'Total Bookings', value: stats.totalBookings.toString(), icon: 'calendar-outline' },
-    { title: 'Revenue', value: `$${stats.revenue.toFixed(2)}`, icon: 'cash-outline' },
+    {
+      title: 'Total Users',
+      value: stats.totalUsers.toString(),
+      icon: 'people-outline',
+    },
+    {
+      title: 'Active Vendors',
+      value: stats.activeVendors.toString(),
+      icon: 'business-outline',
+    },
+    {
+      title: 'Total Bookings',
+      value: stats.totalBookings.toString(),
+      icon: 'calendar-outline',
+    },
+    {
+      title: 'Revenue',
+      value: `$${stats.revenue.toFixed(2)}`,
+      icon: 'cash-outline',
+    },
   ];
 
-  const recentActivities = recentBookings.map((booking) => {
+  const recentActivities = recentBookings.map(booking => {
     const vehicle = booking.vehicle || {};
     const contact = booking.contactDetails || {};
     return {
       id: booking.id,
       type: 'New Booking',
-      description: `${contact.firstName || ''} ${contact.lastName || ''} booked ${vehicle.make || 'Vehicle'} ${vehicle.model || ''}`,
+      description: `${contact.firstName || ''} ${
+        contact.lastName || ''
+      } booked ${vehicle.make || 'Vehicle'} ${vehicle.model || ''}`,
       time: new Date(booking.createdAt).toLocaleDateString(),
     };
   });
 
   return (
     <SafeAreaView style={styles.container}>
-     
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerContent}>
+        <View style={[styles.headerContent,{paddingVertical: 10}]}>
           <Text style={styles.headerTitle}>Admin Dashboard</Text>
-          <TouchableOpacity
-            style={styles.profileButton}
-            onPress={handleLogout}
-          >
+          <TouchableOpacity style={styles.profileButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={25} color="#333" />
           </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
+        }>
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           {statsData.map((stat, index) => (
@@ -147,29 +170,31 @@ const AdminDashboard = ({ navigation }) => {
         </View>
 
         {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.sectionQuickActions}>
+          <Text style={styles.sectionTitleQuickActions}>Quick Actions</Text>
           <View style={styles.quickActionsGrid}>
             <TouchableOpacity
               style={styles.quickActionCard}
-              onPress={() => navigation.navigate('Booking')}
-            >
+              onPress={() => navigation.navigate('PackagesBookings')}>
               <Ionicons name="calendar-outline" size={24} color="#E53935" />
-              <Text style={styles.quickActionText}>Bookings</Text>
+              <Text style={styles.quickActionText}>Ride Bookings</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.quickActionCard}
               onPress={() => navigation.navigate('MyCars')}
             >
               <Ionicons name="car-outline" size={24} color="#E53935" />
               <Text style={styles.quickActionText}>Vehicles</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity
               style={styles.quickActionCard}
-              onPress={() => navigation.navigate('Packages')}
-            >
-              <Ionicons name="package-outline" size={24} color="#E53935" />
-              <Text style={styles.quickActionText}>Packages</Text>
+              onPress={() => navigation.navigate('Packages')}>
+              <Feather
+                name="package"
+                size={24}
+                color="#E53935"
+              />
+              <Text style={styles.quickActionText}>Ride Packages</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -178,19 +203,23 @@ const AdminDashboard = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Activities</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('AdminTabs', { screen: 'Bookings' })}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
           {recentActivities.length === 0 ? (
             <Text style={styles.emptyText}>No recent activities.</Text>
           ) : (
-            recentActivities.map((activity) => (
+            recentActivities.map(activity => (
               <TouchableOpacity
                 key={activity.id}
                 style={styles.activityCard}
-                onPress={() => navigation.navigate('BookingDetails', { ...recentBookings.find(b => b.id === activity.id), bookingId: activity.id })}
-              >
+                onPress={() =>
+                  navigation.navigate('BookingDetails', {
+                    ...recentBookings.find(b => b.id === activity.id),
+                    bookingId: activity.id,
+                  })
+                }>
                 <View style={styles.activityHeader}>
                   <View style={styles.activityType}>
                     <Ionicons
@@ -202,13 +231,15 @@ const AdminDashboard = ({ navigation }) => {
                   </View>
                   <Text style={styles.activityTime}>{activity.time}</Text>
                 </View>
-                <Text style={styles.activityDescription}>{activity.description}</Text>
+                <Text style={styles.activityDescription}>
+                  {activity.description}
+                </Text>
               </TouchableOpacity>
             ))
           )}
         </View>
       </ScrollView>
-       {loading && <Loader />}
+      {loading && <Loader />}
     </SafeAreaView>
   );
 };
